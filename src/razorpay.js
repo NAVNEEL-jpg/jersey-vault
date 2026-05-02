@@ -1,6 +1,6 @@
 export const initiatePayment = (amount, name, email, phone, cart, navigate) => {
   const options = {
-    key: "BIludG7jGixxdRZtzPxp8WWu",
+    key: "rzp_live_SkWOOWgdrS8yxh", // Replace with your Razorpay API key
     amount: amount * 100,
     currency: "INR",
     name: "JerseyVault",
