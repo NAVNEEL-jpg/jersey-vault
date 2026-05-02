@@ -1,25 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const cart = [
-  { id: 1, name: "FC Barcelona", player: "MESSI", number: "10", size: "L", qty: 1, price: 1299, emoji: "⚽", color: "#A50044" },
-  { id: 2, name: "Mumbai Indians", player: "ROHIT", number: "45", size: "M", qty: 2, price: 999, emoji: "🏏", color: "#004BA0" },
-];
+import { initiatePayment } from "../razorpay";
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
   useEffect(() => {
-  const data = localStorage.getItem("cart");
-  if (data) {
-    setCart(JSON.parse(data));
-  }
-}, []);
+    const data = localStorage.getItem("cart");
+    if (data) setCart(JSON.parse(data));
+  }, []);
+
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [payMethod, setPayMethod] = useState("upi");
-  const [placed, setPlaced] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", pincode: "" });
   const [errors, setErrors] = useState({});
@@ -48,32 +42,22 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = () => {
-  setLoading(true);
-
-  const order = {
-  id: "JV" + Math.floor(100000 + Math.random() * 900000),
-  items: cart,
-  total: total,
-  date: new Date().toLocaleDateString(),
-
-  // 🔥 ADD THIS
-  customer: {
-    name: form.name,
-    email: form.email,
-    phone: form.phone
-  }
-};
-
-  // save order
-  localStorage.setItem("latestOrder", JSON.stringify(order));
-
-  setTimeout(() => {
-    setLoading(false);
-    navigate("/success");
-  }, 1500);
-};
-
-  const orderId = "JV" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    if (payMethod === "cod") {
+      setLoading(true);
+      const order = {
+        id: "JV" + Math.floor(100000 + Math.random() * 900000),
+        items: cart,
+        total: total,
+        date: new Date().toLocaleDateString(),
+        customer: { name: form.name, email: form.email, phone: form.phone },
+        payMethod: "COD",
+      };
+      localStorage.setItem("latestOrder", JSON.stringify(order));
+      setTimeout(() => { setLoading(false); navigate("/success"); }, 1500);
+    } else {
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate);
+    }
+  };
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
@@ -82,9 +66,7 @@ export default function CheckoutPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
         @keyframes spin { to{transform:rotate(360deg);} }
-        @keyframes popIn { 0%{transform:scale(0.5);opacity:0;} 70%{transform:scale(1.1);} 100%{transform:scale(1);opacity:1;} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
-        @keyframes slideRight { from{width:0;} to{width:100%;} }
         .field { background: #111; border: 1px solid #222; color: #fff; padding: 13px 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; width: 100%; outline: none; letter-spacing: 1px; transition: border-color 0.2s; }
         .field:focus { border-color: #39ff14; }
         .field.err { border-color: #ff4444; }
@@ -112,207 +94,181 @@ export default function CheckoutPage() {
         <span style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>SECURE CHECKOUT 🔒</span>
       </nav>
 
-      {placed ? (
-        /* SUCCESS STATE */
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", padding: 24, textAlign: "center", animation: "fadeUp 0.5s ease" }}>
-          <div style={{ width: 100, height: 100, borderRadius: "50%", background: "#39ff1420", border: "2px solid #39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48, animation: "popIn 0.5s ease", marginBottom: 28 }}>✓</div>
-          <h1 style={{ fontSize: 42, fontWeight: 900, fontStyle: "italic", letterSpacing: 2 }}>ORDER <span style={{ color: "#39ff14" }}>PLACED!</span></h1>
-          <p style={{ color: "#555", marginTop: 8, letterSpacing: 2, fontSize: 13, fontFamily: "'Barlow', sans-serif" }}>Thank you, {form.name || "Champ"}! Your jerseys are on the way.</p>
-          <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: "20px 40px", marginTop: 28, marginBottom: 28 }}>
-            <div style={{ color: "#555", fontSize: 11, letterSpacing: 3 }}>ORDER ID</div>
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", letterSpacing: 4, marginTop: 4 }}>{orderId}</div>
-          </div>
-          <div style={{ color: "#444", fontSize: 13, letterSpacing: 2, marginBottom: 28 }}>
-            📦 Estimated delivery: <span style={{ color: "#fff" }}>3–5 business days</span>
-          </div>
-          {cart.map(item => (
-            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#111", border: "1px solid #1a1a1a", padding: "12px 20px", width: "100%", maxWidth: 400, marginBottom: 8 }}>
-              <span style={{ fontSize: 28 }}>{item.emoji}</span>
-              <div style={{ flex: 1, textAlign: "left" }}>
-                <div style={{ fontWeight: 900, fontSize: 14 }}>{item.name} #{item.number}</div>
-                <div style={{ color: "#555", fontSize: 11, letterSpacing: 2 }}>SIZE {item.size} · QTY {item.qty}</div>
-              </div>
-              <div style={{ color: "#39ff14", fontWeight: 900 }}>₹{item.price * item.qty}</div>
-            </div>
-          ))}
-          <button onClick={() => { setPlaced(false); setStep(0); }} style={{ marginTop: 16, background: "transparent", border: "1px solid #333", color: "#fff", padding: "12px 32px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: 3, cursor: "pointer" }}>
-            ← BACK TO STORE
-          </button>
-        </div>
-      ) : (
-        <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px", display: "grid", gridTemplateColumns: "1fr 360px", gap: 24, alignItems: "start" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "40px 24px", display: "grid", gridTemplateColumns: "1fr 360px", gap: 24, alignItems: "start" }}>
 
-          {/* LEFT PANEL */}
-          <div style={{ animation: "fadeUp 0.5s ease" }}>
+        {/* LEFT PANEL */}
+        <div style={{ animation: "fadeUp 0.5s ease" }}>
 
-            {/* STEP INDICATOR */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
-              {steps.map((s, i) => (
-                <div key={s} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                    <div className="step-dot" style={{ background: i <= step ? "#39ff14" : "#111", color: i <= step ? "#000" : "#333", border: i <= step ? "none" : "1px solid #222" }}>
-                      {i < step ? "✓" : i + 1}
-                    </div>
-                    <span style={{ fontSize: 10, letterSpacing: 2, color: i <= step ? "#39ff14" : "#333", fontWeight: 700 }}>{s}</span>
+          {/* STEP INDICATOR */}
+          <div style={{ display: "flex", alignItems: "center", marginBottom: 36 }}>
+            {steps.map((s, i) => (
+              <div key={s} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                  <div className="step-dot" style={{ background: i <= step ? "#39ff14" : "#111", color: i <= step ? "#000" : "#333", border: i <= step ? "none" : "1px solid #222" }}>
+                    {i < step ? "✓" : i + 1}
                   </div>
-                  {i < steps.length - 1 && <div className="step-line" style={{ background: i < step ? "#39ff14" : "#222", margin: "0 8px", marginBottom: 20 }} />}
+                  <span style={{ fontSize: 10, letterSpacing: 2, color: i <= step ? "#39ff14" : "#333", fontWeight: 700 }}>{s}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* STEP 0 — DELIVERY */}
-            {step === 0 && (
-              <div style={{ animation: "fadeUp 0.4s ease" }}>
-                <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>DELIVERY DETAILS</h2>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  {[
-                    { key: "name", label: "FULL NAME", placeholder: "Neel Kumar", full: false },
-                    { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
-                    { key: "email", label: "EMAIL ADDRESS", placeholder: "neel@email.com", full: true },
-                    { key: "address", label: "STREET ADDRESS", placeholder: "Flat 4B, Park Street", full: true },
-                    { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
-                    { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
-                    { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
-                  ].map(f => (
-                    <div key={f.key} style={{ gridColumn: f.full ? "1/-1" : "auto" }}>
-                      <div className="label">{f.label}</div>
-                      <input className={`field ${errors[f.key] ? "err" : ""}`} placeholder={f.placeholder} value={form[f.key]}
-                        onChange={e => { setForm(p => ({ ...p, [f.key]: e.target.value })); setErrors(p => ({ ...p, [f.key]: "" })); }} />
-                      {errors[f.key] && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors[f.key]}</div>}
-                    </div>
-                  ))}
-                </div>
-                <button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
-              </div>
-            )}
-
-            {/* STEP 1 — PAYMENT */}
-            {step === 1 && (
-              <div style={{ animation: "fadeUp 0.4s ease" }}>
-                <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>PAYMENT METHOD</h2>
-                {[
-                  { id: "upi", icon: "📲", label: "UPI", sub: "PhonePe, GPay, Paytm" },
-                  { id: "card", icon: "💳", label: "CREDIT / DEBIT CARD", sub: "Visa, Mastercard, RuPay" },
-                  { id: "netbanking", icon: "🏦", label: "NET BANKING", sub: "All major banks supported" },
-                  { id: "cod", icon: "💵", label: "CASH ON DELIVERY", sub: "Pay when you receive" },
-                ].map(p => (
-                  <div key={p.id} className={`pay-card ${payMethod === p.id ? "active" : ""}`} onClick={() => setPayMethod(p.id)}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${payMethod === p.id ? "#39ff14" : "#333"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {payMethod === p.id && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#39ff14" }} />}
-                    </div>
-                    <span style={{ fontSize: 24 }}>{p.icon}</span>
-                    <div>
-                      <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: 1 }}>{p.label}</div>
-                      <div style={{ color: "#555", fontSize: 12, fontFamily: "'Barlow', sans-serif", marginTop: 2 }}>{p.sub}</div>
-                    </div>
-                    {payMethod === p.id && <div style={{ marginLeft: "auto", color: "#39ff14", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>}
-                  </div>
-                ))}
-                {payMethod === "upi" && (
-                  <div style={{ marginTop: 8 }}>
-                    <div className="label">UPI ID</div>
-                    <input className="field" placeholder="yourname@upi" value={upiId} onChange={e => setUpiId(e.target.value)} />
-                  </div>
-                )}
-                {payMethod === "card" && (
-                  <div style={{ marginTop: 8, display: "grid", gap: 12 }}>
-                    <div>
-                      <div className="label">CARD NUMBER</div>
-                      <input className="field" placeholder="1234 5678 9012 3456" maxLength={19} />
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div><div className="label">EXPIRY</div><input className="field" placeholder="MM / YY" /></div>
-                      <div><div className="label">CVV</div><input className="field" placeholder="•••" maxLength={3} type="password" /></div>
-                    </div>
-                  </div>
-                )}
-                <button className="next-btn" onClick={handleNext}>REVIEW ORDER →</button>
-                <button className="back-btn" onClick={() => setStep(0)}>← BACK</button>
-              </div>
-            )}
-
-            {/* STEP 2 — CONFIRM */}
-            {step === 2 && (
-              <div style={{ animation: "fadeUp 0.4s ease" }}>
-                <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>CONFIRM ORDER</h2>
-                <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>DELIVERING TO</div>
-                  <div style={{ fontWeight: 900, fontSize: 16 }}>{form.name}</div>
-                  <div style={{ color: "#888", fontFamily: "'Barlow', sans-serif", fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>
-                    {form.address}, {form.city}, {form.state} — {form.pincode}<br />{form.phone} · {form.email}
-                  </div>
-                </div>
-                <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>PAYMENT VIA</div>
-                  <div style={{ fontWeight: 900, fontSize: 16, color: "#39ff14" }}>
-                    {{ upi: "📲 UPI", card: "💳 CARD", netbanking: "🏦 NET BANKING", cod: "💵 CASH ON DELIVERY" }[payMethod]}
-                  </div>
-                </div>
-                <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>YOUR ITEMS</div>
-                  {cart.map(item => (
-                    <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
-                      <span style={{ fontSize: 32 }}>{item.emoji}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 900 }}>{item.name} #{item.number}</div>
-                        <div style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>{item.player} · SIZE {item.size} · QTY {item.qty}</div>
-                      </div>
-                      <div style={{ fontWeight: 900 }}>₹{item.price * item.qty}</div>
-                    </div>
-                  ))}
-                </div>
-                <button className="next-btn" onClick={handlePlace} disabled={loading}>
-                  {loading ? (
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                      <span style={{ width: 18, height: 18, border: "2px solid #000", borderTop: "2px solid transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
-                      PROCESSING...
-                    </span>
-                  ) : `PLACE ORDER — ₹${total.toLocaleString()} →`}
-                </button>
-                <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT — ORDER SUMMARY */}
-          <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", padding: 24, position: "sticky", top: 80, animation: "fadeUp 0.6s ease 0.1s both" }}>
-            <h3 style={{ fontSize: 18, fontWeight: 900, letterSpacing: 3, marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #1a1a1a" }}>ORDER SUMMARY</h3>
-            {cart.map(item => (
-              <div key={item.id} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-                <div style={{ width: 48, height: 48, background: `${item.color}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, position: "relative" }}>
-                  {item.emoji}
-                  <div style={{ position: "absolute", top: -6, right: -6, background: "#39ff14", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>{item.qty}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>{item.name}</div>
-                  <div style={{ color: "#555", fontSize: 11, letterSpacing: 1 }}>#{item.number} · {item.size}</div>
-                </div>
-                <div style={{ fontWeight: 900, fontSize: 14 }}>₹{item.price * item.qty}</div>
+                {i < steps.length - 1 && <div className="step-line" style={{ background: i < step ? "#39ff14" : "#222", margin: "0 8px", marginBottom: 20 }} />}
               </div>
             ))}
-            <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, marginTop: 8 }}>
-              {[["SUBTOTAL", `₹${subtotal.toLocaleString()}`], ["SHIPPING", shipping === 0 ? "FREE 🎉" : `₹${shipping}`]].map(([l, v]) => (
-                <div key={l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 13, color: "#555", letterSpacing: 1 }}>
-                  <span>{l}</span><span style={{ color: shipping === 0 && l === "SHIPPING" ? "#39ff14" : "#888" }}>{v}</span>
+          </div>
+
+          {/* STEP 0 — DELIVERY */}
+          {step === 0 && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>DELIVERY DETAILS</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                {[
+                  { key: "name", label: "FULL NAME", placeholder: "Navneel Dutta", full: false },
+                  { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
+                  { key: "email", label: "EMAIL ADDRESS", placeholder: "you@email.com", full: true },
+                  { key: "address", label: "STREET ADDRESS", placeholder: "Flat 4B, Park Street", full: true },
+                  { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
+                  { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
+                  { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
+                ].map(f => (
+                  <div key={f.key} style={{ gridColumn: f.full ? "1/-1" : "auto" }}>
+                    <div className="label">{f.label}</div>
+                    <input className={`field ${errors[f.key] ? "err" : ""}`} placeholder={f.placeholder} value={form[f.key]}
+                      onChange={e => { setForm(p => ({ ...p, [f.key]: e.target.value })); setErrors(p => ({ ...p, [f.key]: "" })); }} />
+                    {errors[f.key] && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors[f.key]}</div>}
+                  </div>
+                ))}
+              </div>
+              <button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
+            </div>
+          )}
+
+          {/* STEP 1 — PAYMENT */}
+          {step === 1 && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>PAYMENT METHOD</h2>
+              {[
+                { id: "upi", icon: "📲", label: "UPI", sub: "PhonePe, GPay, Paytm" },
+                { id: "card", icon: "💳", label: "CREDIT / DEBIT CARD", sub: "Visa, Mastercard, RuPay" },
+                { id: "netbanking", icon: "🏦", label: "NET BANKING", sub: "All major banks supported" },
+                { id: "cod", icon: "💵", label: "CASH ON DELIVERY", sub: "Pay when you receive" },
+              ].map(p => (
+                <div key={p.id} className={`pay-card ${payMethod === p.id ? "active" : ""}`} onClick={() => setPayMethod(p.id)}>
+                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${payMethod === p.id ? "#39ff14" : "#333"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {payMethod === p.id && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#39ff14" }} />}
+                  </div>
+                  <span style={{ fontSize: 24 }}>{p.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: 1 }}>{p.label}</div>
+                    <div style={{ color: "#555", fontSize: 12, fontFamily: "'Barlow', sans-serif", marginTop: 2 }}>{p.sub}</div>
+                  </div>
+                  {payMethod === p.id && <div style={{ marginLeft: "auto", color: "#39ff14", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>}
                 </div>
               ))}
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid #1a1a1a", fontWeight: 900, fontSize: 20 }}>
-                <span>TOTAL</span><span style={{ color: "#39ff14" }}>₹{total.toLocaleString()}</span>
-              </div>
+              {payMethod === "upi" && (
+                <div style={{ marginTop: 8 }}>
+                  <div className="label">UPI ID</div>
+                  <input className="field" placeholder="yourname@upi" value={upiId} onChange={e => setUpiId(e.target.value)} />
+                </div>
+              )}
+              {payMethod === "card" && (
+                <div style={{ marginTop: 8, display: "grid", gap: 12 }}>
+                  <div>
+                    <div className="label">CARD NUMBER</div>
+                    <input className="field" placeholder="1234 5678 9012 3456" maxLength={19} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div><div className="label">EXPIRY</div><input className="field" placeholder="MM / YY" /></div>
+                    <div><div className="label">CVV</div><input className="field" placeholder="•••" maxLength={3} type="password" /></div>
+                  </div>
+                </div>
+              )}
+              <button className="next-btn" onClick={handleNext}>REVIEW ORDER →</button>
+              <button className="back-btn" onClick={() => setStep(0)}>← BACK</button>
             </div>
-            {shipping > 0 && (
-              <div style={{ background: "#39ff1410", border: "1px solid #39ff1430", padding: "10px 14px", marginTop: 16, fontSize: 12, letterSpacing: 1, color: "#39ff14" }}>
-                💡 Add ₹{(1999 - subtotal).toLocaleString()} more for FREE shipping!
+          )}
+
+          {/* STEP 2 — CONFIRM */}
+          {step === 2 && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>CONFIRM ORDER</h2>
+              <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>DELIVERING TO</div>
+                <div style={{ fontWeight: 900, fontSize: 16 }}>{form.name}</div>
+                <div style={{ color: "#888", fontFamily: "'Barlow', sans-serif", fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>
+                  {form.address}, {form.city}, {form.state} — {form.pincode}<br />{form.phone} · {form.email}
+                </div>
               </div>
-            )}
-            <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {["🔒 SECURE", "↩️ 30-DAY RETURN", "✓ AUTHENTIC"].map(t => (
-                <span key={t} style={{ fontSize: 10, letterSpacing: 1, color: "#444", border: "1px solid #1a1a1a", padding: "4px 8px" }}>{t}</span>
-              ))}
+              <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
+                <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>PAYMENT VIA</div>
+                <div style={{ fontWeight: 900, fontSize: 16, color: "#39ff14" }}>
+                  {{ upi: "📲 UPI", card: "💳 CARD", netbanking: "🏦 NET BANKING", cod: "💵 CASH ON DELIVERY" }[payMethod]}
+                </div>
+              </div>
+              <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20 }}>
+                <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>YOUR ITEMS</div>
+                {cart.map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
+                    <span style={{ fontSize: 32 }}>{item.emoji || "👕"}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 900 }}>{item.name} #{item.number}</div>
+                      <div style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>{item.player} · SIZE {item.size} · QTY {item.qty}</div>
+                    </div>
+                    <div style={{ fontWeight: 900 }}>₹{item.price * item.qty}</div>
+                  </div>
+                ))}
+              </div>
+
+              <button className="next-btn" onClick={handlePlace} disabled={loading}>
+                {loading ? (
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                    <span style={{ width: 18, height: 18, border: "2px solid #000", borderTop: "2px solid transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+                    PROCESSING...
+                  </span>
+                ) : payMethod === "cod"
+                  ? `PLACE ORDER (COD) — ₹${total.toLocaleString()} →`
+                  : `PAY NOW — ₹${total.toLocaleString()} →`}
+              </button>
+              <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — ORDER SUMMARY */}
+        <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", padding: 24, position: "sticky", top: 80, animation: "fadeUp 0.6s ease 0.1s both" }}>
+          <h3 style={{ fontSize: 18, fontWeight: 900, letterSpacing: 3, marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #1a1a1a" }}>ORDER SUMMARY</h3>
+          {cart.map((item, i) => (
+            <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
+              <div style={{ width: 48, height: 48, background: "#33333322", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, position: "relative" }}>
+                {item.emoji || "👕"}
+                <div style={{ position: "absolute", top: -6, right: -6, background: "#39ff14", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>{item.qty}</div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>{item.name}</div>
+                <div style={{ color: "#555", fontSize: 11, letterSpacing: 1 }}>#{item.number} · {item.size}</div>
+              </div>
+              <div style={{ fontWeight: 900, fontSize: 14 }}>₹{item.price * item.qty}</div>
+            </div>
+          ))}
+          <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, marginTop: 8 }}>
+            {[["SUBTOTAL", `₹${subtotal.toLocaleString()}`], ["SHIPPING", shipping === 0 ? "FREE 🎉" : `₹${shipping}`]].map(([l, v]) => (
+              <div key={l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 13, color: "#555", letterSpacing: 1 }}>
+                <span>{l}</span><span style={{ color: shipping === 0 && l === "SHIPPING" ? "#39ff14" : "#888" }}>{v}</span>
+              </div>
+            ))}
+            <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid #1a1a1a", fontWeight: 900, fontSize: 20 }}>
+              <span>TOTAL</span><span style={{ color: "#39ff14" }}>₹{total.toLocaleString()}</span>
             </div>
           </div>
+          {shipping > 0 && (
+            <div style={{ background: "#39ff1410", border: "1px solid #39ff1430", padding: "10px 14px", marginTop: 16, fontSize: 12, letterSpacing: 1, color: "#39ff14" }}>
+              💡 Add ₹{(1999 - subtotal).toLocaleString()} more for FREE shipping!
+            </div>
+          )}
+          <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {["🔒 SECURE", "↩️ 30-DAY RETURN", "✓ AUTHENTIC"].map(t => (
+              <span key={t} style={{ fontSize: 10, letterSpacing: 1, color: "#444", border: "1px solid #1a1a1a", padding: "4px 8px" }}>{t}</span>
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
