@@ -5,6 +5,33 @@ import logo from "../assets/jerseyvault-logo.jpeg";
 
 const LOGO_SRC = logo;
 
+const BRAND_LOGOS = [
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/images%20(1).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL2ltYWdlcyAoMSkucG5nIiwiaWF0IjoxNzc3ODE5OTQzLCJleHAiOjE4MDkzNTU5NDN9.dX2qC17VupQtSf0nj_UVJlFDdpyjTJB7HkzQaf-46A8",
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/images%20(2).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL2ltYWdlcyAoMikucG5nIiwiaWF0IjoxNzc3ODE5OTgwLCJleHAiOjE4MDkzNTU5ODB9.X46SbHBP6BNkuSiraKXwE-5evacNwYFhSAPpbhyqIGQ",
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/images%20(3).jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL2ltYWdlcyAoMykuanBlZyIsImlhdCI6MTc3NzgyMDAyNiwiZXhwIjoxODA5MzU2MDI2fQ.DzMOHvio9DpMSizM716DIwr5M6Z-ug9yYwMWNVLfsNQ",
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/images%20(4).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL2ltYWdlcyAoNCkucG5nIiwiaWF0IjoxNzc3ODIwMDQ0LCJleHAiOjE4MDkzNTYwNDR9.jRhGmJBuXHUSegx1_5c9_EDYc9P6GC9G9r8wYhIO7aI",
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/images%20(5).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL2ltYWdlcyAoNSkucG5nIiwiaWF0IjoxNzc3ODIwMDgzLCJleHAiOjE4MDkzNTYwODN9.Zbc6sT89CEtnyhrOA-qt6y9Uiu94slFsJ08V5dUF_Tg",
+  "https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/sign/Logo/Old_Nike_logo.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYzQ5ZjJkNS1iZTQzLTQwMTYtOWJkNy0wZWNjYjVmMzE3ZDAiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJMb2dvL09sZF9OaWtlX2xvZ28uanBnIiwiaWF0IjoxNzc3ODIwMTA0LCJleHAiOjE4MDkzNTYxMDR9.Wn0aPVRV64FIwhC2Hj6mBzyZASHvfUzInwmLSFnJKvg",
+];
+
+const GHOST_PARTICLES = [
+  { src: 0, x: 8,  y: 12,  size: 36, opacity: 0.07, dur: 18, delay: 0,  driftX: 18,  driftY: 22  },
+  { src: 1, x: 25, y: 55,  size: 28, opacity: 0.05, dur: 24, delay: 3,  driftX: -14, driftY: 18  },
+  { src: 2, x: 55, y: 8,   size: 32, opacity: 0.06, dur: 20, delay: 7,  driftX: 20,  driftY: -16 },
+  { src: 3, x: 78, y: 30,  size: 30, opacity: 0.05, dur: 22, delay: 1,  driftX: -18, driftY: 20  },
+  { src: 4, x: 88, y: 72,  size: 34, opacity: 0.07, dur: 26, delay: 5,  driftX: 12,  driftY: -22 },
+  { src: 5, x: 42, y: 80,  size: 28, opacity: 0.05, dur: 19, delay: 9,  driftX: -20, driftY: 14  },
+  { src: 0, x: 65, y: 48,  size: 26, opacity: 0.04, dur: 28, delay: 2,  driftX: 16,  driftY: 20  },
+  { src: 1, x: 15, y: 85,  size: 30, opacity: 0.06, dur: 21, delay: 11, driftX: 22,  driftY: -12 },
+  { src: 2, x: 92, y: 15,  size: 24, opacity: 0.04, dur: 30, delay: 6,  driftX: -10, driftY: 24  },
+  { src: 3, x: 35, y: 35,  size: 32, opacity: 0.05, dur: 23, delay: 14, driftX: 18,  driftY: -18 },
+  { src: 4, x: 72, y: 90,  size: 26, opacity: 0.04, dur: 25, delay: 4,  driftX: -16, driftY: -14 },
+  { src: 5, x: 50, y: 60,  size: 28, opacity: 0.06, dur: 17, delay: 8,  driftX: 14,  driftY: 18  },
+  { src: 0, x: 5,  y: 50,  size: 22, opacity: 0.03, dur: 32, delay: 16, driftX: 20,  driftY: -20 },
+  { src: 3, x: 82, y: 55,  size: 24, opacity: 0.04, dur: 27, delay: 12, driftX: -12, driftY: 16  },
+  { src: 1, x: 48, y: 22,  size: 30, opacity: 0.05, dur: 20, delay: 18, driftX: -18, driftY: 20  },
+];
+
 function CartoonFlameText({ text }) {
   const id = "flameclip-" + text.replace(/\s/g, "");
   return (
@@ -76,7 +103,6 @@ export default function JerseyStore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
 
-  // Fetch products from Supabase
   useEffect(() => {
     supabase
       .from("products")
@@ -137,6 +163,36 @@ export default function JerseyStore() {
           @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
           @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
           @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+
+          @keyframes vacuumDrift {
+            0%   { transform: translate(0px, 0px) rotate(0deg); }
+            25%  { transform: translate(var(--dx), calc(var(--dy) * 0.4)) rotate(var(--rot)); }
+            50%  { transform: translate(calc(var(--dx) * 0.5), var(--dy)) rotate(0deg); }
+            75%  { transform: translate(calc(var(--dx) * -0.3), calc(var(--dy) * 0.6)) rotate(calc(var(--rot) * -0.5)); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+          }
+          @keyframes ghostBreathe {
+            0%, 100% { opacity: var(--base-op); }
+            50%       { opacity: calc(var(--base-op) * 1.9); }
+          }
+          .ghost-logo {
+            position: fixed;
+            pointer-events: none;
+            user-select: none;
+            will-change: transform, opacity;
+            z-index: 0;
+            animation:
+              vacuumDrift var(--dur) ease-in-out var(--delay) infinite,
+              ghostBreathe calc(var(--dur) * 0.65) ease-in-out var(--delay) infinite;
+          }
+          .ghost-logo img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: brightness(0) invert(1);
+          }
+
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
           .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
@@ -168,6 +224,29 @@ export default function JerseyStore() {
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
           @media(max-width:600px){ .cart-panel{width:100%;} .search-input{width:140px;} }
         `}</style>
+
+        {/* ── GHOST FLOATING LOGOS (fixed, behind everything) ── */}
+        {GHOST_PARTICLES.map((p, i) => (
+          <div
+            key={i}
+            className="ghost-logo"
+            style={{
+              left: `${p.x}%`,
+              top: `${p.y}%`,
+              width: p.size,
+              height: p.size,
+              opacity: p.opacity,
+              "--base-op": p.opacity,
+              "--dur": `${p.dur}s`,
+              "--delay": `${p.delay}s`,
+              "--dx": `${p.driftX}px`,
+              "--dy": `${p.driftY}px`,
+              "--rot": `${p.driftX > 0 ? 4 : -4}deg`,
+            }}
+          >
+            <img src={BRAND_LOGOS[p.src]} alt="" aria-hidden="true" />
+          </div>
+        ))}
 
         {/* TOAST */}
         {toast && (
@@ -259,7 +338,6 @@ export default function JerseyStore() {
             </h2>
           </div>
 
-          {/* Loading skeletons */}
           {loadingProducts ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
               {[...Array(4)].map((_, i) => (
@@ -283,10 +361,8 @@ export default function JerseyStore() {
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }}
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
 
-                  {/* Out of stock badge */}
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
 
-                  {/* Image */}
                   <div className="card-img-wrap">
                     {jersey.image_url ? (
                       <img src={jersey.image_url} alt={jersey.name} className="card-img" />
