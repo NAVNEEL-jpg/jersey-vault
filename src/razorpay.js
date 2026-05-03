@@ -1,8 +1,9 @@
 import { supabase } from './supabase';
 
-export const initiatePayment = (amount, name, email, phone, cart, navigate, decrementStock) => {
+export const initiatePayment = (amount, name, email, phone, cart, navigate, decrementStock, form, user) => {
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const shipping = subtotal >= 1999 ? 0 : 99;
+  const customerEmail = email || user?.email || "";
 
   const options = {
     key: process.env.REACT_APP_RAZORPAY_KEY,
@@ -16,16 +17,19 @@ export const initiatePayment = (amount, name, email, phone, cart, navigate, decr
         items: cart,
         total: amount,
         date: new Date().toLocaleDateString(),
-        customer: { name, email, phone },
+        customer: { name, email: customerEmail, phone },
         payMethod: "Online",
       };
 
-      // ✅ Save order to Supabase
       await supabase.from("orders").insert({
         id: response.razorpay_payment_id,
         customer_name: name,
-        customer_email: email,
+        customer_email: customerEmail,
         customer_phone: phone,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        pincode: form.pincode,
         items: cart,
         subtotal,
         shipping,
@@ -34,13 +38,12 @@ export const initiatePayment = (amount, name, email, phone, cart, navigate, decr
         status: "pending",
       });
 
-      // ✅ Decrement stock
       if (decrementStock) await decrementStock();
 
       localStorage.setItem("latestOrder", JSON.stringify(order));
       navigate("/success");
     },
-    prefill: { name, email, contact: phone },
+    prefill: { name, email: customerEmail, contact: phone },
     theme: { color: "#39ff14" },
   };
 

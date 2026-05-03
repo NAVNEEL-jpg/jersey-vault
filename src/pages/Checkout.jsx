@@ -118,7 +118,7 @@ localStorage.setItem("latestOrder", JSON.stringify(order));
       navigate("/success");
     } else {
       // For Razorpay — pass decrementStock as callback after payment success
-      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock);
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user);
     }
   };
 
