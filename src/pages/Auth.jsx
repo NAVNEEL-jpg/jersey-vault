@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import { useState } from "react";
 import { supabase } from '../supabase';
 export default function AuthPage() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState("login"); // "login" | "signup" | "forgot"
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -24,7 +26,19 @@ export default function AuthPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async () => {
+const validate = () => {
+  const e = {};
+  if (mode === "signup" && !form.name.trim()) e.name = "Name is required";
+  if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email";
+  if (mode === "signup" && !/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
+  if (form.password.length < 6) e.password = "Minimum 6 characters";
+  if (mode === "signup" && form.password !== form.confirm) e.confirm = "Passwords don't match";
+  setErrors(e);
+  return Object.keys(e).length === 0;  // ← this line
+};
+
+// ADD handleSubmit RIGHT AFTER THIS CLOSING }; 👇
+const handleSubmit = async () => {
   if (!validate()) return;
   setLoading(true);
 
@@ -34,6 +48,8 @@ export default function AuthPage() {
       password: form.password,
     });
     if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+    setLoading(false);
+    navigate('/');
 
   } else {
     const { error } = await supabase.auth.signUp({
@@ -42,10 +58,9 @@ export default function AuthPage() {
       options: { data: { full_name: form.name, phone: form.phone } }
     });
     if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+    setLoading(false);
+    setSuccess(true);
   }
-
-  setLoading(false);
-  setSuccess(true);
 };
 
  const handleForgot = async () => {
