@@ -139,7 +139,7 @@ export default function JerseyStore() {
           @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
-          .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; }
+          .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
           .card:hover { transform:translateY(-6px); border-color:#39ff14; }
           .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
           .card:hover .card-img { transform:scale(1.04); }
@@ -296,7 +296,7 @@ export default function JerseyStore() {
                     <div className="card-overlay" />
                   </div>
 
-                  <div style={{ padding: "16px 16px 0" }}>
+                  <div style={{ padding: "16px 16px 0", flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1 }}>{jersey.name}</div>
