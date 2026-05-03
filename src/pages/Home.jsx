@@ -161,7 +161,7 @@ export default function JerseyStore() {
           .checkout-btn:hover { background:#fff; }
           .search-input { background:#111; border:1px solid #222; color:#fff; padding:10px 16px; font-family:'Barlow Condensed',sans-serif; font-size:15px; width:220px; outline:none; letter-spacing:1px; }
           .search-input:focus { border-color:#39ff14; }
-          .search-input::placeholder { color:#777; }
+          .search-input::placeholder { color:#ccc; }
           .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
           .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
@@ -228,7 +228,7 @@ export default function JerseyStore() {
               LEGEND
             </span>
           </h1>
-          <p style={{ color: "#555", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both" }}>Official jerseys from football, cricket &amp; basketball</p>
+          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both" }}>Official jerseys from football, cricket &amp; basketball</p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", animation: "fadeUp 0.6s ease 0.5s both" }}>
             <button onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}
               style={{ background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
