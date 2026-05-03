@@ -14,9 +14,11 @@ export default function AuthPage() {
   const [forgotSent, setForgotSent] = useState(false);
 
   const update = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: "" })); };
-  useEffect(() => {
+ useEffect(() => {
   supabase.auth.getSession().then(({ data }) => {
-    if (data.session) navigate('/');
+    if (data?.session) {
+      navigate('/', { replace: true });
+    }
   });
 }, []);
 
