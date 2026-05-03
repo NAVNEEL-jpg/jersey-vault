@@ -14,6 +14,11 @@ export default function AuthPage() {
   const [forgotSent, setForgotSent] = useState(false);
 
   const update = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: "" })); };
+  useEffect(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    if (data.session) navigate('/');
+  });
+}, []);
 
   const validate = () => {
     const e = {};
@@ -134,9 +139,9 @@ const handleSubmit = async () => {
               <p style={{ color: "#555", marginTop: 8, letterSpacing: 2, fontSize: 13, fontFamily: "'Barlow', sans-serif" }}>
                 {mode === "login" ? `Logged in as ${form.email}` : `Welcome to JerseyVault, ${form.name}!`}
               </p>
-              <button onClick={() => { setSuccess(false); switchMode("login"); }}
-                style={{ marginTop: 28, background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 3, cursor: "pointer" }}>
-                GO TO STORE →
+              <button onClick={() => navigate('/')} style={{ marginTop: 28, background: "#39ff14", border: "none", padding: "14px 24px", fontSize: 16, fontWeight: 700, letterSpacing: 2, cursor: "pointer", transition: "background 0.2s" }}
+                onMouseEnter={e => e.target.style.background = "#fff"} onMouseLeave={e => e.target.style.background = "#39ff14"}>
+                GO TO HOME
               </button>
             </div>
 
