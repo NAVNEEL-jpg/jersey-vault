@@ -93,7 +93,24 @@ export default function CheckoutPage() {
       };
       // ✅ Decrement stock before navigating
       await decrementStock();
-      localStorage.setItem("latestOrder", JSON.stringify(order));
+      await supabase.from("orders").insert({
+  id: order.id,
+  customer_name: form.name,
+  customer_email: form.email,
+  customer_phone: form.phone,
+  address: form.address,
+  city: form.city,
+  state: form.state,
+  pincode: form.pincode,
+  items: cart,
+  subtotal,
+  shipping,
+  total,
+  pay_method: "COD",
+  status: "pending",
+});
+
+localStorage.setItem("latestOrder", JSON.stringify(order));
       setLoading(false);
       navigate("/success");
     } else {
