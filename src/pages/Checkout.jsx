@@ -81,8 +81,11 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = async () => {
-    if (payMethod === "cod") {
-      setLoading(true);
+  // Ensure email is always set — use logged-in user's email as fallback
+  const customerEmail = form.email || user?.email || "";
+  
+  if (payMethod === "cod") {
+    setLoading(true);
       const order = {
         id: "JV" + Math.floor(100000 + Math.random() * 900000),
         items: cart,
@@ -96,7 +99,7 @@ export default function CheckoutPage() {
       await supabase.from("orders").insert({
   id: order.id,
   customer_name: form.name,
-  customer_email: form.email,
+  customer_email: customerEmail,
   customer_phone: form.phone,
   address: form.address,
   city: form.city,
