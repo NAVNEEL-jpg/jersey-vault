@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logo from "../assets/jerseyvault-logo.jpeg";
 
 // WhatsApp SVG
 const WhatsAppIcon = () => (
@@ -46,7 +47,7 @@ export default function Contact() {
       {/* NAV */}
       <nav style={{ background:"rgba(10,10,10,0.95)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
         <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
-          <div style={{ width:28, height:28, background:"#39ff14", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:14, color:"#000" }}>J</div>
+          <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
         </Link>
         <div style={{ display:"flex", gap:32 }}>
