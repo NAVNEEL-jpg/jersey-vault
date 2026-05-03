@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { supabase } from '../supabase';
 export default function AuthPage() {
   const [mode, setMode] = useState("login"); // "login" | "signup" | "forgot"
   const [loading, setLoading] = useState(false);
@@ -24,17 +24,38 @@ export default function AuthPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
-    setLoading(true);
-    setTimeout(() => { setLoading(false); setSuccess(true); }, 2000);
-  };
+  const handleSubmit = async () => {
+  if (!validate()) return;
+  setLoading(true);
 
-  const handleForgot = () => {
-    if (!/\S+@\S+\.\S+/.test(forgotEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
-    setLoading(true);
-    setTimeout(() => { setLoading(false); setForgotSent(true); }, 1500);
-  };
+  if (mode === "login") {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+    if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+
+  } else {
+    const { error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { data: { full_name: form.name, phone: form.phone } }
+    });
+    if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+  }
+
+  setLoading(false);
+  setSuccess(true);
+};
+
+ const handleForgot = async () => {
+  if (!/\S+@\S+\.\S+/.test(forgotEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
+  setLoading(true);
+  const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
+  if (error) { setErrors({ forgot: error.message }); setLoading(false); return; }
+  setLoading(false);
+  setForgotSent(true);
+};
 
   const switchMode = (m) => { setMode(m); setErrors({}); setSuccess(false); setForm({ name: "", email: "", phone: "", password: "", confirm: "" }); };
 

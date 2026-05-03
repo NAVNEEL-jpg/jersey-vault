@@ -231,7 +231,7 @@ export default function JerseyStore() {
           100% { transform:translateY(-80px) translateX(12px) scale(0); opacity:0; }
         }
 
-        .nav-link { color:#888; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
         .nav-link:hover { color:#39ff14; }
         .cat-btn { background:transparent; border:1px solid #333; color:#888; padding:8px 20px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
         .cat-btn.active, .cat-btn:hover { background:#39ff14; border-color:#39ff14; color:#000; }
@@ -252,7 +252,7 @@ export default function JerseyStore() {
         .checkout-btn:hover { background:#fff; }
         .search-input { background:#111; border:1px solid #222; color:#fff; padding:10px 16px; font-family:'Barlow Condensed',sans-serif; font-size:15px; width:220px; outline:none; letter-spacing:1px; }
         .search-input:focus { border-color:#39ff14; }
-        .search-input::placeholder { color:#444; }
+        .search-input::placeholder { color:#777; }
         .tag { position:absolute; top:12px; right:12px; background:#39ff14; color:#000; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
         .jersey-visual { display:flex; align-items:center; justify-content:center; height:180px; position:relative; overflow:hidden; }
         .jersey-num { font-size:90px; font-style:italic; font-weight:900; opacity:0.15; position:absolute; bottom:-10px; right:10px; line-height:1; }
@@ -283,10 +283,11 @@ export default function JerseyStore() {
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
         </div>
         <div style={{ display:"flex", gap:32 }}>
-          <Link to="/" className="nav-link">HOME</Link>
-          <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
-          <Link to="/tracking" className="nav-link">TRACK</Link>
-          <Link to="/checkout" className="nav-link">CART</Link>
+       <Link to="/" className="nav-link">HOME</Link>
+        <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
+        <Link to="/tracking" className="nav-link">TRACK</Link>
+        <Link to="/checkout" className="nav-link">CART</Link>
+         <Link to="/auth" className="nav-link">LOGIN</Link>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
           <input className="search-input" placeholder="SEARCH..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
