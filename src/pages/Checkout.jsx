@@ -7,11 +7,6 @@ const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
-  useEffect(() => {
-    const data = localStorage.getItem("cart");
-    if (data) setCart(JSON.parse(data));
-  }, []);
-  const [cart, setCart] = useState([]);
 useEffect(() => {
   const data = localStorage.getItem("cart");
   if (data) setCart(JSON.parse(data));

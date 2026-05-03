@@ -33,16 +33,6 @@ export default function AuthPage() {
     return Object.keys(e).length === 0;
   };
 
-const validate = () => {
-  const e = {};
-  if (mode === "signup" && !form.name.trim()) e.name = "Name is required";
-  if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email";
-  if (mode === "signup" && !/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
-  if (form.password.length < 6) e.password = "Minimum 6 characters";
-  if (mode === "signup" && form.password !== form.confirm) e.confirm = "Passwords don't match";
-  setErrors(e);
-  return Object.keys(e).length === 0;  // ← this line
-};
 
 // ADD handleSubmit RIGHT AFTER THIS CLOSING }; 👇
 const handleSubmit = async () => {
