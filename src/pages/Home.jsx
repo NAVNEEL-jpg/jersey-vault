@@ -358,14 +358,14 @@ export default function JerseyStore() {
           </div>
         </section>
 
-        {/* FOOTER */}
+        {/* FOOTER — replace existing footer in Home.jsx with this */}
         <footer style={{ background: "#050505", borderTop: "1px solid #1a1a1a", padding: "40px 24px", textAlign: "center" }}>
           <div style={{ fontWeight: 900, fontSize: 28, letterSpacing: 4, marginBottom: 8 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
           <p style={{ color: "#333", fontSize: 12, letterSpacing: 2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16 }}>
-            {["PRIVACY", "TERMS", "CONTACT", "FAQ"].map(l => (
-              <span key={l} style={{ color: "#444", fontSize: 11, letterSpacing: 2, cursor: "pointer", transition: "color 0.2s" }}
-                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#444"}>{l}</span>
+            {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["FAQ", "/faq"]].map(([l, h]) => (
+              <Link key={l} to={h} style={{ color: "#888", fontSize: 12, letterSpacing: 2, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
+                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#888"}>{l}</Link>
             ))}
           </div>
         </footer>
