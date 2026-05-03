@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react"
+import logo from "../assets/jerseyvault-logo.jpeg"; // save your logo as src/assets/jerseyvault-logo.jpeg
 
 const jerseys = [
   { id: 1, name: "FC Barcelona", number: "10", player: "MESSI", price: 1299, category: "Football", color: "#A50044", accent: "#004D98", emoji: "⚽", tag: "BESTSELLER" },
@@ -14,9 +15,7 @@ const jerseys = [
 
 const categories = ["All", "Football", "Cricket", "Basketball"];
 
-// Base64 of the JerseyVault logo — paste your actual base64 here, or use a URL
-// Using the uploaded image path for local dev; in production use the real import
-const LOGO_SRC = "/WhatsApp_Image_2026-05-03_at_1_50_35_PM.jpeg";
+const LOGO_SRC = logo;
 
 export default function JerseyStore() {
   const navigate = useNavigate();
@@ -75,9 +74,116 @@ export default function JerseyStore() {
         @keyframes toastIn { from{opacity:0;transform:translateX(100px);} to{opacity:1;transform:translateX(0);} }
         @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
-        @keyframes fireFlicker1 { 0%,100%{text-shadow: 0 0 8px #ff4400, 0 0 20px #ff6600, 0 0 40px #ff8800, 0 0 60px #ffaa00; color:#fff8e0;} 25%{text-shadow: 0 0 12px #ff2200, 0 0 30px #ff4400, 0 0 50px #ff6600, 0 0 80px #ffcc00; color:#fff5d0;} 50%{text-shadow: 0 0 6px #ff5500, 0 0 15px #ff7700, 0 0 35px #ff9900, 0 0 55px #ffbb00; color:#fff9e5;} 75%{text-shadow: 0 0 14px #ff3300, 0 0 25px #ff5500, 0 0 45px #ff7700, 0 0 70px #ffdd00; color:#fff4c0;} }
-        @keyframes fireFlicker2 { 0%,100%{text-shadow: 0 0 10px #ff6600, 0 0 25px #ff8800, 0 0 45px #ffaa00, 0 0 70px #ffcc00; color:#fff9e0;} 33%{text-shadow: 0 0 6px #ff3300, 0 0 18px #ff5500, 0 0 38px #ff7700, 0 0 58px #ffee00; color:#fff5d0;} 66%{text-shadow: 0 0 16px #ff4400, 0 0 32px #ff6600, 0 0 55px #ff9900, 0 0 85px #ffcc00; color:#fffdee;} }
-        @keyframes embersFloat { 0%{transform:translateY(0) translateX(0) scale(1); opacity:1;} 100%{transform:translateY(-80px) translateX(20px) scale(0); opacity:0;} }
+
+        /* ─── CARTOON FLAME KEYFRAMES ─── */
+        @keyframes flameFlicker {
+          0%   { background-position: 50% 100%; filter: hue-rotate(0deg) brightness(1.1); }
+          25%  { background-position: 48% 88%;  filter: hue-rotate(8deg)  brightness(1.2); }
+          50%  { background-position: 52% 80%;  filter: hue-rotate(-6deg) brightness(1.0); }
+          75%  { background-position: 47% 88%;  filter: hue-rotate(12deg) brightness(1.15); }
+          100% { background-position: 50% 100%; filter: hue-rotate(0deg) brightness(1.1); }
+        }
+        @keyframes embersFloat {
+          0%   { transform:translateY(0)   translateX(0)  scale(1);   opacity:0.9; }
+          100% { transform:translateY(-70px) translateX(15px) scale(0); opacity:0; }
+        }
+        @keyframes flameWobble {
+          0%,100% { transform: scaleX(1)   skewX(0deg); }
+          30%     { transform: scaleX(1.03) skewX(-1.5deg); }
+          60%     { transform: scaleX(0.97) skewX(1deg); }
+        }
+        @keyframes innerFlameFlicker {
+          0%,100% { opacity:0.65; transform: scaleY(1)   scaleX(1); }
+          40%     { opacity:0.80; transform: scaleY(1.04) scaleX(0.97); }
+          70%     { opacity:0.55; transform: scaleY(0.96) scaleX(1.03); }
+        }
+
+        /* The wrapper that constrains the flame canvas to text shape */
+        .fire-text-container {
+          position: relative;
+          display: inline-block;
+          line-height: 0.9;
+        }
+
+        /* Solid white fallback always readable */
+        .fire-text-white {
+          font-size: clamp(52px,10vw,100px);
+          font-weight: 900;
+          font-style: italic;
+          letter-spacing: -2px;
+          color: #ffffff;
+          display: block;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Cartoon flame gradient clipped to text */
+        .fire-text-clipped {
+          font-size: clamp(52px,10vw,100px);
+          font-weight: 900;
+          font-style: italic;
+          letter-spacing: -2px;
+          display: block;
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          z-index: 2;
+          /* Multi-stop cartoon flame: deep red → orange → yellow → white-yellow tip */
+          background-image: linear-gradient(
+            to top,
+            #ff1a00 0%,
+            #ff4500 15%,
+            #ff6a00 28%,
+            #ff8c00 40%,
+            #ffb300 54%,
+            #ffd700 68%,
+            #fff176 82%,
+            #fffde7 100%
+          );
+          background-size: 100% 300%;
+          background-position: 50% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          animation: flameFlicker 1.6s ease-in-out infinite, flameWobble 2.1s ease-in-out infinite;
+          opacity: 0.9;
+        }
+
+        /* Inner cooler highlight — cyan/white core strip clipped too */
+        .fire-text-core {
+          font-size: clamp(52px,10vw,100px);
+          font-weight: 900;
+          font-style: italic;
+          letter-spacing: -2px;
+          display: block;
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          z-index: 3;
+          background-image: linear-gradient(
+            to top,
+            transparent 0%,
+            transparent 40%,
+            rgba(255,255,220,0.18) 65%,
+            rgba(255,255,255,0.32) 82%,
+            transparent 100%
+          );
+          background-size: 100% 200%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          animation: innerFlameFlicker 1.2s ease-in-out infinite;
+        }
+
+        /* Ember dots */
+        .ember {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: embersFloat 1.4s ease-out infinite;
+          opacity: 0;
+        }
+
         .nav-link { color:#888; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
         .nav-link:hover { color:#39ff14; }
         .cat-btn { background:transparent; border:1px solid #333; color:#888; padding:8px 20px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
@@ -110,7 +216,6 @@ export default function JerseyStore() {
         .hero-bg { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 50%, #39ff1410 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #00ff8808 0%, transparent 50%); pointer-events:none; }
         .hero-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); }
 
-        /* LOGO styles — mix-blend-mode removes white bg */
         .logo-img {
           width: 44px;
           height: 44px;
@@ -125,55 +230,6 @@ export default function JerseyStore() {
           gap:8px;
         }
 
-        /* FIRE TEXT */
-        .fire-text-wrap {
-          position: relative;
-          display: inline-block;
-        }
-        .fire-char {
-          display: inline-block;
-          font-size: clamp(52px,10vw,100px);
-          font-weight: 900;
-          font-style: italic;
-          line-height: 0.9;
-          letter-spacing: -2px;
-          position: relative;
-        }
-        .fire-char.on-fire {
-          animation: fireFlicker1 0.15s ease-in-out infinite alternate;
-          color: #fff8e0;
-        }
-        .fire-char.on-fire:nth-child(odd) {
-          animation: fireFlicker2 0.18s ease-in-out infinite alternate;
-          animation-delay: 0.05s;
-        }
-        .fire-char.on-fire:nth-child(3n) {
-          animation: fireFlicker1 0.12s ease-in-out infinite alternate;
-          animation-delay: 0.09s;
-        }
-
-        /* Embers */
-        .ember {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: #ff6600;
-          pointer-events: none;
-          animation: embersFloat 1.2s ease-out infinite;
-        }
-
-        /* Graffiti stroke on fire text */
-        .graffiti-line {
-          font-size: clamp(52px,10vw,100px);
-          font-weight: 900;
-          font-style: italic;
-          line-height: 0.9;
-          letter-spacing: -2px;
-          display: block;
-          position: relative;
-        }
-
         @media(max-width:600px){.cart-panel{width:100%;} .search-input{width:140px;}}
       `}</style>
 
@@ -186,7 +242,6 @@ export default function JerseyStore() {
 
       {/* NAVBAR */}
       <nav style={{ position:"sticky", top:0, zIndex:50, background:"rgba(10,10,10,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", display:"flex", alignItems:"center", justifyContent:"space-between", height:60, animation:"slideDown 0.5s ease" }}>
-        {/* LOGO — replaced "J" box with actual logo image */}
         <div className="logo-wrap">
           <img
             src={LOGO_SRC}
@@ -233,41 +288,53 @@ export default function JerseyStore() {
         <div className="hero-bg" />
         <p style={{ color:"#39ff14", letterSpacing:6, fontSize:12, fontWeight:700, marginBottom:16, animation:"fadeUp 0.6s ease 0.2s both" }}>THE ULTIMATE COLLECTION</p>
 
-        {/* FIRE GRAFFITI HERO TEXT */}
-        <h1 style={{ lineHeight:0.9, letterSpacing:-2, animation:"fadeUp 0.6s ease 0.3s both", position:"relative", display:"inline-block" }}>
-          {/* "WEAR YOUR" — fire graffiti chars */}
-          <span style={{ display:"block", position:"relative" }}>
-            {/* Ember particles floating above */}
-            <span className="ember" style={{ left:"5%", top:"-10px", animationDelay:"0s", background:"#ff4400" }} />
-            <span className="ember" style={{ left:"15%", top:"-5px", animationDelay:"0.3s", background:"#ff8800", width:3, height:3 }} />
-            <span className="ember" style={{ left:"28%", top:"-15px", animationDelay:"0.6s", background:"#ffcc00", width:5, height:5 }} />
-            <span className="ember" style={{ left:"42%", top:"-8px", animationDelay:"0.2s", background:"#ff6600" }} />
-            <span className="ember" style={{ left:"57%", top:"-12px", animationDelay:"0.9s", background:"#ff4400", width:3, height:3 }} />
-            <span className="ember" style={{ left:"70%", top:"-6px", animationDelay:"0.5s", background:"#ffaa00", width:5, height:5 }} />
-            <span className="ember" style={{ left:"85%", top:"-18px", animationDelay:"0.15s", background:"#ff7700" }} />
-            <span className="ember" style={{ left:"93%", top:"-9px", animationDelay:"0.75s", background:"#ffdd00", width:3, height:3 }} />
+        <h1 style={{ lineHeight:0.9, animation:"fadeUp 0.6s ease 0.3s both", position:"relative", display:"inline-block" }}>
 
-            {"WEAR YOUR".split("").map((ch, i) => (
+          {/* "WEAR YOUR" with CSS cartoon flame animation */}
+          <span style={{ display:"block", position:"relative" }}>
+
+            {/* Floating ember sparks above the text */}
+            {[
+              { left:"4%",  top:"-14px", delay:"0s",    size:3,  color:"#ffcc00" },
+              { left:"14%", top:"-8px",  delay:"0.4s",  size:4,  color:"#ff6600" },
+              { left:"26%", top:"-18px", delay:"0.7s",  size:3,  color:"#ffdd00" },
+              { left:"40%", top:"-10px", delay:"0.2s",  size:5,  color:"#ff4500" },
+              { left:"55%", top:"-16px", delay:"1.0s",  size:3,  color:"#ffee00" },
+              { left:"68%", top:"-6px",  delay:"0.55s", size:4,  color:"#ff8800" },
+              { left:"82%", top:"-20px", delay:"0.1s",  size:3,  color:"#ffdd00" },
+              { left:"94%", top:"-12px", delay:"0.8s",  size:4,  color:"#ff6600" },
+              { left:"32%", top:"-24px", delay:"0.35s", size:2,  color:"#ffffff" },
+              { left:"72%", top:"-22px", delay:"0.9s",  size:2,  color:"#fff176" },
+            ].map((e, i) => (
               <span
                 key={i}
-                className={`fire-char ${ch !== " " ? "on-fire" : ""}`}
+                className="ember"
                 style={{
-                  animationDelay: ch !== " " ? `${i * 0.04}s` : undefined,
-                  // graffiti-style: slight random skew per char
-                  transform: ch !== " " ? `skewX(${(i % 3 === 0 ? -3 : i % 3 === 1 ? 2 : -1)}deg)` : undefined,
-                  marginRight: ch === " " ? "0.25em" : undefined,
-                  // paint drip via text-stroke
-                  WebkitTextStroke: ch !== " " ? "1px #ff440033" : undefined,
-                  filter: ch !== " " ? "drop-shadow(0 4px 8px #ff440066)" : undefined,
+                  left: e.left,
+                  top: e.top,
+                  animationDelay: e.delay,
+                  width: e.size,
+                  height: e.size,
+                  background: e.color,
+                  boxShadow: `0 0 ${e.size * 2}px ${e.color}`,
                 }}
-              >
-                {ch === " " ? "\u00A0" : ch}
-              </span>
+              />
             ))}
+
+            <div className="fire-text-container">
+              {/* Layer 1: solid white base — always legible */}
+              <span className="fire-text-white">WEAR YOUR</span>
+
+              {/* Layer 2: cartoon flame gradient clipped to text shape */}
+              <span className="fire-text-clipped">WEAR YOUR</span>
+
+              {/* Layer 3: inner core shimmer highlight */}
+              <span className="fire-text-core">WEAR YOUR</span>
+            </div>
           </span>
 
-          {/* "LEGEND" — neon green as before */}
-          <span style={{ display:"block", color:"#39ff14", WebkitTextStroke:"0px", fontSize:"clamp(52px,10vw,100px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9 }}>
+          {/* "LEGEND" — neon green unchanged */}
+          <span style={{ display:"block", color:"#39ff14", fontSize:"clamp(52px,10vw,100px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9, letterSpacing:-2 }}>
             LEGEND
           </span>
         </h1>
