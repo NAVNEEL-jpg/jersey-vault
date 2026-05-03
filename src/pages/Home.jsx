@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react"
+import { supabase } from '../supabase';
 import logo from "../assets/jerseyvault-logo.jpeg";
 
 const jerseys = [
@@ -16,12 +17,10 @@ const jerseys = [
 const categories = ["All", "Football", "Cricket", "Basketball"];
 const LOGO_SRC = logo;
 
-// Cartoon flame SVG clipped inside text
 function CartoonFlameText({ text }) {
   const id = "flameclip-" + text.replace(/\s/g, "");
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
-      {/* White base text — always readable */}
       <span style={{
         fontSize: "clamp(52px,10vw,100px)",
         fontWeight: 900,
@@ -34,8 +33,6 @@ function CartoonFlameText({ text }) {
       }}>
         {text}
       </span>
-
-      {/* SVG flame clipped to text shape — sits on top */}
       <svg
         style={{
           position: "absolute",
@@ -48,7 +45,6 @@ function CartoonFlameText({ text }) {
         aria-hidden="true"
       >
         <defs>
-          {/* Clip path using the text */}
           <clipPath id={id}>
             <text
               x="0"
@@ -62,8 +58,6 @@ function CartoonFlameText({ text }) {
               {text}
             </text>
           </clipPath>
-
-          {/* Cartoon flame colours matching video: yellow base → red mid → dark red tips */}
           <linearGradient id="flameGrad1" x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%"   stopColor="#FFE000" />
             <stop offset="22%"  stopColor="#FF8C00" />
@@ -78,8 +72,6 @@ function CartoonFlameText({ text }) {
             <stop offset="75%"  stopColor="#C62828" />
             <stop offset="100%" stopColor="#4a0000" />
           </linearGradient>
-
-          {/* Turbulence filter for hand-drawn wobble */}
           <filter id="flameWobble" x="-20%" y="-40%" width="140%" height="180%">
             <feTurbulence
               type="turbulence"
@@ -104,10 +96,7 @@ function CartoonFlameText({ text }) {
             />
           </filter>
         </defs>
-
-        {/* The flame — a tall rect with gradient + wobble filter, clipped to text */}
         <g clipPath={`url(#${id})`} filter="url(#flameWobble)">
-          {/* Main flame body — oversized so clipping catches all letters */}
           <rect x="-5%" y="-80%" width="110%" height="200%" fill="url(#flameGrad1)">
             <animateTransform
               attributeName="transform"
@@ -117,8 +106,6 @@ function CartoonFlameText({ text }) {
               repeatCount="indefinite"
             />
           </rect>
-
-          {/* Second flame layer — offset timing for cartoon flicker illusion */}
           <rect x="-5%" y="-60%" width="110%" height="180%" fill="url(#flameGrad2)" opacity="0.65">
             <animateTransform
               attributeName="transform"
@@ -134,8 +121,6 @@ function CartoonFlameText({ text }) {
               repeatCount="indefinite"
             />
           </rect>
-
-          {/* Bright yellow glow at the bottom (hottest zone) */}
           <rect x="-5%" y="55%" width="110%" height="55%" fill="#FFE000" opacity="0.7">
             <animate
               attributeName="opacity"
@@ -144,8 +129,6 @@ function CartoonFlameText({ text }) {
               repeatCount="indefinite"
             />
           </rect>
-
-          {/* Dark tip silhouettes — cartoon black-red peaks at the top */}
           {[10, 22, 35, 48, 60, 72, 85, 95].map((x, i) => (
             <ellipse
               key={i}
@@ -181,10 +164,17 @@ export default function JerseyStore() {
   const [toast, setToast] = useState(null);
   const [heroVisible, setHeroVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
   const heroRef = useRef(null);
 
   useEffect(() => {
     setTimeout(() => setHeroVisible(true), 100);
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) setUser(data.session.user);
+    });
   }, []);
 
   const filtered = jerseys.filter(j =>
@@ -230,7 +220,6 @@ export default function JerseyStore() {
           0%   { transform:translateY(0) translateX(0) scale(1); opacity:0.95; }
           100% { transform:translateY(-80px) translateX(12px) scale(0); opacity:0; }
         }
-
         .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
         .nav-link:hover { color:#39ff14; }
         .cat-btn { background:transparent; border:1px solid #333; color:#888; padding:8px 20px; font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
@@ -265,7 +254,6 @@ export default function JerseyStore() {
         .ember { position:absolute; border-radius:50%; pointer-events:none; animation:embersFloat 1.5s ease-out infinite; opacity:0; }
         .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
         .logo-wrap { display:flex; align-items:center; gap:8px; }
-
         @media(max-width:600px){ .cart-panel{width:100%;} .search-input{width:140px;} }
       `}</style>
 
@@ -283,11 +271,18 @@ export default function JerseyStore() {
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
         </div>
         <div style={{ display:"flex", gap:32 }}>
-       <Link to="/" className="nav-link">HOME</Link>
-        <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
-        <Link to="/tracking" className="nav-link">TRACK</Link>
-        <Link to="/checkout" className="nav-link">CART</Link>
-         <Link to="/auth" className="nav-link">LOGIN</Link>
+          <Link to="/" className="nav-link">HOME</Link>
+          <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
+          <Link to="/tracking" className="nav-link">TRACK</Link>
+          <Link to="/checkout" className="nav-link">CART</Link>
+          {user ? (
+            <span className="nav-link" onClick={async () => {
+              await supabase.auth.signOut();
+              setUser(null);
+            }}>LOGOUT</span>
+          ) : (
+            <Link to="/auth" className="nav-link">LOGIN</Link>
+          )}
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
           <input className="search-input" placeholder="SEARCH..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
@@ -316,13 +311,8 @@ export default function JerseyStore() {
       <section style={{ position:"relative", padding:"80px 24px 60px", textAlign:"center", overflow:"hidden", opacity: heroVisible ? 1 : 0, transition:"opacity 0.8s ease" }}>
         <div className="hero-bg" />
         <p style={{ color:"#39ff14", letterSpacing:6, fontSize:12, fontWeight:700, marginBottom:16, animation:"fadeUp 0.6s ease 0.2s both" }}>THE ULTIMATE COLLECTION</p>
-
         <h1 style={{ lineHeight:0.9, animation:"fadeUp 0.6s ease 0.3s both", position:"relative", display:"inline-block" }}>
-
-          {/* ── WEAR YOUR: white text + cartoon flame SVG clipped inside ── */}
           <span style={{ display:"block", position:"relative", marginBottom: 4 }}>
-
-            {/* Ember sparks floating above */}
             {[
               { left:"3%",  top:"-16px", delay:"0s",    size:4,  color:"#FFE000" },
               { left:"13%", top:"-8px",  delay:"0.4s",  size:5,  color:"#FF6600" },
@@ -343,16 +333,12 @@ export default function JerseyStore() {
                 boxShadow: `0 0 ${e.size * 2}px ${e.color}`,
               }} />
             ))}
-
             <CartoonFlameText text="WEAR YOUR" />
           </span>
-
-          {/* LEGEND — neon green unchanged */}
           <span style={{ display:"block", color:"#39ff14", fontSize:"clamp(52px,10vw,100px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9, letterSpacing:-2 }}>
             LEGEND
           </span>
         </h1>
-
         <p style={{ color:"#555", marginTop:20, fontSize:16, letterSpacing:2, fontFamily:"'Barlow',sans-serif", fontWeight:400, animation:"fadeUp 0.6s ease 0.4s both" }}>Official jerseys from football, cricket & basketball</p>
         <div style={{ marginTop:32, display:"flex", gap:12, justifyContent:"center", animation:"fadeUp 0.6s ease 0.5s both" }}>
           <button onClick={() => document.getElementById('shop').scrollIntoView({behavior:'smooth'})}
@@ -388,7 +374,6 @@ export default function JerseyStore() {
             ))}
           </div>
         </div>
-
         {filtered.length === 0 ? (
           <div style={{ textAlign:"center", padding:"80px 0", color:"#333" }}>
             <div style={{ fontSize:60 }}>🔍</div>
