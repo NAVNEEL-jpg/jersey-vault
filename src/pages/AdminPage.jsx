@@ -19,12 +19,16 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("orders");
   const [updatingId, setUpdatingId] = useState(null);
 
-  // Check if logged-in user is admin
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
-      if (!user) { navigate("/"); return; }
+
+      if (!user) {
+        setChecking(false);
+        navigate("/");
+        return;
+      }
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -34,15 +38,15 @@ export default function AdminPage() {
 
       if (profile?.role === "admin") {
         setAuthed(true);
+        setChecking(false);
       } else {
+        setChecking(false);
         navigate("/");
       }
-      setChecking(false);
     };
     checkAdmin();
   }, []);
 
-  // Fetch orders
   useEffect(() => {
     if (!authed) return;
     supabase
@@ -52,7 +56,6 @@ export default function AdminPage() {
       .then(({ data }) => { if (data) setOrders(data); });
   }, [authed]);
 
-  // Fetch products/stock
   useEffect(() => {
     if (!authed) return;
     supabase
@@ -96,6 +99,10 @@ export default function AdminPage() {
         .stock-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #1a1a1a; }
         .stock-row:last-child { border-bottom: none; }
         .stat-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; text-align: center; border-left: 3px solid #39ff14; }
+        .restock-input { background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 6px 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; width: 70px; outline: none; text-align: center; }
+        .restock-input:focus { border-color: #39ff14; }
+        .restock-btn { background: #39ff14; color: #000; border: none; padding: 6px 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 12px; letter-spacing: 2px; cursor: pointer; margin-left: 6px; }
+        .restock-btn:hover { background: #fff; }
       `}</style>
 
       {/* NAV */}
@@ -153,7 +160,6 @@ export default function AdminPage() {
               orders.map(order => (
                 <div key={order.id} className="order-card">
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
-                    {/* Left — order info */}
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
                         <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: 2 }}>{order.id}</span>
@@ -170,17 +176,10 @@ export default function AdminPage() {
                         <div>🕐 {new Date(order.created_at).toLocaleString()}</div>
                       </div>
                     </div>
-
-                    {/* Right — total + status updater */}
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", marginBottom: 12 }}>₹{order.total?.toLocaleString()}</div>
                       <div style={{ fontSize: 11, letterSpacing: 2, color: "#555", marginBottom: 6 }}>UPDATE STATUS</div>
-                      <select
-                        className="status-select"
-                        value={order.status}
-                        disabled={updatingId === order.id}
-                        onChange={e => updateStatus(order.id, e.target.value)}
-                      >
+                      <select className="status-select" value={order.status} disabled={updatingId === order.id} onChange={e => updateStatus(order.id, e.target.value)}>
                         {statusOptions.map(s => (
                           <option key={s} value={s}>{s.toUpperCase()}</option>
                         ))}
@@ -188,8 +187,6 @@ export default function AdminPage() {
                       {updatingId === order.id && <div style={{ color: "#39ff14", fontSize: 11, marginTop: 6, letterSpacing: 2 }}>UPDATING...</div>}
                     </div>
                   </div>
-
-                  {/* Items */}
                   <div style={{ marginTop: 16, borderTop: "1px solid #1a1a1a", paddingTop: 12 }}>
                     <div style={{ fontSize: 10, letterSpacing: 3, color: "#555", marginBottom: 8 }}>ITEMS</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -216,28 +213,68 @@ export default function AdminPage() {
               </div>
             ) : (
               products.map(p => (
-                <div key={p.id} className="stock-row">
-                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                    {p.image_url
-                      ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d" }} />
-                      : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👕</div>
-                    }
-                    <div>
-                      <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>{p.name}</div>
-                      <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>₹{p.price} · {p.status?.toUpperCase()}</div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: p.stock === 0 ? "#ff4444" : p.stock <= 5 ? "#ff9900" : "#39ff14" }}>
-                      {p.stock}
-                    </div>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: "#555" }}>IN STOCK</div>
-                  </div>
-                </div>
+                <StockRow key={p.id} product={p} onUpdate={(id, newStock) => {
+                  setProducts(prev => prev.map(x => x.id === id ? { ...x, stock: newStock } : x));
+                }} />
               ))
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Separate component to handle per-row restock state
+function StockRow({ product: p, onUpdate }) {
+  const [restockVal, setRestockVal] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleRestock = async () => {
+    const qty = parseInt(restockVal);
+    if (!qty || qty <= 0) return;
+    setSaving(true);
+    const newStock = p.stock + qty;
+    await supabase.from("products").update({ stock: newStock }).eq("id", p.id);
+    onUpdate(p.id, newStock);
+    setRestockVal("");
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #1a1a1a" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        {p.image_url
+          ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d" }} />
+          : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👕</div>
+        }
+        <div>
+          <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1 }}>{p.name}</div>
+          <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>₹{p.price} · {p.status?.toUpperCase()}</div>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {/* Restock input */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <input
+            className="restock-input"
+            type="number"
+            min="1"
+            placeholder="Qty"
+            value={restockVal}
+            onChange={e => setRestockVal(e.target.value)}
+          />
+          <button className="restock-btn" onClick={handleRestock} disabled={saving}>
+            {saving ? "..." : "+ ADD"}
+          </button>
+        </div>
+        {/* Stock count */}
+        <div style={{ textAlign: "right", minWidth: 60 }}>
+          <div style={{ fontSize: 28, fontWeight: 900, color: p.stock === 0 ? "#ff4444" : p.stock <= 5 ? "#ff9900" : "#39ff14" }}>
+            {p.stock}
+          </div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: "#555" }}>IN STOCK</div>
+        </div>
       </div>
     </div>
   );
