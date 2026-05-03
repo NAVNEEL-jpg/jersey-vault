@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from '../supabase';
 import logo from "../assets/jerseyvault-logo.jpeg";
+import heroBg from "../assets/hero-bg.jpeg";
 
 const LOGO_SRC = logo;
 
@@ -76,7 +77,6 @@ export default function JerseyStore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
 
-  // Fetch products from Supabase
   useEffect(() => {
     supabase
       .from("products")
@@ -217,10 +217,28 @@ export default function JerseyStore() {
         </div>
 
         {/* HERO */}
-        <section style={{ position: "relative", padding: "80px 24px 60px", textAlign: "center", overflow: "hidden", opacity: heroVisible ? 1 : 0, transition: "opacity 0.8s ease" }}>
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 30% 50%, #39ff1410 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #00ff8808 0%, transparent 50%)", pointerEvents: "none" }} />
-          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both" }}>THE ULTIMATE COLLECTION</p>
-          <h1 style={{ lineHeight: 0.9, animation: "fadeUp 0.6s ease 0.3s both", position: "relative", display: "inline-block" }}>
+        <section style={{
+          position: "relative",
+          padding: "80px 24px 60px",
+          textAlign: "center",
+          overflow: "hidden",
+          opacity: heroVisible ? 1 : 0,
+          transition: "opacity 0.8s ease",
+          backgroundImage: `url(${heroBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+        }}>
+          {/* Gradient overlay — fully dark at top, reveals image, fades dark at bottom */}
+          <div style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to bottom, rgba(10,10,10,1) 0%, rgba(10,10,10,0.3) 30%, rgba(0,0,0,0.2) 60%, rgba(10,10,10,0.95) 100%)",
+            pointerEvents: "none"
+          }} />
+
+          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both", position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
+          <h1 style={{ lineHeight: 0.9, animation: "fadeUp 0.6s ease 0.3s both", position: "relative", display: "inline-block", zIndex: 1 }}>
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
               <CartoonFlameText text="WEAR YOUR" />
             </span>
@@ -228,8 +246,8 @@ export default function JerseyStore() {
               LEGEND
             </span>
           </h1>
-          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both" }}>Official jerseys from football, cricket &amp; basketball</p>
-          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", animation: "fadeUp 0.6s ease 0.5s both" }}>
+          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both", position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
+          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", animation: "fadeUp 0.6s ease 0.5s both", position: "relative", zIndex: 1 }}>
             <button onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}
               style={{ background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
               SHOP NOW
@@ -259,7 +277,6 @@ export default function JerseyStore() {
             </h2>
           </div>
 
-          {/* Loading skeletons */}
           {loadingProducts ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
               {[...Array(4)].map((_, i) => (
@@ -282,11 +299,7 @@ export default function JerseyStore() {
               {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }}
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
-
-                  {/* Out of stock badge */}
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
-
-                  {/* Image */}
                   <div className="card-img-wrap">
                     {jersey.image_url ? (
                       <img src={jersey.image_url} alt={jersey.name} className="card-img" />
@@ -295,7 +308,6 @@ export default function JerseyStore() {
                     )}
                     <div className="card-overlay" />
                   </div>
-
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
@@ -311,7 +323,6 @@ export default function JerseyStore() {
                       </div>
                     </div>
                   </div>
-
                   <div style={{ padding: "12px 16px 16px" }}>
                     <button className="add-btn"
                       disabled={jersey.stock === 0}
