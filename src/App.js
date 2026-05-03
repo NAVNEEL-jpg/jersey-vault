@@ -6,7 +6,6 @@ import Checkout from "./pages/Checkout";
 import Tracking from "./pages/Tracking";
 import Admin from "./pages/AdminPage";
 import MyOrders from "./pages/MyOrders";
-<Route path="/myorders" element={<MyOrders />} />
 
 function App() {
   return (
@@ -18,6 +17,7 @@ function App() {
         <Route path="/tracking" element={<Tracking />} />
         <Route path="/success" element={<Success />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/myorders" element={<MyOrders />} />
       </Routes>
     </Router>
   );

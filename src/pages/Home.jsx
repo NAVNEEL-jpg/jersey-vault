@@ -187,6 +187,7 @@ export default function JerseyStore() {
             <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
             <Link to="/tracking" className="nav-link">TRACK</Link>
             <Link to="/checkout" className="nav-link">CART</Link>
+            <Link to="/myorders" className="nav-link">MY ORDERS</Link>
             {user ? (
               <span className="nav-link" onClick={async () => { await supabase.auth.signOut(); setUser(null); }}>LOGOUT</span>
             ) : (
@@ -229,7 +230,6 @@ export default function JerseyStore() {
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
         }}>
-          {/* Gradient overlay — fully dark at top, reveals image, fades dark at bottom */}
           <div style={{
             position: "absolute",
             inset: 0,
