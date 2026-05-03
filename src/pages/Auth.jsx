@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import logo from "../assets/jerseyvault-logo.jpeg";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -65,6 +66,17 @@ export default function AuthPage() {
     setForgotSent(true);
   };
 
+  const handleGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+        queryParams: { prompt: 'select_account' }
+      }
+    });
+    if (error) setErrors({ email: error.message });
+  };
+
   const switchMode = (m) => { setMode(m); setErrors({}); setSuccess(false); setForm({ name: "", email: "", phone: "", password: "", confirm: "" }); };
 
   const strength = form.password.length === 0 ? 0 : form.password.length < 6 ? 1 : form.password.length < 10 ? 2 : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password) ? 4 : 3;
@@ -91,8 +103,9 @@ export default function AuthPage() {
         .submit-btn:hover { background:#fff; }
         .google-btn { background:#111; color:#fff; border:1px solid #222; width:100%; padding:14px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; }
         .google-btn:hover { border-color:#555; background:#1a1a1a; }
-        .tab { flex:1; padding:14px; background:transparent; border:none; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; border-bottom:2px solid transparent; color:#444; }
+        .tab { flex:1; padding:16px; background:transparent; border:none; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px; letter-spacing:4px; cursor:pointer; transition:all 0.2s; border-bottom:2px solid transparent; color:#666; opacity:1; }
         .tab.active { color:#39ff14; border-bottom-color:#39ff14; }
+        .tab:not(.active):hover { color:#aaa; }
         .eye-btn { position:absolute; right:14px; top:50%; transform:translateY(-50%); background:none; border:none; color:#444; cursor:pointer; font-size:18px; transition:color 0.2s; }
         .eye-btn:hover { color:#39ff14; }
         ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#39ff14; }
@@ -101,7 +114,7 @@ export default function AuthPage() {
       {/* NAV */}
       <nav style={{ background: "rgba(10,10,10,0.95)", borderBottom: "1px solid #1a1a1a", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: "#39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#000" }}>J</div>
+          <img src={logo} alt="JerseyVault" style={{ width: 36, height: 36, objectFit: "contain", mixBlendMode: "screen" }} />
           <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
         </div>
         <span style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>YOUR ACCOUNT</span>
@@ -157,8 +170,14 @@ export default function AuthPage() {
 
           ) : (
             <div style={{ animation: "fadeUp 0.4s ease" }}>
+
+              {/* LOGO */}
               <div style={{ marginBottom: 28, textAlign: "center" }}>
-                <div style={{ width: 56, height: 56, background: "#39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 24, color: "#000", margin: "0 auto 16px" }}>J</div>
+                <img
+                  src={logo}
+                  alt="JerseyVault"
+                  style={{ width: 72, height: 72, objectFit: "contain", mixBlendMode: "screen", filter: "brightness(1.1) contrast(1.05)", margin: "0 auto 16px", display: "block" }}
+                />
                 <h1 style={{ fontSize: 32, fontWeight: 900, fontStyle: "italic" }}>
                   {mode === "login" ? <>WELCOME <span style={{ color: "#39ff14" }}>BACK</span></> : <>CREATE <span style={{ color: "#39ff14" }}>ACCOUNT</span></>}
                 </h1>
@@ -167,18 +186,20 @@ export default function AuthPage() {
                 </p>
               </div>
 
+              {/* TABS */}
               <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28 }}>
                 <button className={`tab ${mode === "login" ? "active" : ""}`} onClick={() => switchMode("login")}>LOGIN</button>
                 <button className={`tab ${mode === "signup" ? "active" : ""}`} onClick={() => switchMode("signup")}>SIGN UP</button>
               </div>
 
-              <button className="google-btn" style={{ marginBottom: 20 }} onClick={async () => {
-                await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: { redirectTo: window.location.origin }
-                });
-              }}>
-                <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+              {/* GOOGLE */}
+              <button className="google-btn" style={{ marginBottom: 20 }} onClick={handleGoogle}>
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
                 CONTINUE WITH GOOGLE
               </button>
 
