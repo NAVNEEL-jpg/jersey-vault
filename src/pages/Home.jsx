@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react"
-import logo from "../assets/jerseyvault-logo.jpeg"; // save your logo as src/assets/jerseyvault-logo.jpeg
+import logo from "../assets/jerseyvault-logo.jpeg";
 
 const jerseys = [
   { id: 1, name: "FC Barcelona", number: "10", player: "MESSI", price: 1299, category: "Football", color: "#A50044", accent: "#004D98", emoji: "⚽", tag: "BESTSELLER" },
@@ -14,8 +14,162 @@ const jerseys = [
 ];
 
 const categories = ["All", "Football", "Cricket", "Basketball"];
-
 const LOGO_SRC = logo;
+
+// Cartoon flame SVG clipped inside text
+function CartoonFlameText({ text }) {
+  const id = "flameclip-" + text.replace(/\s/g, "");
+  return (
+    <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
+      {/* White base text — always readable */}
+      <span style={{
+        fontSize: "clamp(52px,10vw,100px)",
+        fontWeight: 900,
+        fontStyle: "italic",
+        letterSpacing: "-2px",
+        color: "#ffffff",
+        display: "block",
+        fontFamily: "'Barlow Condensed', sans-serif",
+        userSelect: "none",
+      }}>
+        {text}
+      </span>
+
+      {/* SVG flame clipped to text shape — sits on top */}
+      <svg
+        style={{
+          position: "absolute",
+          top: 0, left: 0,
+          width: "100%",
+          height: "100%",
+          overflow: "visible",
+          pointerEvents: "none",
+        }}
+        aria-hidden="true"
+      >
+        <defs>
+          {/* Clip path using the text */}
+          <clipPath id={id}>
+            <text
+              x="0"
+              y="90%"
+              fontSize="clamp(52px,10vw,100px)"
+              fontWeight="900"
+              fontStyle="italic"
+              fontFamily="'Barlow Condensed', sans-serif"
+              letterSpacing="-2"
+            >
+              {text}
+            </text>
+          </clipPath>
+
+          {/* Cartoon flame colours matching video: yellow base → red mid → dark red tips */}
+          <linearGradient id="flameGrad1" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%"   stopColor="#FFE000" />
+            <stop offset="22%"  stopColor="#FF8C00" />
+            <stop offset="48%"  stopColor="#E8000A" />
+            <stop offset="78%"  stopColor="#B20000" />
+            <stop offset="100%" stopColor="#3a0000" />
+          </linearGradient>
+          <linearGradient id="flameGrad2" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%"   stopColor="#FFF176" />
+            <stop offset="18%"  stopColor="#FFB300" />
+            <stop offset="45%"  stopColor="#FF3D00" />
+            <stop offset="75%"  stopColor="#C62828" />
+            <stop offset="100%" stopColor="#4a0000" />
+          </linearGradient>
+
+          {/* Turbulence filter for hand-drawn wobble */}
+          <filter id="flameWobble" x="-20%" y="-40%" width="140%" height="180%">
+            <feTurbulence
+              type="turbulence"
+              baseFrequency="0.025 0.06"
+              numOctaves="3"
+              seed="2"
+              result="noise"
+            >
+              <animate
+                attributeName="baseFrequency"
+                values="0.025 0.06; 0.03 0.08; 0.022 0.055; 0.025 0.06"
+                dur="0.9s"
+                repeatCount="indefinite"
+              />
+            </feTurbulence>
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="14"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </defs>
+
+        {/* The flame — a tall rect with gradient + wobble filter, clipped to text */}
+        <g clipPath={`url(#${id})`} filter="url(#flameWobble)">
+          {/* Main flame body — oversized so clipping catches all letters */}
+          <rect x="-5%" y="-80%" width="110%" height="200%" fill="url(#flameGrad1)">
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0,0; 2,-6; -3,-10; 1,-5; 0,0"
+              dur="0.55s"
+              repeatCount="indefinite"
+            />
+          </rect>
+
+          {/* Second flame layer — offset timing for cartoon flicker illusion */}
+          <rect x="-5%" y="-60%" width="110%" height="180%" fill="url(#flameGrad2)" opacity="0.65">
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0,0; -2,-8; 3,-4; -1,-9; 0,0"
+              dur="0.42s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              values="0.65; 0.85; 0.5; 0.75; 0.65"
+              dur="0.7s"
+              repeatCount="indefinite"
+            />
+          </rect>
+
+          {/* Bright yellow glow at the bottom (hottest zone) */}
+          <rect x="-5%" y="55%" width="110%" height="55%" fill="#FFE000" opacity="0.7">
+            <animate
+              attributeName="opacity"
+              values="0.7; 1; 0.6; 0.9; 0.7"
+              dur="0.35s"
+              repeatCount="indefinite"
+            />
+          </rect>
+
+          {/* Dark tip silhouettes — cartoon black-red peaks at the top */}
+          {[10, 22, 35, 48, 60, 72, 85, 95].map((x, i) => (
+            <ellipse
+              key={i}
+              cx={`${x}%`}
+              cy="-20%"
+              rx="6%"
+              ry="18%"
+              fill="#2a0000"
+              opacity="0.75"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                values={`0,0; ${i % 2 === 0 ? 3 : -3},-8; 0,0`}
+                dur={`${0.4 + i * 0.06}s`}
+                repeatCount="indefinite"
+              />
+            </ellipse>
+          ))}
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 export default function JerseyStore() {
   const navigate = useNavigate();
@@ -57,7 +211,6 @@ export default function JerseyStore() {
 
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
-
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
   return (
@@ -70,118 +223,12 @@ export default function JerseyStore() {
         @keyframes slideDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
-        @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
         @keyframes toastIn { from{opacity:0;transform:translateX(100px);} to{opacity:1;transform:translateX(0);} }
         @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
-
-        /* ─── CARTOON FLAME KEYFRAMES ─── */
-        @keyframes flameFlicker {
-          0%   { background-position: 50% 100%; filter: hue-rotate(0deg) brightness(1.1); }
-          25%  { background-position: 48% 88%;  filter: hue-rotate(8deg)  brightness(1.2); }
-          50%  { background-position: 52% 80%;  filter: hue-rotate(-6deg) brightness(1.0); }
-          75%  { background-position: 47% 88%;  filter: hue-rotate(12deg) brightness(1.15); }
-          100% { background-position: 50% 100%; filter: hue-rotate(0deg) brightness(1.1); }
-        }
         @keyframes embersFloat {
-          0%   { transform:translateY(0)   translateX(0)  scale(1);   opacity:0.9; }
-          100% { transform:translateY(-70px) translateX(15px) scale(0); opacity:0; }
-        }
-        @keyframes flameWobble {
-          0%,100% { transform: scaleX(1)   skewX(0deg); }
-          30%     { transform: scaleX(1.03) skewX(-1.5deg); }
-          60%     { transform: scaleX(0.97) skewX(1deg); }
-        }
-        @keyframes innerFlameFlicker {
-          0%,100% { opacity:0.65; transform: scaleY(1)   scaleX(1); }
-          40%     { opacity:0.80; transform: scaleY(1.04) scaleX(0.97); }
-          70%     { opacity:0.55; transform: scaleY(0.96) scaleX(1.03); }
-        }
-
-        /* The wrapper that constrains the flame canvas to text shape */
-        .fire-text-container {
-          position: relative;
-          display: inline-block;
-          line-height: 0.9;
-        }
-
-        /* Solid white fallback always readable */
-        .fire-text-white {
-          font-size: clamp(52px,10vw,100px);
-          font-weight: 900;
-          font-style: italic;
-          letter-spacing: -2px;
-          color: #ffffff;
-          display: block;
-          position: relative;
-          z-index: 1;
-        }
-
-        /* Cartoon flame gradient clipped to text */
-        .fire-text-clipped {
-          font-size: clamp(52px,10vw,100px);
-          font-weight: 900;
-          font-style: italic;
-          letter-spacing: -2px;
-          display: block;
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          z-index: 2;
-          /* Multi-stop cartoon flame: deep red → orange → yellow → white-yellow tip */
-          background-image: linear-gradient(
-            to top,
-            #ff1a00 0%,
-            #ff4500 15%,
-            #ff6a00 28%,
-            #ff8c00 40%,
-            #ffb300 54%,
-            #ffd700 68%,
-            #fff176 82%,
-            #fffde7 100%
-          );
-          background-size: 100% 300%;
-          background-position: 50% 100%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          color: transparent;
-          animation: flameFlicker 1.6s ease-in-out infinite, flameWobble 2.1s ease-in-out infinite;
-          opacity: 0.9;
-        }
-
-        /* Inner cooler highlight — cyan/white core strip clipped too */
-        .fire-text-core {
-          font-size: clamp(52px,10vw,100px);
-          font-weight: 900;
-          font-style: italic;
-          letter-spacing: -2px;
-          display: block;
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          z-index: 3;
-          background-image: linear-gradient(
-            to top,
-            transparent 0%,
-            transparent 40%,
-            rgba(255,255,220,0.18) 65%,
-            rgba(255,255,255,0.32) 82%,
-            transparent 100%
-          );
-          background-size: 100% 200%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          color: transparent;
-          animation: innerFlameFlicker 1.2s ease-in-out infinite;
-        }
-
-        /* Ember dots */
-        .ember {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-          animation: embersFloat 1.4s ease-out infinite;
-          opacity: 0;
+          0%   { transform:translateY(0) translateX(0) scale(1); opacity:0.95; }
+          100% { transform:translateY(-80px) translateX(12px) scale(0); opacity:0; }
         }
 
         .nav-link { color:#888; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
@@ -215,22 +262,11 @@ export default function JerseyStore() {
         .ticker-item { font-weight:900; letter-spacing:3px; font-size:12px; padding:0 40px; }
         .hero-bg { position:absolute; inset:0; background:radial-gradient(ellipse at 30% 50%, #39ff1410 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #00ff8808 0%, transparent 50%); pointer-events:none; }
         .hero-line { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); }
+        .ember { position:absolute; border-radius:50%; pointer-events:none; animation:embersFloat 1.5s ease-out infinite; opacity:0; }
+        .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
+        .logo-wrap { display:flex; align-items:center; gap:8px; }
 
-        .logo-img {
-          width: 44px;
-          height: 44px;
-          object-fit: contain;
-          mix-blend-mode: screen;
-          filter: brightness(1.1) contrast(1.05);
-          display: block;
-        }
-        .logo-wrap {
-          display:flex;
-          align-items:center;
-          gap:8px;
-        }
-
-        @media(max-width:600px){.cart-panel{width:100%;} .search-input{width:140px;}}
+        @media(max-width:600px){ .cart-panel{width:100%;} .search-input{width:140px;} }
       `}</style>
 
       {/* TOAST */}
@@ -243,23 +279,15 @@ export default function JerseyStore() {
       {/* NAVBAR */}
       <nav style={{ position:"sticky", top:0, zIndex:50, background:"rgba(10,10,10,0.95)", backdropFilter:"blur(10px)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", display:"flex", alignItems:"center", justifyContent:"space-between", height:60, animation:"slideDown 0.5s ease" }}>
         <div className="logo-wrap">
-          <img
-            src={LOGO_SRC}
-            alt="JerseyVault logo"
-            className="logo-img"
-          />
+          <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
         </div>
-
         <div style={{ display:"flex", gap:32 }}>
-          <div style={{ display:"flex", gap:32 }}>
-            <Link to="/" className="nav-link">HOME</Link>
-            <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
-            <Link to="/tracking" className="nav-link">TRACK</Link>
-            <Link to="/checkout" className="nav-link">CART</Link>
-          </div>
+          <Link to="/" className="nav-link">HOME</Link>
+          <span className="nav-link" onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}>SHOP</span>
+          <Link to="/tracking" className="nav-link">TRACK</Link>
+          <Link to="/checkout" className="nav-link">CART</Link>
         </div>
-
         <div style={{ display:"flex", alignItems:"center", gap:16 }}>
           <input className="search-input" placeholder="SEARCH..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           <button onClick={() => setCartOpen(true)} style={{ background:"transparent", border:"1px solid #39ff14", color:"#39ff14", padding:"8px 16px", cursor:"pointer", fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:13, letterSpacing:2, display:"flex", alignItems:"center", gap:8, transition:"all 0.2s" }}
@@ -290,50 +318,35 @@ export default function JerseyStore() {
 
         <h1 style={{ lineHeight:0.9, animation:"fadeUp 0.6s ease 0.3s both", position:"relative", display:"inline-block" }}>
 
-          {/* "WEAR YOUR" with CSS cartoon flame animation */}
-          <span style={{ display:"block", position:"relative" }}>
+          {/* ── WEAR YOUR: white text + cartoon flame SVG clipped inside ── */}
+          <span style={{ display:"block", position:"relative", marginBottom: 4 }}>
 
-            {/* Floating ember sparks above the text */}
+            {/* Ember sparks floating above */}
             {[
-              { left:"4%",  top:"-14px", delay:"0s",    size:3,  color:"#ffcc00" },
-              { left:"14%", top:"-8px",  delay:"0.4s",  size:4,  color:"#ff6600" },
-              { left:"26%", top:"-18px", delay:"0.7s",  size:3,  color:"#ffdd00" },
-              { left:"40%", top:"-10px", delay:"0.2s",  size:5,  color:"#ff4500" },
-              { left:"55%", top:"-16px", delay:"1.0s",  size:3,  color:"#ffee00" },
-              { left:"68%", top:"-6px",  delay:"0.55s", size:4,  color:"#ff8800" },
-              { left:"82%", top:"-20px", delay:"0.1s",  size:3,  color:"#ffdd00" },
-              { left:"94%", top:"-12px", delay:"0.8s",  size:4,  color:"#ff6600" },
-              { left:"32%", top:"-24px", delay:"0.35s", size:2,  color:"#ffffff" },
-              { left:"72%", top:"-22px", delay:"0.9s",  size:2,  color:"#fff176" },
+              { left:"3%",  top:"-16px", delay:"0s",    size:4,  color:"#FFE000" },
+              { left:"13%", top:"-8px",  delay:"0.4s",  size:5,  color:"#FF6600" },
+              { left:"25%", top:"-20px", delay:"0.7s",  size:3,  color:"#FFD700" },
+              { left:"38%", top:"-12px", delay:"0.2s",  size:5,  color:"#FF4500" },
+              { left:"52%", top:"-18px", delay:"1.0s",  size:3,  color:"#FFE000" },
+              { left:"65%", top:"-7px",  delay:"0.55s", size:4,  color:"#FF8800" },
+              { left:"78%", top:"-22px", delay:"0.1s",  size:3,  color:"#FFD700" },
+              { left:"91%", top:"-13px", delay:"0.8s",  size:5,  color:"#FF6600" },
+              { left:"31%", top:"-28px", delay:"0.35s", size:2,  color:"#fff" },
+              { left:"70%", top:"-24px", delay:"0.9s",  size:2,  color:"#FFF176" },
             ].map((e, i) => (
-              <span
-                key={i}
-                className="ember"
-                style={{
-                  left: e.left,
-                  top: e.top,
-                  animationDelay: e.delay,
-                  width: e.size,
-                  height: e.size,
-                  background: e.color,
-                  boxShadow: `0 0 ${e.size * 2}px ${e.color}`,
-                }}
-              />
+              <span key={i} className="ember" style={{
+                left: e.left, top: e.top,
+                animationDelay: e.delay,
+                width: e.size, height: e.size,
+                background: e.color,
+                boxShadow: `0 0 ${e.size * 2}px ${e.color}`,
+              }} />
             ))}
 
-            <div className="fire-text-container">
-              {/* Layer 1: solid white base — always legible */}
-              <span className="fire-text-white">WEAR YOUR</span>
-
-              {/* Layer 2: cartoon flame gradient clipped to text shape */}
-              <span className="fire-text-clipped">WEAR YOUR</span>
-
-              {/* Layer 3: inner core shimmer highlight */}
-              <span className="fire-text-core">WEAR YOUR</span>
-            </div>
+            <CartoonFlameText text="WEAR YOUR" />
           </span>
 
-          {/* "LEGEND" — neon green unchanged */}
+          {/* LEGEND — neon green unchanged */}
           <span style={{ display:"block", color:"#39ff14", fontSize:"clamp(52px,10vw,100px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9, letterSpacing:-2 }}>
             LEGEND
           </span>
