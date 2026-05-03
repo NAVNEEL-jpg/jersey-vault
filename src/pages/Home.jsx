@@ -246,7 +246,7 @@ export default function JerseyStore() {
           {[["500+", "JERSEYS"], ["50K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} style={{ textAlign: "center", padding: "20px 0", borderRight: "1px solid #1a1a1a" }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: "#39ff14" }}>{num}</div>
-              <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginTop: 4 }}>{label}</div>
+              <div style={{ fontSize: 11, letterSpacing: 3, color: "#ccc", marginTop: 4 }}>{label}</div>
             </div>
           ))}
         </div>
