@@ -7,10 +7,28 @@ const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
-useEffect(() => {
-  const data = localStorage.getItem("cart");
-  if (data) setCart(JSON.parse(data));
-}, []);
+  const [user, setUser] = useState(null);
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const data = localStorage.getItem("cart");
+    if (data) setCart(JSON.parse(data));
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data?.session) {
+        setUser(data.session.user);
+        // Pre-fill name and email if logged in
+        setForm(p => ({
+          ...p,
+          name: data.session.user.user_metadata?.full_name || "",
+          email: data.session.user.email || "",
+          phone: data.session.user.user_metadata?.phone || "",
+        }));
+      }
+    });
+  }, []);
 
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -38,20 +56,31 @@ useEffect(() => {
   };
 
   const handleNext = async () => {
-  if (step === 0) {
-    if (!validate()) return;
-    if (!user && password.length >= 6) {
-      await supabase.auth.signUp({
-        email: form.email,
-        password,
-        options: { data: { full_name: form.name, phone: form.phone } }
+    if (step === 0) {
+      if (!validate()) return;
+      // Auto sign up guest users
+      if (!user && password.length >= 6) {
+        await supabase.auth.signUp({
+          email: form.email,
+          password,
+          options: { data: { full_name: form.name, phone: form.phone } }
+        });
+      }
+    }
+    setStep(s => s + 1);
+  };
+
+  // ✅ Decrement stock in Supabase for each cart item
+  const decrementStock = async () => {
+    for (const item of cart) {
+      await supabase.rpc('decrement_stock', {
+        product_id: item.id,
+        quantity: item.qty
       });
     }
-  }
-  setStep(s => s + 1);
-};
+  };
 
-  const handlePlace = () => {
+  const handlePlace = async () => {
     if (payMethod === "cod") {
       setLoading(true);
       const order = {
@@ -62,10 +91,14 @@ useEffect(() => {
         customer: { name: form.name, email: form.email, phone: form.phone },
         payMethod: "COD",
       };
+      // ✅ Decrement stock before navigating
+      await decrementStock();
       localStorage.setItem("latestOrder", JSON.stringify(order));
-      setTimeout(() => { setLoading(false); navigate("/success"); }, 1500);
+      setLoading(false);
+      navigate("/success");
     } else {
-      initiatePayment(total, form.name, form.email, form.phone, cart, navigate);
+      // For Razorpay — pass decrementStock as callback after payment success
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock);
     }
   };
 
@@ -129,13 +162,13 @@ useEffect(() => {
             <div style={{ animation: "fadeUp 0.4s ease" }}>
               <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>DELIVERY DETAILS</h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-               {(user ? [
+                {(user ? [
                   { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
                   { key: "address", label: "STREET ADDRESS", placeholder: "Flat 4B, Park Street", full: true },
                   { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
                   { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
                   { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
-             ] : [
+                ] : [
                   { key: "name", label: "FULL NAME", placeholder: "Navneel Dutta", full: false },
                   { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
                   { key: "email", label: "EMAIL ADDRESS", placeholder: "you@email.com", full: true },
@@ -143,7 +176,7 @@ useEffect(() => {
                   { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
                   { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
                   { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
-              ]).map(f => (
+                ]).map(f => (
                   <div key={f.key} style={{ gridColumn: f.full ? "1/-1" : "auto" }}>
                     <div className="label">{f.label}</div>
                     <input className={`field ${errors[f.key] ? "err" : ""}`} placeholder={f.placeholder} value={form[f.key]}
@@ -152,21 +185,21 @@ useEffect(() => {
                   </div>
                 ))}
               </div>
+
+              {/* Password field for guest users only */}
               {!user && (
-  <>
-    <div style={{ marginTop: 14 }}>
-      <div className="label">PASSWORD</div>
-      <input className="field" type="password" placeholder="Create a password (min. 6 chars)"
-        value={password} onChange={e => setPassword(e.target.value)} />
-    </div>
-    <p style={{ color: "#555", fontSize: 12, fontFamily: "'Barlow', sans-serif",
-      letterSpacing: 1, marginTop: 10, lineHeight: 1.6,
-      borderLeft: "2px solid #39ff1440", paddingLeft: 10 }}>
-      💡 Your email & password will be saved for future logins — no need to re-enter next time.
-    </p>
-  </>
-)}
-<button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
+                <>
+                  <div style={{ marginTop: 14 }}>
+                    <div className="label">PASSWORD (OPTIONAL)</div>
+                    <input className="field" type="password" placeholder="Create a password (min. 6 chars)"
+                      value={password} onChange={e => setPassword(e.target.value)} />
+                  </div>
+                  <p style={{ color: "#555", fontSize: 12, fontFamily: "'Barlow', sans-serif", letterSpacing: 1, marginTop: 10, lineHeight: 1.6, borderLeft: "2px solid #39ff1440", paddingLeft: 10 }}>
+                    💡 Your email & password will be saved for future logins — no need to re-enter next time.
+                  </p>
+                </>
+              )}
+
               <button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
             </div>
           )}
@@ -237,10 +270,13 @@ useEffect(() => {
                 <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>YOUR ITEMS</div>
                 {cart.map((item, i) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
-                    <span style={{ fontSize: 32 }}>{item.emoji || "👕"}</span>
+                    {item.image_url
+                      ? <img src={item.image_url} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", flexShrink: 0 }} />
+                      : <span style={{ fontSize: 32 }}>👕</span>
+                    }
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 900 }}>{item.name} #{item.number}</div>
-                      <div style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>{item.player} · SIZE {item.size} · QTY {item.qty}</div>
+                      <div style={{ fontWeight: 900 }}>{item.name}</div>
+                      <div style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>SIZE {item.size} · QTY {item.qty}</div>
                     </div>
                     <div style={{ fontWeight: 900 }}>₹{item.price * item.qty}</div>
                   </div>
@@ -267,13 +303,16 @@ useEffect(() => {
           <h3 style={{ fontSize: 18, fontWeight: 900, letterSpacing: 3, marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #1a1a1a" }}>ORDER SUMMARY</h3>
           {cart.map((item, i) => (
             <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-              <div style={{ width: 48, height: 48, background: "#33333322", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, position: "relative" }}>
-                {item.emoji || "👕"}
+              <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+                {item.image_url
+                  ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : <span style={{ fontSize: 24 }}>👕</span>
+                }
                 <div style={{ position: "absolute", top: -6, right: -6, background: "#39ff14", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>{item.qty}</div>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>{item.name}</div>
-                <div style={{ color: "#555", fontSize: 11, letterSpacing: 1 }}>#{item.number} · {item.size}</div>
+                <div style={{ color: "#555", fontSize: 11, letterSpacing: 1 }}>SIZE {item.size}</div>
               </div>
               <div style={{ fontWeight: 900, fontSize: 14 }}>₹{item.price * item.qty}</div>
             </div>
