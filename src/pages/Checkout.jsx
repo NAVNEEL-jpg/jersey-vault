@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { initiatePayment } from "../razorpay";
+import { supabase } from '../supabase';
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
@@ -10,6 +11,11 @@ export default function CheckoutPage() {
     const data = localStorage.getItem("cart");
     if (data) setCart(JSON.parse(data));
   }, []);
+  const [cart, setCart] = useState([]);
+useEffect(() => {
+  const data = localStorage.getItem("cart");
+  if (data) setCart(JSON.parse(data));
+}, []);
 
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -36,10 +42,19 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleNext = () => {
-    if (step === 0 && !validate()) return;
-    setStep(s => s + 1);
-  };
+  const handleNext = async () => {
+  if (step === 0) {
+    if (!validate()) return;
+    if (!user && password.length >= 6) {
+      await supabase.auth.signUp({
+        email: form.email,
+        password,
+        options: { data: { full_name: form.name, phone: form.phone } }
+      });
+    }
+  }
+  setStep(s => s + 1);
+};
 
   const handlePlace = () => {
     if (payMethod === "cod") {
@@ -119,7 +134,13 @@ export default function CheckoutPage() {
             <div style={{ animation: "fadeUp 0.4s ease" }}>
               <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>DELIVERY DETAILS</h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {[
+               {(user ? [
+                  { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
+                  { key: "address", label: "STREET ADDRESS", placeholder: "Flat 4B, Park Street", full: true },
+                  { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
+                  { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
+                  { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
+             ] : [
                   { key: "name", label: "FULL NAME", placeholder: "Navneel Dutta", full: false },
                   { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
                   { key: "email", label: "EMAIL ADDRESS", placeholder: "you@email.com", full: true },
@@ -127,7 +148,7 @@ export default function CheckoutPage() {
                   { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
                   { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
                   { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
-                ].map(f => (
+              ]).map(f => (
                   <div key={f.key} style={{ gridColumn: f.full ? "1/-1" : "auto" }}>
                     <div className="label">{f.label}</div>
                     <input className={`field ${errors[f.key] ? "err" : ""}`} placeholder={f.placeholder} value={form[f.key]}
@@ -136,6 +157,21 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+              {!user && (
+  <>
+    <div style={{ marginTop: 14 }}>
+      <div className="label">PASSWORD</div>
+      <input className="field" type="password" placeholder="Create a password (min. 6 chars)"
+        value={password} onChange={e => setPassword(e.target.value)} />
+    </div>
+    <p style={{ color: "#555", fontSize: 12, fontFamily: "'Barlow', sans-serif",
+      letterSpacing: 1, marginTop: 10, lineHeight: 1.6,
+      borderLeft: "2px solid #39ff1440", paddingLeft: 10 }}>
+      💡 Your email & password will be saved for future logins — no need to re-enter next time.
+    </p>
+  </>
+)}
+<button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
               <button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
             </div>
           )}
