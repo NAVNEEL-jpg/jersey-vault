@@ -66,13 +66,23 @@ const handleNext = async () => {
     if (step === 0) {
       if (!validate()) return;
       // Auto sign up guest users
-      if (!user && password.length >= 6) {
-        await supabase.auth.signUp({
-          email: form.email,
-          password,
-          options: { data: { full_name: form.name, phone: form.phone } }
-        });
-      }
+if (!user && password.length >= 6) {
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    email: form.email,
+    password,
+    options: { data: { full_name: form.name, phone: form.phone } }
+  });
+
+  // Also save to profiles table so it shows up with login info
+  if (!signUpError && signUpData?.user) {
+    await supabase.from("profiles").upsert({
+      id: signUpData.user.id,
+      full_name: form.name,
+      email: form.email,
+      phone: form.phone,
+    });
+  }
+}
     }
     setStep(s => s + 1);
   };
