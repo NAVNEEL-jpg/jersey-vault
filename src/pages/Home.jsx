@@ -68,7 +68,10 @@ export default function JerseyStore() {
   const navigate = useNavigate();
   const [jerseys, setJerseys] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+  const saved = localStorage.getItem("cart");
+  return saved ? JSON.parse(saved) : [];
+});
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
@@ -77,6 +80,10 @@ export default function JerseyStore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [cart, setCart] = useState(() => {
+  const saved = localStorage.getItem("cart");
+  return saved ? JSON.parse(saved) : [];
+});
 
   useEffect(() => {
     supabase

@@ -55,7 +55,14 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
-  const handleNext = async () => {
+const handleNext = async () => {
+    // Add this guardrail at the very top
+    if (cart.length === 0) {
+      alert("Your cart is empty! Please add items before checking out.");
+      navigate("/"); // Redirect them back to the store
+      return; 
+    }
+
     if (step === 0) {
       if (!validate()) return;
       // Auto sign up guest users
