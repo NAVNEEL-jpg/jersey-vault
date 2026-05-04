@@ -99,13 +99,15 @@ export default function JerseyStore() {
     });
   }, []);
 
+  // Filter uses j.type which matches the Supabase "type" column values:
+  // "PLAYER VERSION", "FAN VERSION", "RETRO"
   const filtered = jerseys.filter(j => {
     const matchesSearch = j.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter =
       activeFilter === "ALL" ||
-      (activeFilter === "FAN" && j.version === "fan") ||
-      (activeFilter === "PLAYER" && j.version === "player") ||
-      (activeFilter === "RETRO" && j.version === "retro");
+      (activeFilter === "FAN VERSION" && j.type === "FAN VERSION") ||
+      (activeFilter === "PLAYER VERSION" && j.type === "PLAYER VERSION") ||
+      (activeFilter === "RETRO" && j.type === "RETRO");
     return matchesSearch && matchesFilter;
   });
 
@@ -129,6 +131,17 @@ export default function JerseyStore() {
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  // Filter button config — keys match Supabase type values exactly
+  const filterButtons = [
+    { key: "ALL",            label: "ALL" },
+    { key: "FAN VERSION",    label: "FAN VERSION" },
+    { key: "PLAYER VERSION", label: "PLAYER VERSION" },
+    { key: "RETRO",          label: "RETRO" },
+  ];
+
+  const sectionTitle =
+    activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
 
   return (
     <>
@@ -174,6 +187,7 @@ export default function JerseyStore() {
           .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
+          .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
           .filter-btn { background:transparent; color:#888; border:1px solid #333; padding:8px 18px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:13px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
           .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
           .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
@@ -250,7 +264,6 @@ export default function JerseyStore() {
 
           <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both", position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
 
-          {/* ── HERO HEADING with slow breathe animation ── */}
           <h1 style={{
             lineHeight: 0.9,
             animation: "fadeUp 0.6s ease 0.3s both, breathe 5s ease-in-out 1s infinite",
@@ -293,18 +306,12 @@ export default function JerseyStore() {
         <section id="shop" style={{ padding: "60px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
-              <span style={{ color: "#39ff14" }}>/ </span>
-{activeFilter === "ALL" ? "SHOP ALL" : activeFilter === "FAN" ? "FAN VERSION" : activeFilter === "PLAYER" ? "PLAYER VERSION" : "RETRO"}
+              <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
 
-            {/* ── FILTER BUTTONS ── */}
+            {/* FILTER BUTTONS — keys match Supabase type values exactly */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {[
-                { key: "ALL",    label: "ALL" },
-                { key: "FAN",    label: "FAN VERSION" },
-                { key: "PLAYER", label: "PLAYER VERSION" },
-                { key: "RETRO",  label: "RETRO" },
-              ].map(({ key, label }) => (
+              {filterButtons.map(({ key, label }) => (
                 <button
                   key={key}
                   className={`filter-btn${activeFilter === key ? " active" : ""}`}
@@ -339,6 +346,7 @@ export default function JerseyStore() {
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }}
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
+                  {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
                   <div className="card-img-wrap">
                     {jersey.image_url ? (
                       <img src={jersey.image_url} alt={jersey.name} className="card-img" />
@@ -423,6 +431,9 @@ export default function JerseyStore() {
               </div>
               <div style={{ padding: "20px 24px 8px" }}>
                 <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 1 }}>{selectedJersey.name}</div>
+                {selectedJersey.type && (
+                  <div style={{ fontSize: 10, letterSpacing: 3, color: "#39ff14", fontWeight: 900, marginTop: 4 }}>{selectedJersey.type}</div>
+                )}
                 <div style={{ fontSize: 22, fontWeight: 900, color: "#39ff14", marginTop: 4 }}>₹{selectedJersey.price}</div>
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
                   <div style={{ fontSize: 11, color: "#ff9900", letterSpacing: 2, marginTop: 6, fontWeight: 700 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>

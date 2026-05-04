@@ -10,14 +10,15 @@ const statusColors = {
   delivered: "#39ff14",
 };
 
+const JERSEY_TYPES = ["PLAYER VERSION", "FAN VERSION", "RETRO"];
+
 const EMPTY_FORM = {
   name: "",
   price: "",
   stock: "",
   status: "active",
   image_url: "",
-  description: "",
-  category: "",
+  type: "FAN VERSION",
 };
 
 export default function AdminPage() {
@@ -87,8 +88,7 @@ export default function AdminPage() {
       stock: Number(stock),
       status: formData.status,
       image_url: formData.image_url.trim() || null,
-      description: formData.description.trim() || null,
-      category: formData.category.trim() || null,
+      type: formData.type,
     };
 
     const { data, error } = await supabase.from("products").insert([payload]).select().single();
@@ -172,6 +172,10 @@ export default function AdminPage() {
         .add-product-toggle:hover { background: #39ff1410; border-color: #39ff14; }
         .form-error { color: #ff4444; font-size: 12px; letter-spacing: 1px; background: #ff444410; border: 1px solid #ff444430; padding: 10px 14px; margin-top: 4px; }
         .image-preview { width: 48px; height: 48px; object-fit: cover; background: #0d0d0d; border: 1px solid #1a1a1a; }
+        .type-badge { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: 2px; padding: 2px 7px; border-radius: 0; }
+        .type-badge.player { background: #00aaff22; border: 1px solid #00aaff44; color: #00aaff; }
+        .type-badge.fan { background: #39ff1422; border: 1px solid #39ff1444; color: #39ff14; }
+        .type-badge.retro { background: #ff990022; border: 1px solid #ff990044; color: #ff9900; }
       `}</style>
 
       {/* NAV */}
@@ -291,15 +295,19 @@ export default function AdminPage() {
                 <div style={{ fontSize: 11, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW PRODUCT</div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Name + Category */}
+                  {/* Name + Type */}
                   <div className="form-grid">
                     <div className="form-field">
                       <label className="form-label">PRODUCT NAME *</label>
                       <input className="form-input" type="text" placeholder="e.g. Argentina 2024 Home" value={formData.name} onChange={e => handleFormChange("name", e.target.value)} />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">CATEGORY</label>
-                      <input className="form-input" type="text" placeholder="e.g. Club / National" value={formData.category} onChange={e => handleFormChange("category", e.target.value)} />
+                      <label className="form-label">TYPE OF JERSEY *</label>
+                      <select className="form-select" value={formData.type} onChange={e => handleFormChange("type", e.target.value)}>
+                        {JERSEY_TYPES.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -337,12 +345,6 @@ export default function AdminPage() {
                         />
                       )}
                     </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="form-field">
-                    <label className="form-label">DESCRIPTION</label>
-                    <input className="form-input" type="text" placeholder="Short product description..." value={formData.description} onChange={e => handleFormChange("description", e.target.value)} />
                   </div>
 
                   {/* Error */}
@@ -410,6 +412,11 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   const isConfirming = confirmDeleteId === p.id;
   const isDeleting = deletingId === p.id;
 
+  const typeClass =
+    p.type === "PLAYER VERSION" ? "player" :
+    p.type === "FAN VERSION" ? "fan" :
+    p.type === "RETRO" ? "retro" : "";
+
   return (
     <div className="stock-row-item">
       {/* Left: image + info */}
@@ -420,7 +427,12 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
         }
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-          <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>₹{p.price} · {p.status?.toUpperCase()}{p.category ? ` · ${p.category}` : ""}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
+            {p.type && (
+              <span className={`type-badge ${typeClass}`}>{p.type}</span>
+            )}
+          </div>
         </div>
       </div>
 
