@@ -76,6 +76,7 @@ export default function JerseyStore() {
   const [heroVisible, setHeroVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
+  const [activeFilter, setActiveFilter] = useState("ALL");
 
   useEffect(() => {
     supabase
@@ -98,9 +99,15 @@ export default function JerseyStore() {
     });
   }, []);
 
-  const filtered = jerseys.filter(j =>
-    j.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = jerseys.filter(j => {
+    const matchesSearch = j.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter =
+      activeFilter === "ALL" ||
+      (activeFilter === "FAN" && j.version === "fan") ||
+      (activeFilter === "PLAYER" && j.version === "player") ||
+      (activeFilter === "RETRO" && j.version === "retro");
+    return matchesSearch && matchesFilter;
+  });
 
   const addToCart = (jersey, size) => {
     setCart(prev => {
@@ -137,6 +144,7 @@ export default function JerseyStore() {
           @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
           @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
           @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+          @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.025);} }
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
           .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
@@ -166,6 +174,9 @@ export default function JerseyStore() {
           .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
+          .filter-btn { background:transparent; color:#888; border:1px solid #333; padding:8px 18px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:13px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+          .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
+          .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
           @media(max-width:600px){ .cart-panel{width:100%;} .search-input{width:140px;} }
         `}</style>
 
@@ -238,7 +249,15 @@ export default function JerseyStore() {
           }} />
 
           <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both", position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
-          <h1 style={{ lineHeight: 0.9, animation: "fadeUp 0.6s ease 0.3s both", position: "relative", display: "inline-block", zIndex: 1 }}>
+
+          {/* ── HERO HEADING with slow breathe animation ── */}
+          <h1 style={{
+            lineHeight: 0.9,
+            animation: "fadeUp 0.6s ease 0.3s both, breathe 5s ease-in-out 1s infinite",
+            position: "relative",
+            display: "inline-block",
+            zIndex: 1,
+          }}>
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
               <CartoonFlameText text="WEAR YOUR" />
             </span>
@@ -246,6 +265,7 @@ export default function JerseyStore() {
               LEGEND
             </span>
           </h1>
+
           <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both", position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", animation: "fadeUp 0.6s ease 0.5s both", position: "relative", zIndex: 1 }}>
             <button onClick={() => document.getElementById('shop').scrollIntoView({ behavior: 'smooth' })}
@@ -275,6 +295,24 @@ export default function JerseyStore() {
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
               <span style={{ color: "#39ff14" }}>/ </span>SHOP ALL
             </h2>
+
+            {/* ── FILTER BUTTONS ── */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {[
+                { key: "ALL",    label: "ALL" },
+                { key: "FAN",    label: "FAN VERSION" },
+                { key: "PLAYER", label: "PLAYER VERSION" },
+                { key: "RETRO",  label: "RETRO" },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  className={`filter-btn${activeFilter === key ? " active" : ""}`}
+                  onClick={() => setActiveFilter(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {loadingProducts ? (
@@ -358,7 +396,7 @@ export default function JerseyStore() {
           </div>
         </section>
 
-        {/* FOOTER — replace existing footer in Home.jsx with this */}
+        {/* FOOTER */}
         <footer style={{ background: "#050505", borderTop: "1px solid #1a1a1a", padding: "40px 24px", textAlign: "center" }}>
           <div style={{ fontWeight: 900, fontSize: 28, letterSpacing: 4, marginBottom: 8 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
           <p style={{ color: "#333", fontSize: 12, letterSpacing: 2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
