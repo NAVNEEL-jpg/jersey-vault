@@ -101,6 +101,9 @@ export default function JerseyStore() {
       if (data?.session) setUser(data.session.user);
     });
   }, []);
+  useEffect(() => {
+  localStorage.setItem("cart", JSON.stringify(cart));
+}, [cart]);
 
   // Filter uses j.type which matches the Supabase "type" column values:
   // "PLAYER VERSION", "FAN VERSION", "RETRO"
@@ -217,7 +220,7 @@ export default function JerseyStore() {
             <Link to="/checkout" className="nav-link">CART</Link>
             <Link to="/myorders" className="nav-link">MY ORDERS</Link>
             {user ? (
-              <span className="nav-link" onClick={async () => { await supabase.auth.signOut(); setUser(null); }}>LOGOUT</span>
+              <span className="nav-link" onClick={async () => { await supabase.auth.signOut(); setUser(null); setCart([]); localStorage.removeItem("cart"); }}>LOGOUT</span>
             ) : (
               <Link to="/auth" className="nav-link">LOGIN</Link>
             )}
