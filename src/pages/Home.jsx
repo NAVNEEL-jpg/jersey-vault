@@ -80,10 +80,6 @@ export default function JerseyStore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
-  const [cart, setCart] = useState(() => {
-  const saved = localStorage.getItem("cart");
-  return saved ? JSON.parse(saved) : [];
-});
 
   useEffect(() => {
     supabase
