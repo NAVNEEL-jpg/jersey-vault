@@ -293,7 +293,8 @@ export default function JerseyStore() {
         <section id="shop" style={{ padding: "60px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
-              <span style={{ color: "#39ff14" }}>/ </span>SHOP ALL
+              <span style={{ color: "#39ff14" }}>/ </span>
+{activeFilter === "ALL" ? "SHOP ALL" : activeFilter === "FAN" ? "FAN VERSION" : activeFilter === "PLAYER" ? "PLAYER VERSION" : "RETRO"}
             </h2>
 
             {/* ── FILTER BUTTONS ── */}
