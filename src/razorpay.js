@@ -48,5 +48,9 @@ export const initiatePayment = (amount, name, email, phone, cart, navigate, decr
   };
 
   const rzp = new window.Razorpay(options);
+  rzp.on("payment.failed", function (response) {
+  alert("Oops! Something went wrong. Payment Failed");
+  console.error("Razorpay error:", response.error);
+});
   rzp.open();
 };
