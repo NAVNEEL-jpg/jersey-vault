@@ -7,7 +7,7 @@ import heroBg from "../assets/hero-bg.jpeg";
 const LOGO_SRC = logo;
 
 function CartoonFlameText({ text }) {
-  const id = "flameclip-" + text.replace(/\s/g, "");
+ const id = "flameclip-" + text.replace(/\s/g, "") + Math.random();
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
       <span style={{
@@ -111,7 +111,7 @@ useEffect(() => {
     }
   });
 }, []);
-  }, []);
+ 
   useEffect(() => {
   localStorage.setItem("cart", JSON.stringify(cart));
 }, [cart]);
@@ -542,4 +542,4 @@ useEffect(() => {
       </div>
     </>
   );
-}
+};
