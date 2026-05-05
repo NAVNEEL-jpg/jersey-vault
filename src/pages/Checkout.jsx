@@ -88,14 +88,21 @@ if (!user && password.length >= 6) {
   };
 
   // ✅ Decrement stock in Supabase for each cart item
-  const decrementStock = async () => {
-    for (const item of cart) {
-      await supabase.rpc('decrement_stock', {
-        product_id: item.id,
-        quantity: item.qty
-      });
+const decrementStock = async () => {
+  for (const item of cart) {
+    const { data: product } = await supabase
+      .from("products")
+      .select("size_stock")
+      .eq("id", item.id)
+      .single();
+    
+    if (product?.size_stock) {
+      const newSizeStock = { ...product.size_stock };
+      newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
+      await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", item.id);
     }
-  };
+  }
+};
 
   const handlePlace = async () => {
   // Ensure email is always set — use logged-in user's email as fallback

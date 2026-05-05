@@ -448,9 +448,21 @@ export default function JerseyStore() {
               <div style={{ padding: "8px 24px 24px" }}>
                 <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>SELECT SIZE</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {sizes.map(s => (
-                    <button key={s} className={`size-btn ${selectedSize === s ? "selected" : ""}`} onClick={() => setSelectedSize(s)}>{s}</button>
-                  ))}
+                  {sizes.map(s => {
+  const sizeStock = selectedJersey.size_stock?.[s] ?? 0;
+  const outOfStock = sizeStock === 0;
+  return (
+    <button
+      key={s}
+      className={`size-btn ${selectedSize === s ? "selected" : ""} ${outOfStock ? "oos" : ""}`}
+      onClick={() => !outOfStock && setSelectedSize(s)}
+      disabled={outOfStock}
+      style={outOfStock ? { opacity: 0.3, cursor: "not-allowed", textDecoration: "line-through" } : {}}
+    >
+      {s}
+    </button>
+  );
+})}
                 </div>
                 <button className="add-btn" style={{ marginTop: 24, fontSize: 16 }} onClick={() => addToCart(selectedJersey, selectedSize)}>
                   ADD TO CART — ₹{selectedJersey.price}

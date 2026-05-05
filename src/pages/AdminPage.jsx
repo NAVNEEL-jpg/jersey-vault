@@ -11,14 +11,15 @@ const statusColors = {
 };
 
 const JERSEY_TYPES = ["PLAYER VERSION", "FAN VERSION", "RETRO"];
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 const EMPTY_FORM = {
   name: "",
   price: "",
-  stock: "",
   status: "active",
   image_url: "",
   type: "FAN VERSION",
+  size_stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
 };
 
 export default function AdminPage() {
@@ -30,7 +31,6 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("orders");
   const [updatingId, setUpdatingId] = useState(null);
 
-  // Product form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
@@ -75,17 +75,25 @@ export default function AdminPage() {
     setFormError("");
   };
 
+  const handleSizeStockChange = (size, value) => {
+    setFormData(prev => ({
+      ...prev,
+      size_stock: { ...prev.size_stock, [size]: parseInt(value) || 0 }
+    }));
+  };
+
   const handleAddProduct = async () => {
-    const { name, price, stock } = formData;
+    const { name, price } = formData;
     if (!name.trim()) { setFormError("Product name is required."); return; }
     if (!price || isNaN(Number(price)) || Number(price) <= 0) { setFormError("Enter a valid price."); return; }
-    if (stock === "" || isNaN(Number(stock)) || Number(stock) < 0) { setFormError("Enter a valid stock quantity."); return; }
 
     setFormSaving(true);
+    const totalStock = SIZES.reduce((s, sz) => s + (formData.size_stock[sz] || 0), 0);
     const payload = {
       name: name.trim(),
       price: Number(price),
-      stock: Number(stock),
+      stock: totalStock,
+      size_stock: formData.size_stock,
       status: formData.status,
       image_url: formData.image_url.trim() || null,
       type: formData.type,
@@ -139,10 +147,6 @@ export default function AdminPage() {
         .order-card { background: #111; border: 1px solid #1a1a1a; padding: 20px; margin-bottom: 12px; animation: fadeUp 0.4s ease; transition: border-color 0.2s; }
         .order-card:hover { border-color: #2a2a2a; }
         .stat-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; text-align: center; border-left: 3px solid #39ff14; }
-        .restock-input { background: #0d0d0d; border: 1px solid #333; color: #fff; padding: 6px 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; width: 70px; outline: none; text-align: center; }
-        .restock-input:focus { border-color: #39ff14; }
-        .restock-btn { background: #39ff14; color: #000; border: none; padding: 6px 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 12px; letter-spacing: 2px; cursor: pointer; margin-left: 6px; }
-        .restock-btn:hover { background: #fff; }
         .add-product-form { background: #0d0d0d; border: 1px solid #39ff1430; padding: 28px; margin-bottom: 20px; animation: slideDown 0.3s ease; }
         .form-field { display: flex; flex-direction: column; gap: 6px; }
         .form-label { font-size: 10px; letter-spacing: 3px; color: #555; font-weight: 700; }
@@ -165,17 +169,22 @@ export default function AdminPage() {
         .btn-danger-confirm { background: #ff4444; color: #fff; border: none; padding: 6px 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 11px; letter-spacing: 2px; cursor: pointer; }
         .btn-cancel-sm { background: transparent; color: #555; border: 1px solid #222; padding: 6px 10px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 1px; cursor: pointer; }
         .btn-cancel-sm:hover { color: #aaa; }
-        .stock-row-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #1a1a1a; transition: background 0.15s; }
+        .stock-row-item { padding: 16px 20px; border-bottom: 1px solid #1a1a1a; transition: background 0.15s; }
         .stock-row-item:last-child { border-bottom: none; }
-        .stock-row-item:hover { background: #0d0d0d; }
+        .stock-row-item:hover { background: #0a0a0a; }
         .add-product-toggle { background: transparent; border: 1px dashed #39ff1440; color: #39ff14; padding: 12px 24px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 13px; letter-spacing: 3px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
         .add-product-toggle:hover { background: #39ff1410; border-color: #39ff14; }
         .form-error { color: #ff4444; font-size: 12px; letter-spacing: 1px; background: #ff444410; border: 1px solid #ff444430; padding: 10px 14px; margin-top: 4px; }
         .image-preview { width: 48px; height: 48px; object-fit: cover; background: #0d0d0d; border: 1px solid #1a1a1a; }
-        .type-badge { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: 2px; padding: 2px 7px; border-radius: 0; }
+        .type-badge { display: inline-block; font-size: 9px; font-weight: 900; letter-spacing: 2px; padding: 2px 7px; }
         .type-badge.player { background: #00aaff22; border: 1px solid #00aaff44; color: #00aaff; }
         .type-badge.fan { background: #39ff1422; border: 1px solid #39ff1444; color: #39ff14; }
         .type-badge.retro { background: #ff990022; border: 1px solid #ff990044; color: #ff9900; }
+        .size-stock-input { width: 100%; background: #111; border: 1px solid #333; color: #fff; padding: 4px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; text-align: center; outline: none; }
+        .size-stock-input:focus { border-color: #39ff14; }
+        .size-add-btn { width: 100%; background: #39ff14; color: #000; border: none; padding: 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 11px; cursor: pointer; margin-top: 3px; letter-spacing: 1px; }
+        .size-add-btn:hover { background: #fff; }
+        .size-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       `}</style>
 
       {/* NAV */}
@@ -279,23 +288,17 @@ export default function AdminPage() {
         {/* STOCK TAB */}
         {activeTab === "stock" && (
           <div>
-            {/* ADD PRODUCT TOGGLE */}
             <div style={{ marginBottom: 20 }}>
-              <button
-                className="add-product-toggle"
-                onClick={() => { setShowAddForm(f => !f); setFormData(EMPTY_FORM); setFormError(""); }}
-              >
+              <button className="add-product-toggle" onClick={() => { setShowAddForm(f => !f); setFormData(EMPTY_FORM); setFormError(""); }}>
                 {showAddForm ? "✕ CANCEL" : "+ ADD NEW PRODUCT"}
               </button>
             </div>
 
-            {/* ADD PRODUCT FORM */}
             {showAddForm && (
               <div className="add-product-form">
                 <div style={{ fontSize: 11, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW PRODUCT</div>
-
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {/* Name + Type */}
+
                   <div className="form-grid">
                     <div className="form-field">
                       <label className="form-label">PRODUCT NAME *</label>
@@ -304,22 +307,15 @@ export default function AdminPage() {
                     <div className="form-field">
                       <label className="form-label">TYPE OF JERSEY *</label>
                       <select className="form-select" value={formData.type} onChange={e => handleFormChange("type", e.target.value)}>
-                        {JERSEY_TYPES.map(t => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
+                        {JERSEY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
                   </div>
 
-                  {/* Price + Stock + Status */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+                  <div className="form-grid">
                     <div className="form-field">
                       <label className="form-label">PRICE (₹) *</label>
                       <input className="form-input" type="number" min="0" placeholder="799" value={formData.price} onChange={e => handleFormChange("price", e.target.value)} />
-                    </div>
-                    <div className="form-field">
-                      <label className="form-label">STOCK QTY *</label>
-                      <input className="form-input" type="number" min="0" placeholder="50" value={formData.stock} onChange={e => handleFormChange("stock", e.target.value)} />
                     </div>
                     <div className="form-field">
                       <label className="form-label">STATUS</label>
@@ -331,26 +327,38 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  {/* Image URL */}
+                  <div>
+                    <label className="form-label" style={{ marginBottom: 10, display: "block" }}>STOCK PER SIZE *</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                      {SIZES.map(size => (
+                        <div key={size} style={{ background: "#111", border: "1px solid #1e1e1e", padding: 10, textAlign: "center" }}>
+                          <div style={{ fontSize: 11, letterSpacing: 2, color: "#39ff14", fontWeight: 900, marginBottom: 6 }}>{size}</div>
+                          <input
+                            className="form-input"
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={formData.size_stock[size]}
+                            onChange={e => handleSizeStockChange(size, e.target.value)}
+                            style={{ padding: "6px", textAlign: "center" }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="form-field">
                     <label className="form-label">IMAGE URL</label>
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                       <input className="form-input" type="url" placeholder="https://..." value={formData.image_url} onChange={e => handleFormChange("image_url", e.target.value)} />
                       {formData.image_url && (
-                        <img
-                          src={formData.image_url}
-                          alt="preview"
-                          className="image-preview"
-                          onError={e => { e.target.style.display = "none"; }}
-                        />
+                        <img src={formData.image_url} alt="preview" className="image-preview" onError={e => { e.target.style.display = "none"; }} />
                       )}
                     </div>
                   </div>
 
-                  {/* Error */}
                   {formError && <div className="form-error">{formError}</div>}
 
-                  {/* Actions */}
                   <div style={{ display: "flex", gap: 12, paddingTop: 4 }}>
                     <button className="btn-primary" onClick={handleAddProduct} disabled={formSaving}>
                       {formSaving ? "ADDING..." : "✓ ADD PRODUCT"}
@@ -363,7 +371,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* PRODUCT LIST */}
             <div style={{ background: "#111", border: "1px solid #1a1a1a" }}>
               {products.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "80px 0", color: "#333" }}>
@@ -379,8 +386,8 @@ export default function AdminPage() {
                     confirmDeleteId={confirmDeleteId}
                     setConfirmDeleteId={setConfirmDeleteId}
                     onDelete={handleDeleteProduct}
-                    onUpdate={(id, newStock) => {
-                      setProducts(prev => prev.map(x => x.id === id ? { ...x, stock: newStock } : x));
+                    onUpdate={(id, newSizeStock) => {
+                      setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock } : x));
                     }}
                   />
                 ))
@@ -393,80 +400,50 @@ export default function AdminPage() {
   );
 }
 
-// Separate component to handle per-row state
 function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
-  const [restockVal, setRestockVal] = useState("");
+  const [sizeInputs, setSizeInputs] = useState({});
   const [saving, setSaving] = useState(false);
 
-  const handleRestock = async () => {
-    const qty = parseInt(restockVal);
+  const handleSizeRestock = async (size) => {
+    const qty = parseInt(sizeInputs[size] || 0);
     if (!qty || qty <= 0) return;
     setSaving(true);
-    const newStock = p.stock + qty;
-    await supabase.from("products").update({ stock: newStock }).eq("id", p.id);
-    onUpdate(p.id, newStock);
-    setRestockVal("");
+    const newSizeStock = { ...(p.size_stock || {}), [size]: (p.size_stock?.[size] || 0) + qty };
+    await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", p.id);
+    onUpdate(p.id, newSizeStock);
+    setSizeInputs(prev => ({ ...prev, [size]: "" }));
     setSaving(false);
   };
 
   const isConfirming = confirmDeleteId === p.id;
   const isDeleting = deletingId === p.id;
-
-  const typeClass =
-    p.type === "PLAYER VERSION" ? "player" :
-    p.type === "FAN VERSION" ? "fan" :
-    p.type === "RETRO" ? "retro" : "";
+  const typeClass = p.type === "PLAYER VERSION" ? "player" : p.type === "FAN VERSION" ? "fan" : p.type === "RETRO" ? "retro" : "";
+  const totalStock = SIZES.reduce((s, sz) => s + (p.size_stock?.[sz] || 0), 0);
 
   return (
     <div className="stock-row-item">
-      {/* Left: image + info */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-        {p.image_url
-          ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
-          : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
-        }
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-            <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
-            {p.type && (
-              <span className={`type-badge ${typeClass}`}>{p.type}</span>
-            )}
+      {/* Top: image + name + delete */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+          {p.image_url
+            ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
+            : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
+          }
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+              <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
+              {p.type && <span className={`type-badge ${typeClass}`}>{p.type}</span>}
+              <span style={{ fontSize: 12, fontWeight: 900, color: totalStock === 0 ? "#ff4444" : totalStock <= 10 ? "#ff9900" : "#39ff14" }}>
+                TOTAL: {totalStock}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right: restock + stock count + delete */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-        {/* Restock */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <input
-            className="restock-input"
-            type="number"
-            min="1"
-            placeholder="Qty"
-            value={restockVal}
-            onChange={e => setRestockVal(e.target.value)}
-          />
-          <button className="restock-btn" onClick={handleRestock} disabled={saving}>
-            {saving ? "..." : "+ ADD"}
-          </button>
-        </div>
-
-        {/* Stock count */}
-        <div style={{ textAlign: "right", minWidth: 60 }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: p.stock === 0 ? "#ff4444" : p.stock <= 5 ? "#ff9900" : "#39ff14" }}>
-            {p.stock}
-          </div>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: "#555" }}>IN STOCK</div>
-        </div>
-
-        {/* Delete */}
-        <div style={{ minWidth: 100, display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+        <div style={{ flexShrink: 0, marginLeft: 12 }}>
           {!isConfirming ? (
-            <button className="btn-danger" onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
-              🗑 REMOVE
-            </button>
+            <button className="btn-danger" onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>🗑 REMOVE</button>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
               <div style={{ fontSize: 10, letterSpacing: 1, color: "#ff4444", marginBottom: 2 }}>CONFIRM DELETE?</div>
@@ -479,6 +456,30 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             </div>
           )}
         </div>
+      </div>
+
+      {/* Per-size stock grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+        {SIZES.map(size => {
+          const stock = p.size_stock?.[size] || 0;
+          return (
+            <div key={size} style={{ background: "#0d0d0d", border: `1px solid ${stock === 0 ? "#ff444440" : "#1a1a1a"}`, padding: "8px", textAlign: "center" }}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: "#555", marginBottom: 4, fontWeight: 700 }}>{size}</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: stock === 0 ? "#ff4444" : stock <= 2 ? "#ff9900" : "#39ff14", marginBottom: 6 }}>{stock}</div>
+              <input
+                type="number"
+                min="1"
+                placeholder="+"
+                value={sizeInputs[size] || ""}
+                onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))}
+                className="size-stock-input"
+              />
+              <button className="size-add-btn" onClick={() => handleSizeRestock(size)} disabled={saving}>
+                {saving ? "..." : "+ADD"}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
