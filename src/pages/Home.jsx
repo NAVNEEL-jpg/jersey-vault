@@ -96,10 +96,21 @@ export default function JerseyStore() {
     setTimeout(() => setHeroVisible(true), 100);
   }, []);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data?.session) setUser(data.session.user);
-    });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+useEffect(() => {
+  supabase.auth.getSession().then(async ({ data }) => {
+    if (data?.session) {
+      setUser(data.session.user);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.session.user.id)
+        .single();
+      if (profile?.role === "admin") setIsAdmin(true);
+    }
+  });
+}, []);
   }, []);
   useEffect(() => {
   localStorage.setItem("cart", JSON.stringify(cart));
@@ -232,6 +243,13 @@ export default function JerseyStore() {
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#39ff14"; }}>
               🛒 CART {cartCount > 0 && <span style={{ background: "#39ff14", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 900 }}>{cartCount}</span>}
             </button>
+            {isAdmin && (
+  <button
+    onClick={() => navigate("/admin")}
+    style={{ background: "#39ff14", border: "none", color: "#000", padding: "8px 16px", cursor: "pointer", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 2 }}>
+    ⚙ ADMIN
+  </button>
+)}
           </div>
         </nav>
 
