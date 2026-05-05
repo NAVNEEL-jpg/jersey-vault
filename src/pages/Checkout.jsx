@@ -19,7 +19,6 @@ export default function CheckoutPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data?.session) {
         setUser(data.session.user);
-        // Pre-fill name and email if logged in
         setForm(p => ({
           ...p,
           name: data.session.user.user_metadata?.full_name || "",
@@ -32,11 +31,10 @@ export default function CheckoutPage() {
 
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [payMethod, setPayMethod] = useState("upi");
+  const [payMethod, setPayMethod] = useState("razorpay");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", pincode: "" });
   const [errors, setErrors] = useState({});
-  const [upiId, setUpiId] = useState("");
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const shipping = subtotal >= 1999 ? 0 : 99;
@@ -55,61 +53,56 @@ export default function CheckoutPage() {
     return Object.keys(e).length === 0;
   };
 
-const handleNext = async () => {
-    // Add this guardrail at the very top
+  const handleNext = async () => {
     if (cart.length === 0) {
       alert("Your cart is empty! Please add items before checking out.");
-      navigate("/"); // Redirect them back to the store
-      return; 
+      navigate("/");
+      return;
     }
 
     if (step === 0) {
       if (!validate()) return;
-      // Auto sign up guest users
-if (!user && password.length >= 6) {
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-    email: form.email,
-    password,
-    options: { data: { full_name: form.name, phone: form.phone } }
-  });
+      if (!user && password.length >= 6) {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: form.email,
+          password,
+          options: { data: { full_name: form.name, phone: form.phone } }
+        });
 
-  // Also save to profiles table so it shows up with login info
-  if (!signUpError && signUpData?.user) {
-    await supabase.from("profiles").upsert({
-      id: signUpData.user.id,
-      full_name: form.name,
-      email: form.email,
-      phone: form.phone,
-    });
-  }
-}
+        if (!signUpError && signUpData?.user) {
+          await supabase.from("profiles").upsert({
+            id: signUpData.user.id,
+            full_name: form.name,
+            email: form.email,
+            phone: form.phone,
+          });
+        }
+      }
     }
     setStep(s => s + 1);
   };
 
-  // ✅ Decrement stock in Supabase for each cart item
-const decrementStock = async () => {
-  for (const item of cart) {
-    const { data: product } = await supabase
-      .from("products")
-      .select("size_stock")
-      .eq("id", item.id)
-      .single();
-    
-    if (product?.size_stock) {
-      const newSizeStock = { ...product.size_stock };
-      newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
-      await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", item.id);
+  const decrementStock = async () => {
+    for (const item of cart) {
+      const { data: product } = await supabase
+        .from("products")
+        .select("size_stock")
+        .eq("id", item.id)
+        .single();
+
+      if (product?.size_stock) {
+        const newSizeStock = { ...product.size_stock };
+        newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
+        await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", item.id);
+      }
     }
-  }
-};
+  };
 
   const handlePlace = async () => {
-  // Ensure email is always set — use logged-in user's email as fallback
-  const customerEmail = form.email || user?.email || "";
-  
-  if (payMethod === "cod") {
-    setLoading(true);
+    const customerEmail = form.email || user?.email || "";
+
+    if (payMethod === "cod") {
+      setLoading(true);
       const order = {
         id: "JV" + Math.floor(100000 + Math.random() * 900000),
         items: cart,
@@ -118,30 +111,29 @@ const decrementStock = async () => {
         customer: { name: form.name, email: form.email, phone: form.phone },
         payMethod: "COD",
       };
-      // ✅ Decrement stock before navigating
       await decrementStock();
       await supabase.from("orders").insert({
-  id: order.id,
-  customer_name: form.name,
-  customer_email: customerEmail,
-  customer_phone: form.phone,
-  address: form.address,
-  city: form.city,
-  state: form.state,
-  pincode: form.pincode,
-  items: cart,
-  subtotal,
-  shipping,
-  total,
-  pay_method: "COD",
-  status: "pending",
-});
+        id: order.id,
+        customer_name: form.name,
+        customer_email: customerEmail,
+        customer_phone: form.phone,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        pincode: form.pincode,
+        items: cart,
+        subtotal,
+        shipping,
+        total,
+        pay_method: "COD",
+        status: "pending",
+      });
 
-localStorage.setItem("latestOrder", JSON.stringify(order));
+      localStorage.setItem("latestOrder", JSON.stringify(order));
       setLoading(false);
       navigate("/success");
     } else {
-      // For Razorpay — pass decrementStock as callback after payment success
+      // Razorpay handles UPI / Card / Net Banking inside its own modal
       initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user);
     }
   };
@@ -252,11 +244,20 @@ localStorage.setItem("latestOrder", JSON.stringify(order));
           {step === 1 && (
             <div style={{ animation: "fadeUp 0.4s ease" }}>
               <h2 style={{ fontSize: 28, fontWeight: 900, fontStyle: "italic", marginBottom: 24 }}><span style={{ color: "#39ff14" }}>/ </span>PAYMENT METHOD</h2>
+
               {[
-                { id: "upi", icon: "📲", label: "UPI", sub: "PhonePe, GPay, Paytm" },
-                { id: "card", icon: "💳", label: "CREDIT / DEBIT CARD", sub: "Visa, Mastercard, RuPay" },
-                { id: "netbanking", icon: "🏦", label: "NET BANKING", sub: "All major banks supported" },
-                { id: "cod", icon: "💵", label: "CASH ON DELIVERY", sub: "Pay when you receive" },
+                {
+                  id: "razorpay",
+                  icon: "💳",
+                  label: "PAY ONLINE",
+                  sub: "UPI, Credit/Debit Card, Net Banking & more — choose inside Razorpay",
+                },
+                {
+                  id: "cod",
+                  icon: "💵",
+                  label: "CASH ON DELIVERY",
+                  sub: "Pay when you receive your order",
+                },
               ].map(p => (
                 <div key={p.id} className={`pay-card ${payMethod === p.id ? "active" : ""}`} onClick={() => setPayMethod(p.id)}>
                   <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${payMethod === p.id ? "#39ff14" : "#333"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -270,24 +271,17 @@ localStorage.setItem("latestOrder", JSON.stringify(order));
                   {payMethod === p.id && <div style={{ marginLeft: "auto", color: "#39ff14", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>}
                 </div>
               ))}
-              {payMethod === "upi" && (
-                <div style={{ marginTop: 8 }}>
-                  <div className="label">UPI ID</div>
-                  <input className="field" placeholder="yourname@upi" value={upiId} onChange={e => setUpiId(e.target.value)} />
+
+              {/* Info banner when Razorpay is selected */}
+              {payMethod === "razorpay" && (
+                <div style={{ background: "#39ff1408", border: "1px solid #39ff1430", padding: "12px 16px", marginTop: 4, marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>ℹ️</span>
+                  <span style={{ fontSize: 12, color: "#39ff14", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
+                    You'll choose UPI, Card, or Net Banking on the next screen inside the secure Razorpay window.
+                  </span>
                 </div>
               )}
-              {payMethod === "card" && (
-                <div style={{ marginTop: 8, display: "grid", gap: 12 }}>
-                  <div>
-                    <div className="label">CARD NUMBER</div>
-                    <input className="field" placeholder="1234 5678 9012 3456" maxLength={19} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div><div className="label">EXPIRY</div><input className="field" placeholder="MM / YY" /></div>
-                    <div><div className="label">CVV</div><input className="field" placeholder="•••" maxLength={3} type="password" /></div>
-                  </div>
-                </div>
-              )}
+
               <button className="next-btn" onClick={handleNext}>REVIEW ORDER →</button>
               <button className="back-btn" onClick={() => setStep(0)}>← BACK</button>
             </div>
@@ -307,7 +301,7 @@ localStorage.setItem("latestOrder", JSON.stringify(order));
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>PAYMENT VIA</div>
                 <div style={{ fontWeight: 900, fontSize: 16, color: "#39ff14" }}>
-                  {{ upi: "📲 UPI", card: "💳 CARD", netbanking: "🏦 NET BANKING", cod: "💵 CASH ON DELIVERY" }[payMethod]}
+                  {{ razorpay: "💳 ONLINE PAYMENT (Razorpay)", cod: "💵 CASH ON DELIVERY" }[payMethod]}
                 </div>
               </div>
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20 }}>
