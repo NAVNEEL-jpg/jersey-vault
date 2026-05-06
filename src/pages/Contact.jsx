@@ -113,7 +113,7 @@ export default function Contact() {
 
         {/* INSTAGRAM CARD */}
         <a
-          href="https://instagram.com/the_jerseyvault"
+          href="https://instagram.com/the_jerseyvault.in"
           target="_blank"
           rel="noopener noreferrer"
           className="contact-card ig"
