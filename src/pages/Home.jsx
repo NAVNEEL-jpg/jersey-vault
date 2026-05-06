@@ -366,7 +366,7 @@ export default function JerseyStore() {
             />
             <button
               onClick={() => setCartOpen(true)}
-              style={{ background: "transparent", border: "1px solid #39ff14", color: "#39ff14", padding: "8px 12px", cursor: "pointer", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 2, display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s", flexShrink: 0 }}
+              style={{ background: "transparent", border: "1px solid #39ff14", color: "#39ff14", padding: "8px 12px", cursor: "pointer", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 2, display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s", flexShrink: 0, minWidth: 52, width: 52, justifyContent: "center", }}
               onMouseEnter={e => { e.currentTarget.style.background = "#39ff14"; e.currentTarget.style.color = "#000"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#39ff14"; }}
             >
