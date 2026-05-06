@@ -359,6 +359,7 @@ export default function JerseyStore() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <input
               className="search-input"
+              style={{ flexShrink: 1, minWidth: 0 }}
               placeholder="SEARCH..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
