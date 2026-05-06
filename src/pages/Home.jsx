@@ -345,7 +345,7 @@ export default function JerseyStore() {
         )}
 
         {/* NAVBAR */}
-        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 16px 0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60, animation: "slideDown 0.5s ease" }}>
+        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 16px 0 8px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60, animation: "slideDown 0.5s ease" }}>
           <div className="logo-wrap">
             <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
             <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
