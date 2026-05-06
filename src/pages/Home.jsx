@@ -317,20 +317,24 @@ export default function JerseyStore() {
           .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
           /* FIX 7: Mobile cart panel */
-          @media(max-width:768px) {
-            .hamburger { display:flex; }
-            .desktop-nav { display:none; }
-            .cart-panel { width:100%; border-left:none; }
-            .search-input { width:120px; font-size:13px; }
-            .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
-            .modal-img { height:180px; }
-            .modal-img-placeholder { height:180px; }
-            .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
-          }
-          @media(max-width:480px) {
-            .search-input { width:90px; font-size:12px; padding:8px 10px; }
-            .stat-cell { padding:14px 0; }
-          }
+          /* Replace the existing mobile search-input rule */
+@media(max-width:768px) {
+  .hamburger { display:flex; }
+  .desktop-nav { display:none; }
+  .cart-panel { width:100%; border-left:none; }
+  
+  /* KEY FIX: constrain search on mobile */
+  .search-input { width:90px; font-size:12px; padding:8px 8px; min-width:0; }
+  
+  .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
+  .modal-img { height:180px; }
+  .modal-img-placeholder { height:180px; }
+  .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
+}
+@media(max-width:480px) {
+  .search-input { width:70px; font-size:11px; padding:6px 8px; }
+  .stat-cell { padding:14px 0; }
+}
         `}</style>
 
         {/* TOAST */}
