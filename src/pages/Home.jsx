@@ -275,12 +275,12 @@ export default function JerseyStore() {
           .checkout-btn { background:linear-gradient(90deg,#39ff14,#00ff88); color:#000; border:none; width:calc(100% - 32px); margin:16px; padding:16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:16px; letter-spacing:3px; cursor:pointer; animation:glow 2s infinite; }
           .checkout-btn:hover { background:#fff; }
 
-          .search-input { background:#111; border:1px solid #2a2a2a; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s; }
-          .search-input:focus { border-color:#39ff14; }
-          .search-input::placeholder { color:#555; }
+         .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s, box-shadow 0.2s; }
+         .search-input:focus { border-color:#39ff14; box-shadow: 0 0 0 2px rgba(57,255,20,0.15); }
+         .search-input::placeholder { color:#888; letter-spacing:2px; }
 
           .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-          .logo-img { width:44px; height:44px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.1) contrast(1.05); display:block; }
+          .logo-img { width:54px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.2) contrast(1.1) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
           .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
@@ -342,9 +342,9 @@ export default function JerseyStore() {
         )}
 
         {/* NAVBAR */}
-        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
+       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 16px 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
   {/* LEFT: Logo */}
-  <div className="logo-wrap" style={{ flexShrink: 0 }}>
+<div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
     <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
     <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
   </div>
