@@ -128,7 +128,7 @@ export default function CheckoutPage() {
         pay_method: "COD",
         status: "pending",
       });
-await supabase.functions.invoke("send-order-email", {
+await supabase.functions.invoke("smooth-worker", {
   body: {
     customerName: form.name,
     customerEmail: customerEmail,

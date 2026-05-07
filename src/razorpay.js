@@ -39,7 +39,7 @@ export const initiatePayment = (amount, name, email, phone, cart, navigate, decr
       });
 
       if (decrementStock) await decrementStock();
-await supabase.functions.invoke("send-order-email", {
+await supabase.functions.invoke("smooth-worker", {
   body: {
     customerName: name,
     customerEmail: customerEmail,
