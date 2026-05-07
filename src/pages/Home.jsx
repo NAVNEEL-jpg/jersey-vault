@@ -431,7 +431,7 @@ export default function JerseyStore() {
 
           <h1 style={{
             lineHeight: 0.9,
-            animation: "fadeUp 0.6s ease 0.3s both, breathe 5s ease-in-out 1s infinite",
+            animation: "fadeUp 0.6s ease 0.3s both, breathe 3s ease-in-out 1s infinite",
             position: "relative",
             display: "inline-block",
             zIndex: 1,
@@ -439,7 +439,7 @@ export default function JerseyStore() {
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
               <CartoonFlameText text="WEAR YOUR" />
             </span>
-            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(40px,8vw,100px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>
+            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>
               LEGEND
             </span>
           </h1>
