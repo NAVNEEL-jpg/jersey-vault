@@ -39,7 +39,24 @@ export const initiatePayment = (amount, name, email, phone, cart, navigate, decr
       });
 
       if (decrementStock) await decrementStock();
-
+await supabase.functions.invoke("send-order-email", {
+  body: {
+    customerName: name,
+    customerEmail: customerEmail,
+    orderId: response.razorpay_payment_id,
+    date: new Date().toLocaleDateString(),
+    items: cart,
+    subtotal,
+    shipping,
+    total: amount,
+    address: form.address,
+    city: form.city,
+    state: form.state,
+    pincode: form.pincode,
+    phone,
+    payMethod: "Online Payment",
+  },
+});
       localStorage.setItem("latestOrder", JSON.stringify(order));
       navigate("/success");
     },

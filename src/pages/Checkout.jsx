@@ -128,7 +128,24 @@ export default function CheckoutPage() {
         pay_method: "COD",
         status: "pending",
       });
-
+await supabase.functions.invoke("send-order-email", {
+  body: {
+    customerName: form.name,
+    customerEmail: customerEmail,
+    orderId: order.id,
+    date: order.date,
+    items: cart,
+    subtotal,
+    shipping,
+    total,
+    address: form.address,
+    city: form.city,
+    state: form.state,
+    pincode: form.pincode,
+    phone: form.phone,
+    payMethod: "Cash on Delivery",
+  },
+});
       localStorage.setItem("latestOrder", JSON.stringify(order));
       setLoading(false);
       navigate("/success");
