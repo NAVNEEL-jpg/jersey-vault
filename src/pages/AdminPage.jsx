@@ -156,7 +156,6 @@ export default function AdminPage() {
         .form-select { background: #111; border: 1px solid #1e1e1e; color: #fff; padding: 10px 14px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1px; outline: none; cursor: pointer; width: 100%; transition: border-color 0.2s; }
         .form-select:focus { border-color: #39ff14; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media(max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
         .btn-primary { background: #39ff14; color: #000; border: none; padding: 12px 28px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 14px; letter-spacing: 3px; cursor: pointer; transition: background 0.2s, transform 0.1s; }
         .btn-primary:hover { background: #fff; }
         .btn-primary:active { transform: scale(0.98); }
@@ -185,6 +184,109 @@ export default function AdminPage() {
         .size-add-btn { width: 100%; background: #39ff14; color: #000; border: none; padding: 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 11px; cursor: pointer; margin-top: 3px; letter-spacing: 1px; }
         .size-add-btn:hover { background: #fff; }
         .size-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ─── MOBILE RESPONSIVE ──────────────────────────────────── */
+
+        /* Nav: hide secondary label on small screens */
+        @media (max-width: 480px) {
+          .admin-nav-label { display: none; }
+          .admin-nav-store-btn { padding: 6px 10px !important; font-size: 11px !important; }
+          .tab-btn { padding: 14px 16px; font-size: 13px; letter-spacing: 2px; }
+          .admin-badge { display: none; }
+        }
+
+        /* Stats grid: 2-col on mobile instead of 4 */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        @media (max-width: 500px) {
+          .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+          .stat-card { padding: 16px 12px; }
+          .stat-card .stat-value { font-size: 28px !important; }
+          .stat-card .stat-label { font-size: 9px !important; letter-spacing: 2px !important; }
+        }
+
+        /* Order card: stack info + status control on mobile */
+        .order-card-inner {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .order-status-block { text-align: right; }
+        @media (max-width: 600px) {
+          .order-card { padding: 14px; }
+          .order-card-inner { flex-direction: column; }
+          .order-status-block {
+            text-align: left;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #1a1a1a;
+            flex-wrap: wrap;
+          }
+          .order-status-block .status-label { display: none; }
+          .order-total { font-size: 22px !important; margin-bottom: 0 !important; }
+          .status-select { flex: 1; min-width: 120px; font-size: 14px; padding: 8px 10px; }
+        }
+
+        /* Add product form grid → single col on mobile */
+        @media (max-width: 600px) {
+          .form-grid { grid-template-columns: 1fr; }
+          .add-product-form { padding: 18px; }
+          .form-actions { flex-direction: column; }
+          .form-actions .btn-primary,
+          .form-actions .btn-ghost { width: 100%; text-align: center; padding: 14px; }
+        }
+
+        /* Size stock grid: 3-col on mobile (instead of 6) */
+        .size-grid-add {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 8px;
+        }
+        .size-grid-stock {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 8px;
+        }
+        @media (max-width: 540px) {
+          .size-grid-add  { grid-template-columns: repeat(3, 1fr); }
+          .size-grid-stock { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Stock row: keep delete button accessible on narrow screens */
+        .stock-row-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+        @media (max-width: 480px) {
+          .stock-row-item { padding: 12px; }
+          .stock-row-top { align-items: flex-start; gap: 8px; }
+          .stock-product-name { font-size: 14px !important; }
+          .btn-danger, .btn-danger-confirm { font-size: 10px; padding: 5px 10px; }
+        }
+
+        /* Image URL row: stack on very narrow */
+        .image-url-row { display: flex; gap: 10px; align-items: center; }
+        @media (max-width: 400px) {
+          .image-url-row { flex-direction: column; align-items: flex-start; }
+          .image-preview { width: 40px; height: 40px; }
+        }
+
+        /* Main content padding */
+        .admin-content { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+        @media (max-width: 480px) {
+          .admin-content { padding: 20px 12px; }
+        }
       `}</style>
 
       {/* NAV */}
@@ -192,35 +294,35 @@ export default function AdminPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 28, height: 28, background: "#39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#000" }}>J</div>
           <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
-          <span style={{ background: "#39ff1420", border: "1px solid #39ff1440", color: "#39ff14", fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", marginLeft: 8 }}>ADMIN</span>
+          <span className="admin-badge" style={{ background: "#39ff1420", border: "1px solid #39ff1440", color: "#39ff14", fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", marginLeft: 8 }}>ADMIN</span>
         </div>
         <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <span style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>ADMIN PANEL</span>
-          <button onClick={() => navigate("/")} style={{ background: "transparent", border: "1px solid #222", color: "#555", padding: "6px 16px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 2, cursor: "pointer" }}>
+          <span className="admin-nav-label" style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>ADMIN PANEL</span>
+          <button className="admin-nav-store-btn" onClick={() => navigate("/")} style={{ background: "transparent", border: "1px solid #222", color: "#555", padding: "6px 16px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 2, cursor: "pointer" }}>
             ← STORE
           </button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
+      <div className="admin-content">
 
         {/* STATS */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px,1fr))", gap: 16, marginBottom: 32 }}>
+        <div className="stats-grid">
           <div className="stat-card">
-            <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL ORDERS</div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{orders.length}</div>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL ORDERS</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{orders.length}</div>
           </div>
           <div className="stat-card">
-            <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>PENDING</div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: "#ff9900" }}>{pendingCount}</div>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>PENDING</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#ff9900" }}>{pendingCount}</div>
           </div>
           <div className="stat-card">
-            <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>DELIVERED</div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{deliveredCount}</div>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>DELIVERED</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{deliveredCount}</div>
           </div>
           <div className="stat-card">
-            <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL REVENUE</div>
-            <div style={{ fontSize: 36, fontWeight: 900, color: "#fff" }}>₹{totalRevenue.toLocaleString()}</div>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL REVENUE</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#fff" }}>₹{totalRevenue.toLocaleString()}</div>
           </div>
         </div>
 
@@ -241,9 +343,9 @@ export default function AdminPage() {
             ) : (
               orders.map(order => (
                 <div key={order.id} className="order-card">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                  <div className="order-card-inner">
                     <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
                         <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: 2 }}>{order.id}</span>
                         <span style={{ background: statusColors[order.status] + "22", border: `1px solid ${statusColors[order.status]}44`, color: statusColors[order.status], fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px" }}>
                           {order.status?.toUpperCase()}
@@ -258,9 +360,9 @@ export default function AdminPage() {
                         <div>🕐 {new Date(order.created_at).toLocaleString()}</div>
                       </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", marginBottom: 12 }}>₹{order.total?.toLocaleString()}</div>
-                      <div style={{ fontSize: 11, letterSpacing: 2, color: "#555", marginBottom: 6 }}>UPDATE STATUS</div>
+                    <div className="order-status-block">
+                      <div className="order-total" style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", marginBottom: 12 }}>₹{order.total?.toLocaleString()}</div>
+                      <div className="status-label" style={{ fontSize: 11, letterSpacing: 2, color: "#555", marginBottom: 6 }}>UPDATE STATUS</div>
                       <select className="status-select" value={order.status} disabled={updatingId === order.id} onChange={e => updateStatus(order.id, e.target.value)}>
                         {statusOptions.map(s => (
                           <option key={s} value={s}>{s.toUpperCase()}</option>
@@ -315,7 +417,7 @@ export default function AdminPage() {
                   <div className="form-grid">
                     <div className="form-field">
                       <label className="form-label">PRICE (₹) *</label>
-                      <input className="form-input" type="number" min="0" placeholder="799" value={formData.price} onChange={e => handleFormChange("price", e.target.value)} />
+                      <input className="form-input" type="number" min="0" placeholder="799" value={formData.price} onChange={e => handleFormChange("price", e.target.value)} inputMode="numeric" />
                     </div>
                     <div className="form-field">
                       <label className="form-label">STATUS</label>
@@ -329,7 +431,7 @@ export default function AdminPage() {
 
                   <div>
                     <label className="form-label" style={{ marginBottom: 10, display: "block" }}>STOCK PER SIZE *</label>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+                    <div className="size-grid-add">
                       {SIZES.map(size => (
                         <div key={size} style={{ background: "#111", border: "1px solid #1e1e1e", padding: 10, textAlign: "center" }}>
                           <div style={{ fontSize: 11, letterSpacing: 2, color: "#39ff14", fontWeight: 900, marginBottom: 6 }}>{size}</div>
@@ -341,6 +443,7 @@ export default function AdminPage() {
                             value={formData.size_stock[size]}
                             onChange={e => handleSizeStockChange(size, e.target.value)}
                             style={{ padding: "6px", textAlign: "center" }}
+                            inputMode="numeric"
                           />
                         </div>
                       ))}
@@ -349,7 +452,7 @@ export default function AdminPage() {
 
                   <div className="form-field">
                     <label className="form-label">IMAGE URL</label>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <div className="image-url-row">
                       <input className="form-input" type="url" placeholder="https://..." value={formData.image_url} onChange={e => handleFormChange("image_url", e.target.value)} />
                       {formData.image_url && (
                         <img src={formData.image_url} alt="preview" className="image-preview" onError={e => { e.target.style.display = "none"; }} />
@@ -359,7 +462,7 @@ export default function AdminPage() {
 
                   {formError && <div className="form-error">{formError}</div>}
 
-                  <div style={{ display: "flex", gap: 12, paddingTop: 4 }}>
+                  <div className="form-actions" style={{ display: "flex", gap: 12, paddingTop: 4 }}>
                     <button className="btn-primary" onClick={handleAddProduct} disabled={formSaving}>
                       {formSaving ? "ADDING..." : "✓ ADD PRODUCT"}
                     </button>
@@ -423,14 +526,14 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   return (
     <div className="stock-row-item">
       {/* Top: image + name + delete */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+      <div className="stock-row-top">
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
           {p.image_url
             ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
             : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
           }
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+            <div className="stock-product-name" style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
               <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
               {p.type && <span className={`type-badge ${typeClass}`}>{p.type}</span>}
@@ -459,7 +562,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
       </div>
 
       {/* Per-size stock grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+      <div className="size-grid-stock">
         {SIZES.map(size => {
           const stock = p.size_stock?.[size] || 0;
           return (
@@ -473,6 +576,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
                 value={sizeInputs[size] || ""}
                 onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))}
                 className="size-stock-input"
+                inputMode="numeric"
               />
               <button className="size-add-btn" onClick={() => handleSizeRestock(size)} disabled={saving}>
                 {saving ? "..." : "+ADD"}
