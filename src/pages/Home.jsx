@@ -237,7 +237,7 @@ export default function JerseyStore() {
           @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
           @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
           @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
-          @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.025);} }
+          @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
           @keyframes mobileMenuSlide { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
 
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
