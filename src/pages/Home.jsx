@@ -195,13 +195,9 @@ export default function JerseyStore() {
 
   // FIX 11: Gate checkout if no user
   const handleCheckout = useCallback(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
-    if (!user) {
-      navigate("/auth?redirect=/checkout");
-    } else {
-      navigate("/checkout");
-    }
-  }, [cart, user, navigate]);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  navigate("/checkout");
+}, [cart, navigate]);
 
   const navLinks = (
     <>
@@ -678,7 +674,7 @@ export default function JerseyStore() {
                   </div>
                   {/* FIX 11: Gated checkout */}
                   <button className="checkout-btn" onClick={handleCheckout}>
-                    {user ? "PROCEED TO CHECKOUT →" : "LOGIN TO CHECKOUT →"}
+                    PROCEED TO CHECKOUT →
                   </button>
                   <p style={{ textAlign: "center", color: "#333", fontSize: 11, letterSpacing: 2, paddingBottom: 16 }}>FREE SHIPPING ON ORDERS ABOVE ₹1999</p>
                 </div>
