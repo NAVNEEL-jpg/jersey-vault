@@ -280,7 +280,7 @@ export default function JerseyStore() {
          .search-input::placeholder { color:#888; letter-spacing:2px; }
 
           .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-          .logo-img { width:64px; height:644px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.2) contrast(1.1) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; }
+          .logo-img { width:64px; height:64px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.2) contrast(1.1) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
           .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
