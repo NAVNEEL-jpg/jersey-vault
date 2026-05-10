@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Use Service Role Key for backend to bypass RLS (Super Admin power)
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseServiceKey);

@@ -38,6 +38,11 @@ export default function AdminPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
+  const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, totalProducts: 0, pendingOrders: 0 });
+  const [usersList, setUsersList] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -53,14 +58,49 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authed) return;
-    supabase.from("orders").select("*").order("created_at", { ascending: false })
-      .then(({ data }) => { if (data) setOrders(data); });
-  }, [authed]);
+    const fetchAdminData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-  useEffect(() => {
-    if (!authed) return;
-    supabase.from("products").select("*").order("name")
-      .then(({ data }) => { if (data) setProducts(data); });
+      // Fetch Stats
+      fetch("http://localhost:5000/api/admin/stats", {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => { if (data && !data.message) setStats(data); setLoadingStats(false); })
+      .catch(err => { console.error("Stats Fetch Error:", err); setLoadingStats(false); });
+
+      // Fetch Users
+      setLoadingUsers(true);
+      fetch("http://localhost:5000/api/admin/users", {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Server error");
+        return res.json();
+      })
+      .then(data => { 
+        if (Array.isArray(data)) {
+          setUsersList(data); 
+        } else {
+          setUsersList([]);
+        }
+        setLoadingUsers(false); 
+      })
+      .catch(err => {
+        console.error("Users Fetch Error:", err);
+        setUsersList([]);
+        setLoadingUsers(false);
+      });
+
+      // Fetch Orders & Products
+      supabase.from("orders").select("*").order("created_at", { ascending: false })
+        .then(({ data }) => { if (data) setOrders(data); });
+      supabase.from("products").select("*").order("name")
+        .then(({ data }) => { if (data) setProducts(data); });
+    };
+
+    fetchAdminData();
   }, [authed]);
 
   const updateStatus = async (orderId, newStatus) => {
@@ -321,30 +361,31 @@ export default function AdminPage() {
 
       <div className="admin-content">
 
-        {/* STATS */}
+        {/* STATS SUMMARY (Always visible or in Dashboard) */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL ORDERS</div>
-            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{orders.length}</div>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>REVENUE</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#fff" }}>₹{stats.totalRevenue.toLocaleString()}</div>
           </div>
           <div className="stat-card">
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>ORDERS</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{stats.totalOrders}</div>
+          </div>
+          <div className="stat-card" style={{ borderLeftColor: "#ff9900" }}>
             <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>PENDING</div>
-            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#ff9900" }}>{pendingCount}</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#ff9900" }}>{stats.pendingOrders}</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>DELIVERED</div>
-            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#39ff14" }}>{deliveredCount}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>TOTAL REVENUE</div>
-            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#fff" }}>₹{totalRevenue.toLocaleString()}</div>
+          <div className="stat-card" style={{ borderLeftColor: "#00aaff" }}>
+            <div className="stat-label" style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>USERS</div>
+            <div className="stat-value" style={{ fontSize: 36, fontWeight: 900, color: "#00aaff" }}>{stats.totalUsers}</div>
           </div>
         </div>
 
         {/* TABS */}
-        <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28 }}>
-          <button className={`tab-btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📦 ORDERS ({orders.length})</button>
-          <button className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📊 STOCK ({products.length})</button>
+        <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28, overflowX: "auto" }}>
+          <button className={`tab-btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📦 ORDERS</button>
+          <button className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📊 PRODUCTS</button>
+          <button className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 USERS</button>
         </div>
 
         {/* ORDERS TAB */}
@@ -384,6 +425,19 @@ export default function AdminPage() {
                         ))}
                       </select>
                       {updatingId === order.id && <div style={{ color: "#39ff14", fontSize: 11, marginTop: 6, letterSpacing: 2 }}>UPDATING...</div>}
+                      
+                      <div style={{ marginTop: 12 }}>
+                        <a 
+                          href={`http://localhost:5000/api/admin/orders/${order.id}/invoice`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <button className="btn-ghost" style={{ width: "100%", padding: "8px", fontSize: "11px", borderColor: "#39ff1444", color: "#39ff14" }}>
+                            📄 DOWNLOAD INVOICE
+                          </button>
+                        </a>
+                      </div>
                     </div>
                   </div>
                   <div style={{ marginTop: 16, borderTop: "1px solid #1a1a1a", paddingTop: 12 }}>
@@ -511,6 +565,47 @@ export default function AdminPage() {
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {/* USERS TAB */}
+        {activeTab === "users" && (
+          <div style={{ background: "#111", border: "1px solid #1a1a1a", animation: "fadeUp 0.4s ease" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+                <thead>
+                  <tr style={{ background: "#0d0d0d", borderBottom: "1px solid #1a1a1a" }}>
+                    <th style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, letterSpacing: 2, color: "#555" }}>USER / EMAIL</th>
+                    <th style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, letterSpacing: 2, color: "#555" }}>PHONE</th>
+                    <th style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, letterSpacing: 2, color: "#555" }}>ROLE</th>
+                    <th style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, letterSpacing: 2, color: "#555" }}>JOINED</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(usersList) && usersList.map(u => (
+                    <tr key={u.id} style={{ borderBottom: "1px solid #0d0d0d" }}>
+                      <td style={{ padding: "16px 20px" }}>
+                        <div style={{ fontWeight: 900, fontSize: 15 }}>{u.full_name || "Guest"}</div>
+                        <div style={{ fontSize: 12, color: "#555" }}>{u.email}</div>
+                      </td>
+                      <td style={{ padding: "16px 20px", fontSize: 14, color: "#aaa" }}>{u.phone || "N/A"}</td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", background: u.role === "admin" ? "#39ff1415" : "#222", color: u.role === "admin" ? "#39ff14" : "#555", border: `1px solid ${u.role === "admin" ? "#39ff1444" : "#333"}` }}>
+                          {u.role?.toUpperCase() || "USER"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "16px 20px", fontSize: 12, color: "#555" }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {usersList.length === 0 && !loadingUsers && (
+              <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>NO USERS FOUND</div>
+            )}
+            {loadingUsers && (
+              <div style={{ textAlign: "center", padding: "40px", color: "#39ff14" }}>LOADING...</div>
+            )}
           </div>
         )}
       </div>

@@ -509,9 +509,15 @@ useEffect(() => {
               </div>
               <div className="status-pill">
                 <div className="dot" />
-                <div className="pill-text">Paid</div>
+                <div className="pill-text">{order?.payMethod?.includes('COD') ? "COD Advance Paid" : "Paid"}</div>
               </div>
             </div>
+            {order?.payMethod?.includes('COD') && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                <span style={{ color: "var(--muted)" }}>To pay on delivery:</span>
+                <span style={{ color: "var(--green)", fontWeight: 900 }}>₹{(order.total - order.amountPaid).toLocaleString()}</span>
+              </div>
+            )}
           </div>
 
           {/* Item */}
@@ -560,6 +566,16 @@ useEffect(() => {
           <Link to="/tracking" className="btn-primary">
             TRACK YOUR ORDER →
           </Link>
+          <a 
+            href={`http://localhost:5000/api/orders/${order?.id}/invoice`} 
+            target="_blank" 
+            rel="noreferrer" 
+            style={{ textDecoration: "none", width: "100%" }}
+          >
+            <button className="btn-secondary" style={{ color: "var(--green)", borderColor: "var(--green-border)" }}>
+              📄 DOWNLOAD INVOICE
+            </button>
+          </a>
           <Link to="/" className="btn-secondary">
             Continue Shopping
           </Link>
