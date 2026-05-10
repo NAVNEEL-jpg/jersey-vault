@@ -23,7 +23,7 @@ export const initiatePayment = (amountToPayNow, name, email, phone, cart, naviga
         payMethod: isCOD ? "COD (Shipping Paid Online)" : "Online",
       };
 
-      await supabase.from("orders").insert({
+      const { error: insertError } = await supabase.from("orders").insert({
         id: response.razorpay_payment_id,
         customer_name: name,
         customer_email: customerEmail,
@@ -36,11 +36,14 @@ export const initiatePayment = (amountToPayNow, name, email, phone, cart, naviga
         subtotal,
         shipping,
         total: fullTotal,
-        amount_paid: amountToPayNow,
         pay_method: isCOD ? "COD" : "Online",
-        cod_shipping_paid: isCOD ? true : false,
         status: "pending",
       });
+
+      if (insertError) {
+        console.error("Supabase Insert Error:", insertError);
+        alert("Payment successful, but failed to save order. Please contact support.");
+      }
 
       if (decrementStock) await decrementStock();
       

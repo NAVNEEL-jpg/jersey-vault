@@ -384,7 +384,7 @@ export default function CheckoutPage() {
                     PROCESSING...
                   </span>
                 ) : payMethod === "cod"
-                  ? `PAY ₹99 ADVANCE (COD) →`
+                  ? `PLACE ORDER (COD) — ₹${total.toLocaleString()} →`
                   : `PAY NOW — ₹${total.toLocaleString()} →`}
               </button>
               <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>

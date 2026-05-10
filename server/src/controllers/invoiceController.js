@@ -79,18 +79,19 @@ export const generateInvoice = async (req, res) => {
     doc.text('SHIPPING:', 400, summaryY + 25);
     doc.text(`₹${order.shipping || order.shipping_price || 0}`, 500, summaryY + 25);
 
-    if (order.pay_method === 'COD' || order.payment_method === 'COD' || order.payment_type === 'COD') {
+    const isCOD = order.pay_method === 'COD' || order.payment_method === 'COD' || order.payment_type === 'COD';
+    const amountPaid = isCOD ? 99 : (order.total || order.total_price || 0);
+
+    if (isCOD) {
       doc.text('COD FEE:', 400, summaryY + 40);
       doc.text(`₹${order.cod_fee || 30}`, 500, summaryY + 40);
-      if (order.cod_shipping_paid) {
-         doc.text('PAID ONLINE:', 400, summaryY + 55);
-         doc.text(`- ₹99`, 500, summaryY + 55);
-      }
+      doc.text('PAID ONLINE:', 400, summaryY + 55);
+      doc.text(`- ₹99`, 500, summaryY + 55);
     }
 
     doc.fillColor('#39ff14').fontSize(14).text('TOTAL DUE:', 350, summaryY + 75);
     const totalDue = order.total || order.total_price || 0;
-    const finalAmount = order.cod_shipping_paid ? (totalDue - 99) : totalDue;
+    const finalAmount = isCOD ? (totalDue - 99) : 0;
     doc.text(`₹${finalAmount}`, 500, summaryY + 75);
 
     // Footer
