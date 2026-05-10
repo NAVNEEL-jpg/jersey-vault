@@ -99,58 +99,60 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = async () => {
-    const customerEmail = form.email || user?.email || "";
+    const isCOD = payMethod === "cod";
+    const amountToPayNow = isCOD ? shipping : total;
 
-    if (payMethod === "cod") {
-      setLoading(true);
-      const order = {
-        id: "JV" + Math.floor(100000 + Math.random() * 900000),
-        items: cart,
-        total: total,
-        date: new Date().toLocaleDateString(),
-        customer: { name: form.name, email: form.email, phone: form.phone },
-        payMethod: "COD",
-      };
-      await decrementStock();
-      await supabase.from("orders").insert({
-        id: order.id,
-        customer_name: form.name,
-        customer_email: customerEmail,
-        customer_phone: form.phone,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        pincode: form.pincode,
-        items: cart,
-        subtotal,
-        shipping,
-        total,
-        pay_method: "COD",
-        status: "pending",
-      });
-await supabase.functions.invoke("smooth-worker", {
-  body: {
-    customerName: form.name,
-    customerEmail: customerEmail,
-    orderId: order.id,
-    date: order.date,
-    items: cart,
-    subtotal,
-    shipping,
-    total,
-    address: form.address,
-    city: form.city,
-    state: form.state,
-    pincode: form.pincode,
-    phone: form.phone,
-    payMethod: "Cash on Delivery",
-  },
-});
-      localStorage.setItem("latestOrder", JSON.stringify(order));
-      setLoading(false);
-      navigate("/success");
+    if (isCOD && shipping === 0) {
+       setLoading(true);
+       const customerEmail = form.email || user?.email || "";
+       const order = {
+         id: "JV" + Math.floor(100000 + Math.random() * 900000),
+         items: cart,
+         total: total,
+         date: new Date().toLocaleDateString(),
+         customer: { name: form.name, email: form.email, phone: form.phone },
+         payMethod: "COD",
+       };
+       await decrementStock();
+       await supabase.from("orders").insert({
+         id: order.id,
+         customer_name: form.name,
+         customer_email: customerEmail,
+         customer_phone: form.phone,
+         address: form.address,
+         city: form.city,
+         state: form.state,
+         pincode: form.pincode,
+         items: cart,
+         subtotal,
+         shipping,
+         total,
+         pay_method: "COD",
+         status: "pending",
+       });
+       await supabase.functions.invoke("smooth-worker", {
+         body: {
+           customerName: form.name,
+           customerEmail: customerEmail,
+           orderId: order.id,
+           date: order.date,
+           items: cart,
+           subtotal,
+           shipping,
+           total,
+           address: form.address,
+           city: form.city,
+           state: form.state,
+           pincode: form.pincode,
+           phone: form.phone,
+           payMethod: "Cash on Delivery",
+         },
+       });
+       localStorage.setItem("latestOrder", JSON.stringify(order));
+       setLoading(false);
+       navigate("/success");
     } else {
-      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user);
+       initiatePayment(amountToPayNow, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, isCOD);
     }
   };
 

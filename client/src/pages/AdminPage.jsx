@@ -113,12 +113,27 @@ export default function AdminPage() {
 
   const handleDeleteProduct = async (id) => {
     setDeletingId(id);
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (!error) {
-      setProducts(prev => prev.filter(p => p.id !== id));
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        setProducts(prev => prev.filter(p => p.id !== id));
+      } else {
+        const errorData = await response.json();
+        alert("Failed to delete: " + (errorData.message || response.statusText));
+      }
+    } catch (err) {
+      alert("Error connecting to server. Make sure the backend is running!");
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
     }
-    setDeletingId(null);
-    setConfirmDeleteId(null);
   };
 
   if (checking) return (
