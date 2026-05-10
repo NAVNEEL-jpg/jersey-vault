@@ -99,60 +99,11 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = async () => {
-    const isCOD = payMethod === "cod";
-    const amountToPayNow = isCOD ? shipping : total;
-
-    if (isCOD && shipping === 0) {
-       setLoading(true);
-       const customerEmail = form.email || user?.email || "";
-       const order = {
-         id: "JV" + Math.floor(100000 + Math.random() * 900000),
-         items: cart,
-         total: total,
-         date: new Date().toLocaleDateString(),
-         customer: { name: form.name, email: form.email, phone: form.phone },
-         payMethod: "COD",
-       };
-       await decrementStock();
-       await supabase.from("orders").insert({
-         id: order.id,
-         customer_name: form.name,
-         customer_email: customerEmail,
-         customer_phone: form.phone,
-         address: form.address,
-         city: form.city,
-         state: form.state,
-         pincode: form.pincode,
-         items: cart,
-         subtotal,
-         shipping,
-         total,
-         pay_method: "COD",
-         status: "pending",
-       });
-       await supabase.functions.invoke("smooth-worker", {
-         body: {
-           customerName: form.name,
-           customerEmail: customerEmail,
-           orderId: order.id,
-           date: order.date,
-           items: cart,
-           subtotal,
-           shipping,
-           total,
-           address: form.address,
-           city: form.city,
-           state: form.state,
-           pincode: form.pincode,
-           phone: form.phone,
-           payMethod: "Cash on Delivery",
-         },
-       });
-       localStorage.setItem("latestOrder", JSON.stringify(order));
-       setLoading(false);
-       navigate("/success");
+    if (payMethod === "cod") {
+      // For COD, pay ₹99 upfront via Razorpay
+      initiatePayment(99, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true);
     } else {
-       initiatePayment(amountToPayNow, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, isCOD);
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false);
     }
   };
 
@@ -315,12 +266,12 @@ export default function CheckoutPage() {
                       inputMode={f.key === "phone" || f.key === "pincode" ? "numeric" : f.key === "email" ? "email" : "text"}
                       autoComplete={
                         f.key === "name" ? "name" :
-                        f.key === "phone" ? "tel" :
-                        f.key === "email" ? "email" :
-                        f.key === "address" ? "street-address" :
-                        f.key === "city" ? "address-level2" :
-                        f.key === "state" ? "address-level1" :
-                        f.key === "pincode" ? "postal-code" : "off"
+                          f.key === "phone" ? "tel" :
+                            f.key === "email" ? "email" :
+                              f.key === "address" ? "street-address" :
+                                f.key === "city" ? "address-level2" :
+                                  f.key === "state" ? "address-level1" :
+                                    f.key === "pincode" ? "postal-code" : "off"
                       }
                     />
                     {errors[f.key] && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors[f.key]}</div>}
@@ -433,7 +384,7 @@ export default function CheckoutPage() {
                     PROCESSING...
                   </span>
                 ) : payMethod === "cod"
-                  ? `PLACE ORDER (COD) — ₹${total.toLocaleString()} →`
+                  ? `PAY ₹99 ADVANCE (COD) →`
                   : `PAY NOW — ₹${total.toLocaleString()} →`}
               </button>
               <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>

@@ -109,8 +109,22 @@ export default function JerseyStore() {
       .from("products")
       .select("*")
       .eq("status", "active")
-      .then(({ data, error }) => {
-        if (!error && data) setJerseys(data);
+      .then(async ({ data, error }) => {
+        if (!error && data) {
+          setJerseys(data);
+          
+          // Validate existing cart items against fresh data
+          if (cart.length > 0) {
+            const validIds = new Set(data.map(p => p.id));
+            const filteredCart = cart.filter(item => validIds.has(item.id));
+            
+            if (filteredCart.length !== cart.length) {
+              setCart(filteredCart);
+              localStorage.setItem("cart", JSON.stringify(filteredCart));
+              showToast("Some unavailable items were removed from your cart.");
+            }
+          }
+        }
         setLoadingProducts(false);
       });
   }, []);

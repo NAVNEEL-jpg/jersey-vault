@@ -10,8 +10,21 @@ export default function AuthPage() {
   const [success, setSuccess] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", countryCode: "+91", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
+
+  const COUNTRY_CODES = [
+    { code: "+91", country: "IN" },
+    { code: "+1", country: "US" },
+    { code: "+44", country: "UK" },
+    { code: "+971", country: "UAE" },
+    { code: "+61", country: "AU" },
+    { code: "+1", country: "CA" },
+    { code: "+49", country: "DE" },
+    { code: "+33", country: "FR" },
+    { code: "+81", country: "JP" },
+    { code: "+65", country: "SG" },
+  ];
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
 
@@ -27,7 +40,7 @@ export default function AuthPage() {
     const e = {};
     if (mode === "signup" && !form.name.trim()) e.name = "Name is required";
     if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email";
-    if (mode === "signup" && !/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
+    if (mode === "signup" && !/^\d{7,15}$/.test(form.phone)) e.phone = "Enter valid phone number";
     if (form.password.length < 6) e.password = "Minimum 6 characters";
     if (mode === "signup" && form.password !== form.confirm) e.confirm = "Passwords don't match";
     setErrors(e);
@@ -49,7 +62,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.name, phone: form.phone } }
+        options: { data: { full_name: form.name, phone: `${form.countryCode}${form.phone}` } }
       });
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
       setLoading(false);
@@ -77,7 +90,7 @@ export default function AuthPage() {
     if (error) setErrors({ email: error.message });
   };
 
-  const switchMode = (m) => { setMode(m); setErrors({}); setSuccess(false); setForm({ name: "", email: "", phone: "", password: "", confirm: "" }); };
+  const switchMode = (m) => { setMode(m); setErrors({}); setSuccess(false); setForm({ name: "", email: "", phone: "", countryCode: "+91", password: "", confirm: "" }); };
 
   const strength = form.password.length === 0 ? 0 : form.password.length < 6 ? 1 : form.password.length < 10 ? 2 : /[A-Z]/.test(form.password) && /[0-9]/.test(form.password) ? 4 : 3;
   const strengthLabels = ["", "WEAK", "FAIR", "STRONG", "VERY STRONG"];
@@ -231,8 +244,16 @@ export default function AuthPage() {
                 {mode === "signup" && (
                   <div>
                     <label className="label">PHONE NUMBER</label>
-                    <div className="field-wrap">
-                      <input className={`field ${errors.phone ? "err" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => update("phone", e.target.value)} maxLength={10} />
+                    <div className="field-wrap" style={{ display: "flex", gap: 8 }}>
+                      <select 
+                        className="field" 
+                        style={{ width: "90px", padding: "14px 8px", fontSize: "14px" }}
+                        value={form.countryCode}
+                        onChange={e => update("countryCode", e.target.value)}
+                      >
+                        {COUNTRY_CODES.map(c => <option key={c.code + c.country} value={c.code}>{c.country} {c.code}</option>)}
+                      </select>
+                      <input className={`field ${errors.phone ? "err" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => update("phone", e.target.value)} inputMode="numeric" />
                     </div>
                     {errors.phone && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.phone}</div>}
                   </div>

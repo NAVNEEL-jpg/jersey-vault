@@ -8,7 +8,7 @@ export const initiatePayment = (amountToPayNow, name, email, phone, cart, naviga
 
   const options = {
     key: process.env.REACT_APP_RAZORPAY_KEY,
-    amount: amountToPayNow * 100,
+    amount: Math.round(amountToPayNow) * 100,
     currency: "INR",
     name: "JerseyVault",
     description: isCOD ? "Shipping Charge (COD)" : "Jersey Purchase",
@@ -38,6 +38,7 @@ export const initiatePayment = (amountToPayNow, name, email, phone, cart, naviga
         total: fullTotal,
         amount_paid: amountToPayNow,
         pay_method: isCOD ? "COD" : "Online",
+        cod_shipping_paid: isCOD ? true : false,
         status: "pending",
       });
 
