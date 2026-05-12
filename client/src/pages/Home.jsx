@@ -10,7 +10,12 @@ const LOGO_SRC = logo;
 function useStableId(prefix) {
   const ref = useRef(null);
   if (!ref.current) {
-    ref.current = `${prefix}-${Math.random().toString(36).slice(2)}`;
+    // Deterministic: no Math.random(), just hash the prefix string
+    let hash = 0;
+    for (let i = 0; i < prefix.length; i++) {
+      hash = (hash * 31 + prefix.charCodeAt(i)) & 0xfffffff;
+    }
+    ref.current = `${prefix}-${hash.toString(36)}`;
   }
   return ref.current;
 }
