@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import { memo } from "react";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from '../supabase';
 import logo from "../assets/jerseyvault-logo.jpeg";
@@ -16,7 +15,7 @@ function useStableId(prefix) {
   return ref.current;
 }
 
-const CartoonFlameText = memo(function CartoonFlameText({ text }) {
+function CartoonFlameText({ text }) {
   const id = useStableId("flameclip-" + text.replace(/\s/g, ""));
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
@@ -72,7 +71,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
       </svg>
     </div>
   );
-});
+}
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -169,7 +168,7 @@ export default function JerseyStore() {
       j.type === activeFilter;
     return matchesSearch && matchesFilter;
   }), [jerseys, searchQuery, activeFilter]);
- 
+
   // FIX 9: useCallback for stable handlers
   const addToCart = useCallback((jersey, size) => {
     setCart(prev => {
