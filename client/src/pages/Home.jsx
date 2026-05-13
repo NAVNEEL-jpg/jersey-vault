@@ -1,22 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from '../supabase';
 import logo from "../assets/jerseyvault-logo.jpeg";
 import heroBg from "../assets/hero-bg.jpeg";
 
 const LOGO_SRC = logo;
 
-// FIX 4: Stable ID — computed once outside render, no Math.random() on each render
-function useStableId(prefix) {
-  const ref = useRef(null);
-  if (!ref.current) {
-    ref.current = `${prefix}-${Math.random().toString(36).slice(2)}`;
-  }
-  return ref.current;
-}
+// FINAL FIX: Fully static hardcoded SVG IDs — no Math.random(), no useRef, no remount issues.
+// There is only ever one CartoonFlameText on the page so IDs will never collide.
+const FLAME_ID = "jv-flame";
 
-function CartoonFlameText({ text }) {
-  const id = useStableId("flameclip-" + text.replace(/\s/g, ""));
+const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   return (
     <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
       <span style={{
@@ -36,31 +30,31 @@ function CartoonFlameText({ text }) {
         aria-hidden="true"
       >
         <defs>
-          <clipPath id={id}>
+          <clipPath id={FLAME_ID}>
             <text x="0" y="90%" fontSize="clamp(40px,8vw,100px)" fontWeight="900" fontStyle="italic" fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
           </clipPath>
-          <linearGradient id={`${id}-g1`} x1="0" y1="1" x2="0" y2="0">
+          <linearGradient id={`${FLAME_ID}-g1`} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%" stopColor="#FFE000" /><stop offset="22%" stopColor="#FF8C00" />
             <stop offset="48%" stopColor="#E8000A" /><stop offset="78%" stopColor="#B20000" />
             <stop offset="100%" stopColor="#3a0000" />
           </linearGradient>
-          <linearGradient id={`${id}-g2`} x1="0" y1="1" x2="0" y2="0">
+          <linearGradient id={`${FLAME_ID}-g2`} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%" stopColor="#FFF176" /><stop offset="18%" stopColor="#FFB300" />
             <stop offset="45%" stopColor="#FF3D00" /><stop offset="75%" stopColor="#C62828" />
             <stop offset="100%" stopColor="#4a0000" />
           </linearGradient>
-          <filter id={`${id}-wobble`} x="-20%" y="-40%" width="140%" height="180%">
+          <filter id={`${FLAME_ID}-wobble`} x="-20%" y="-40%" width="140%" height="180%">
             <feTurbulence type="turbulence" baseFrequency="0.025 0.06" numOctaves="3" seed="2" result="noise">
               <animate attributeName="baseFrequency" values="0.025 0.06; 0.03 0.08; 0.022 0.055; 0.025 0.06" dur="0.9s" repeatCount="indefinite" />
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
-        <g clipPath={`url(#${id})`} filter={`url(#${id}-wobble)`}>
-          <rect x="-5%" y="-80%" width="110%" height="200%" fill={`url(#${id}-g1)`}>
+        <g clipPath={`url(#${FLAME_ID})`} filter={`url(#${FLAME_ID}-wobble)`}>
+          <rect x="-5%" y="-80%" width="110%" height="200%" fill={`url(#${FLAME_ID}-g1)`}>
             <animateTransform attributeName="transform" type="translate" values="0,0; 2,-6; -3,-10; 1,-5; 0,0" dur="0.55s" repeatCount="indefinite" />
           </rect>
-          <rect x="-5%" y="-60%" width="110%" height="180%" fill={`url(#${id}-g2)`} opacity="0.65">
+          <rect x="-5%" y="-60%" width="110%" height="180%" fill={`url(#${FLAME_ID}-g2)`} opacity="0.65">
             <animateTransform attributeName="transform" type="translate" values="0,0; -2,-8; 3,-4; -1,-9; 0,0" dur="0.42s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.65; 0.85; 0.5; 0.75; 0.65" dur="0.7s" repeatCount="indefinite" />
           </rect>
@@ -71,7 +65,24 @@ function CartoonFlameText({ text }) {
       </svg>
     </div>
   );
-}
+});
+
+// FIX 2: memo() prevents ticker animation from restarting when auth state changes
+const Ticker = memo(function Ticker() {
+  return (
+    <div style={{ background: "#39ff14", color: "#000", padding: "8px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
+      <div style={{ display: "inline-flex", animation: "marquee 18s linear infinite" }}>
+        {[...Array(2)].map((_, i) => (
+          <span key={i} style={{ display: "inline-flex" }}>
+            {["FREE SHIPPING ABOVE ₹1999", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
+              <span key={t} style={{ fontWeight: 900, letterSpacing: 3, fontSize: 12, padding: "0 40px" }}>★ {t}</span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -88,7 +99,7 @@ export default function JerseyStore() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [cart, setCart] = useState(() => {
     try {
-      const saved = localStorage.getItem("cart");
+      const saved = sessionStorage.getItem("cart");
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -96,14 +107,21 @@ export default function JerseyStore() {
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
   const [toast, setToast] = useState(null);
-  const [heroVisible, setHeroVisible] = useState(false);
+
+  // FIX: If returning from auth page, skip entrance animation entirely —
+  // start heroVisible=true so nothing fades/slides in on remount after login.
+  const [heroVisible, setHeroVisible] = useState(() => {
+    try { return sessionStorage.getItem("jv_visited") === "1"; }
+    catch { return false; }
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [isAdmin, setIsAdmin] = useState(false);
-  // FIX 1 & 2: Hamburger menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Products
   useEffect(() => {
     supabase
       .from("products")
@@ -112,15 +130,12 @@ export default function JerseyStore() {
       .then(async ({ data, error }) => {
         if (!error && data) {
           setJerseys(data);
-          
-          // Validate existing cart items against fresh data
           if (cart.length > 0) {
             const validIds = new Set(data.map(p => p.id));
             const filteredCart = cart.filter(item => validIds.has(item.id));
-            
             if (filteredCart.length !== cart.length) {
               setCart(filteredCart);
-              localStorage.setItem("cart", JSON.stringify(filteredCart));
+              sessionStorage.setItem("cart", JSON.stringify(filteredCart));
               showToast("Some unavailable items were removed from your cart.");
             }
           }
@@ -129,47 +144,56 @@ export default function JerseyStore() {
       });
   }, []);
 
+  // Mark visited so post-login remount skips entrance animation
   useEffect(() => {
-    setTimeout(() => setHeroVisible(true), 100);
+    try { sessionStorage.setItem("jv_visited", "1"); } catch {}
   }, []);
 
+  // Only animate on the very first visit; heroVisible already true on return visits
+  useEffect(() => {
+    if (!heroVisible) {
+      const t = setTimeout(() => setHeroVisible(true), 100);
+      return () => clearTimeout(t);
+    }
+  }, []); // eslint-disable-line
+
+  // FIX 4: Auth effect — both setUser + setIsAdmin called together so only ONE re-render fires
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data?.session) {
-        setUser(data.session.user);
+        const sessionUser = data.session.user;
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", data.session.user.id)
+          .eq("id", sessionUser.id)
           .single();
+        // React 18 auto-batches these — one re-render instead of two
+        setUser(sessionUser);
         if (profile?.role === "admin") setIsAdmin(true);
       }
     });
   }, []);
 
+  // Persist cart
   useEffect(() => {
     try {
-      localStorage.setItem("cart", JSON.stringify(cart));
+      sessionStorage.setItem("cart", JSON.stringify(cart));
     } catch {}
   }, [cart]);
 
-  // Close mobile menu on route change / resize
+  // Close mobile menu on resize
   useEffect(() => {
     const onResize = () => { if (window.innerWidth > 768) setMobileMenuOpen(false); };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // FIX 9: useMemo for filtered list
   const filtered = useMemo(() => jerseys.filter(j => {
     const matchesSearch = j.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      activeFilter === "ALL" ||
-      j.type === activeFilter;
+    const matchesFilter = activeFilter === "ALL" || j.type === activeFilter;
     return matchesSearch && matchesFilter;
   }), [jerseys, searchQuery, activeFilter]);
 
-  // FIX 9: useCallback for stable handlers
   const addToCart = useCallback((jersey, size) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === jersey.id && i.size === size);
@@ -197,8 +221,9 @@ export default function JerseyStore() {
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setIsAdmin(false);
     setCart([]);
-    try { localStorage.removeItem("cart"); } catch {}
+    try { sessionStorage.removeItem("cart"); } catch {}
     setMobileMenuOpen(false);
   }, []);
 
@@ -207,16 +232,22 @@ export default function JerseyStore() {
     setMobileMenuOpen(false);
   }, []);
 
-  // FIX 11: Gate checkout if no user
   const handleCheckout = useCallback(() => {
-  localStorage.setItem("cart", JSON.stringify(cart));
-  navigate("/checkout");
-}, [cart, navigate]);
+    sessionStorage.setItem("cart", JSON.stringify(cart));
+    navigate("/checkout");
+  }, [cart, navigate]);
 
-  const navLinks = (
+  const getSizeStock = (jersey, size) => {
+    if (!jersey?.size_stock || typeof jersey.size_stock !== "object") return 0;
+    return jersey.size_stock[size] ?? 0;
+  };
+
+  // FIX: useMemo so nav doesn't re-render (and flash) on unrelated state changes
+  const navLinks = useMemo(() => (
     <>
       <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
       <span className="nav-link" onClick={scrollToShop}>SHOP</span>
+      <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
       <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
       <Link to="/checkout" className="nav-link" onClick={() => setMobileMenuOpen(false)}>CART</Link>
       <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
@@ -229,13 +260,7 @@ export default function JerseyStore() {
         <span className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
       )}
     </>
-  );
-
-  // FIX 5: Safe size_stock accessor
-  const getSizeStock = (jersey, size) => {
-    if (!jersey?.size_stock || typeof jersey.size_stock !== "object") return 0;
-    return jersey.size_stock[size] ?? 0;
-  };
+  ), [user, isAdmin, handleLogout, scrollToShop, navigate]);
 
   return (
     <>
@@ -257,7 +282,6 @@ export default function JerseyStore() {
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
 
-          /* CARD */
           .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
           .card:hover { transform:translateY(-6px); border-color:#39ff14; }
           .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
@@ -272,76 +296,65 @@ export default function JerseyStore() {
           .size-btn.selected { background:#39ff14; border-color:#39ff14; color:#000; }
           .size-btn:hover:not(.selected):not(:disabled) { border-color:#39ff14; color:#39ff14; }
 
-          /* FIX 8: Modal with proper padding bottom for small screens */
           .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px; }
           .modal { background:#111; border:1px solid #2a2a2a; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s ease; max-height:calc(100vh - 32px); overflow-y:auto; border-radius:2px; }
           .modal-img { width:100%; height:220px; object-fit:cover; display:block; }
           .modal-img-placeholder { width:100%; height:220px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
 
-          /* CART PANEL */
           .cart-panel { position:fixed; right:0; top:0; bottom:0; width:360px; background:#0f0f0f; border-left:1px solid #222; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.3s ease; }
           .cart-item { display:flex; gap:12px; padding:16px; border-bottom:1px solid #1a1a1a; align-items:center; }
           .cart-item-img { width:50px; height:50px; object-fit:cover; background:#0d0d0d; flex-shrink:0; }
           .checkout-btn { background:linear-gradient(90deg,#39ff14,#00ff88); color:#000; border:none; width:calc(100% - 32px); margin:16px; padding:16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:16px; letter-spacing:3px; cursor:pointer; animation:glow 2s infinite; }
           .checkout-btn:hover { background:#fff; }
 
-         .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s, box-shadow 0.2s; }
-         .search-input:focus { border-color:#39ff14; box-shadow: 0 0 0 2px rgba(57,255,20,0.15); }
-         .search-input::placeholder { color:#888; letter-spacing:2px; }
+          .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s, box-shadow 0.2s; }
+          .search-input:focus { border-color:#39ff14; box-shadow: 0 0 0 2px rgba(57,255,20,0.15); }
+          .search-input::placeholder { color:#888; letter-spacing:2px; }
 
           .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-          .logo-img { width52px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.3) contrast(1.13) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; background:transparent; }
+          .logo-img { width:52px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.3) contrast(1.13) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; background:transparent; }
           .logo-wrap { display:flex; align-items:center; gap:8px; }
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
           .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
 
-          /* FIX 6: Filter buttons scroll on small screens */
           .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
           .filter-bar::-webkit-scrollbar { display:none; }
           .filter-btn { background:transparent; color:#888; border:1px solid #333; padding:8px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
           .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
           .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
 
-          /* Hamburger */
           .hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:4px; }
           .hamburger span { display:block; width:22px; height:2px; background:#fff; transition:all 0.3s; }
           .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
           .hamburger.open span:nth-child(2) { opacity:0; }
           .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
 
-          /* Desktop nav links */
           .desktop-nav { display:flex; gap:28px; align-items:center; }
 
-          /* Mobile menu dropdown */
-          .mobile-menu { display:none; position:absolute; top:60px; left:0; right:0; background:rgba(10,10,10,0.98); border-bottom:1px solid #222; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; }
+          .mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(10,10,10,0.98); border-bottom:1px solid #222; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; }
           .mobile-menu.open { display:flex; }
           .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #1a1a1a; }
 
-          /* Stats fix */
           .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a; background:#0d0d0d; }
-          /* FIX 3: Remove borderRight from last stat cell */
           .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #1a1a1a; }
           .stat-cell:last-child { border-right:none; }
 
-          /* FIX 10: Hero mobile */
           .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
-          /* FIX 7: Mobile cart panel */
-          /* Replace the existing mobile search-input rule */
-@media(max-width:768px) {
-  .hamburger { display:flex; }
-  .desktop-nav { display:none; }
-  .cart-panel { width:100%; border-left:none; }
-  .search-input { max-width:100%; font-size:13px; padding:8px 16px; }
-  .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
-  .modal-img { height:180px; }
-  .modal-img-placeholder { height:180px; }
-  .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
-  .nav-right { gap:8px !important; }
-}
-@media(max-width:480px) {
-  .stat-cell { padding:14px 0; }
-}
+          @media(max-width:768px) {
+            .hamburger { display:flex; }
+            .desktop-nav { display:none; }
+            .cart-panel { width:100%; border-left:none; }
+            .search-input { max-width:100%; font-size:13px; padding:8px 16px; }
+            .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
+            .modal-img { height:180px; }
+            .modal-img-placeholder { height:180px; }
+            .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
+            .nav-right { gap:8px !important; }
+          }
+          @media(max-width:480px) {
+            .stat-cell { padding:14px 0; }
+          }
         `}</style>
 
         {/* TOAST */}
@@ -352,85 +365,75 @@ export default function JerseyStore() {
         )}
 
         {/* NAVBAR */}
-       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 0 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
-  {/* LEFT: Logo */}
-<div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
-    <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
-    <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
-  </div>
-
-  {/* CENTER: Search — desktop only */}
-  <div className="desktop-nav" style={{ flex: 1, justifyContent: "center", maxWidth: 520 }}>
-    <input
-      className="search-input"
-      placeholder="SEARCH..."
-      value={searchQuery}
-      onChange={e => setSearchQuery(e.target.value)}
-    />
-  </div>
-
-  {/* Desktop nav links */}
-  <div className="desktop-nav" style={{ flexShrink: 0 }}>
-    {navLinks}
-  </div>
-
-  {/* RIGHT: Cart + hamburger */}
-  <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, paddingRight: 20 }}>
-    <button
-      onClick={() => setCartOpen(true)}
-      style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 1, padding: 0, transition: "color 0.2s" }}
-      onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
-      onMouseLeave={e => e.currentTarget.style.color = "#fff"}
-    >
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-      </svg>
-      {cartCount > 0 && (
-        <span style={{ color: "#39ff14", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
-      )}
-    </button>
-    <button
-      className={`hamburger${mobileMenuOpen ? " open" : ""}`}
-      onClick={() => setMobileMenuOpen(o => !o)}
-      aria-label="Toggle menu"
-    >
-      <span /><span /><span />
-    </button>
-  </div>
-
-  {/* Mobile dropdown */}
-  <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-    <input
-      className="search-input"
-      placeholder="SEARCH..."
-      value={searchQuery}
-      onChange={e => setSearchQuery(e.target.value)}
-      style={{ marginBottom: 8 }}
-    />
-    {navLinks}
-  </div>
-</nav>
-
-        {/* TICKER */}
-        <div style={{ background: "#39ff14", color: "#000", padding: "8px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
-          <div style={{ display: "inline-flex", animation: "marquee 18s linear infinite" }}>
-            {[...Array(2)].map((_, i) => (
-              <span key={i} style={{ display: "inline-flex" }}>
-                {["FREE SHIPPING ABOVE ₹1999", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
-                  <span key={t} style={{ fontWeight: 900, letterSpacing: 3, fontSize: 12, padding: "0 40px" }}>★ {t}</span>
-                ))}
-              </span>
-            ))}
+        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 0 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
+          {/* LEFT: Logo */}
+          <div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
+            <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
+            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
           </div>
-        </div>
 
-        {/* FIX 10: Hero — mobile-friendly */}
+          {/* CENTER: Search — desktop only */}
+          <div className="desktop-nav" style={{ flex: 1, justifyContent: "center", maxWidth: 520 }}>
+            <input
+              className="search-input"
+              placeholder="SEARCH..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Desktop nav links */}
+          <div className="desktop-nav" style={{ flexShrink: 0 }}>
+            {navLinks}
+          </div>
+
+          {/* RIGHT: Cart + hamburger */}
+          <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, paddingRight: 20 }}>
+            <button
+              onClick={() => setCartOpen(true)}
+              style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 1, padding: 0, transition: "color 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
+              onMouseLeave={e => e.currentTarget.style.color = "#fff"}
+            >
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              {cartCount > 0 && (
+                <span style={{ color: "#39ff14", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
+              )}
+            </button>
+            <button
+              className={`hamburger${mobileMenuOpen ? " open" : ""}`}
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label="Toggle menu"
+            >
+              <span /><span /><span />
+            </button>
+          </div>
+
+          {/* Mobile dropdown */}
+          <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
+            <input
+              className="search-input"
+              placeholder="SEARCH..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+            {navLinks}
+          </div>
+        </nav>
+
+        {/* FIX 2: Ticker extracted as memo component — never remounts on auth change */}
+        <Ticker />
+
+        {/* HERO */}
         <section
           className="hero-section"
           style={{
             opacity: heroVisible ? 1 : 0,
-            transition: "opacity 0.8s ease",
+            transition: heroVisible ? "none" : "opacity 0.8s ease",
             backgroundImage: `url(${heroBg})`,
           }}
         >
@@ -441,15 +444,16 @@ export default function JerseyStore() {
             pointerEvents: "none"
           }} />
 
-          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both", position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
+          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
 
           <h1 style={{
             lineHeight: 0.9,
-            animation: "fadeUp 0.6s ease 0.3s both, breathe 3s ease-in-out 1s infinite",
+            animation: "breathe 3s ease-in-out 1s infinite",
             position: "relative",
             display: "inline-block",
             zIndex: 1,
           }}>
+            {/* FIX 1: CartoonFlameText is memo'd — auth re-renders won't touch it */}
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
               <CartoonFlameText text="WEAR YOUR" />
             </span>
@@ -458,20 +462,22 @@ export default function JerseyStore() {
             </span>
           </h1>
 
-          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both", position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
-          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", animation: "fadeUp 0.6s ease 0.5s both", position: "relative", zIndex: 1 }}>
+          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
+          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <button onClick={scrollToShop}
               style={{ background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
               SHOP NOW
             </button>
-            <button style={{ background: "transparent", color: "#fff", border: "1px solid #333", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, cursor: "pointer" }}>
+            <button
+              onClick={() => navigate("/teams")}
+              style={{ background: "transparent", color: "#fff", border: "1px solid #333", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, cursor: "pointer" }}>
               VIEW TEAMS
             </button>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, #39ff14, transparent)" }} />
         </section>
 
-        {/* FIX 3: Stats — last cell has no borderRight */}
+        {/* STATS */}
         <div className="stats-grid">
           {[["500+", "JERSEYS"], ["50K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
@@ -487,8 +493,6 @@ export default function JerseyStore() {
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
               <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
-
-            {/* FIX 6: Horizontally scrollable filter bar */}
             <div className="filter-bar">
               {filterButtons.map(({ key, label }) => (
                 <button
@@ -596,7 +600,7 @@ export default function JerseyStore() {
           </div>
         </footer>
 
-        {/* FIX 8: SIZE PICKER MODAL — proper padding & scroll */}
+        {/* SIZE PICKER MODAL */}
         {selectedJersey && (
           <div className="modal-bg" onClick={() => setSelectedJersey(null)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
@@ -621,7 +625,6 @@ export default function JerseyStore() {
               <div style={{ padding: "8px 24px 32px" }}>
                 <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>SELECT SIZE</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {/* FIX 5: Safe size_stock via helper */}
                   {sizes.map(s => {
                     const sizeStock = getSizeStock(selectedJersey, s);
                     const outOfStock = sizeStock === 0;
@@ -686,7 +689,6 @@ export default function JerseyStore() {
                     <span style={{ color: "#555" }}>TOTAL</span>
                     <span>₹{total.toLocaleString()}</span>
                   </div>
-                  {/* FIX 11: Gated checkout */}
                   <button className="checkout-btn" onClick={handleCheckout}>
                     PROCEED TO CHECKOUT →
                   </button>
