@@ -249,7 +249,7 @@ export default function JerseyStore() {
       <span className="nav-link" onClick={scrollToShop}>SHOP</span>
       <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
       <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
-      <Link to="/checkout" className="nav-link" onClick={() => setMobileMenuOpen(false)}>CART</Link>
+      <span className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</span>
       <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
       {user ? (
         <span className="nav-link" onClick={handleLogout}>LOGOUT</span>
