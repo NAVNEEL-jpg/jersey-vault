@@ -264,10 +264,12 @@ export default function JerseyStore() {
 
   return (
     <>
-      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
+      <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
+          /* Hard-reset all buttons inside this page so Auth.jsx styles can't bleed in */
+          #jv-root button { all: unset; box-sizing: border-box; cursor: pointer; }
           ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
           @keyframes slideDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
           @keyframes fadeUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
@@ -465,12 +467,12 @@ export default function JerseyStore() {
           <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <button onClick={scrollToShop}
-              style={{ background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
+              style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
               SHOP NOW
             </button>
             <button
               onClick={() => navigate("/teams")}
-              style={{ background: "transparent", color: "#fff", border: "1px solid #333", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, cursor: "pointer" }}>
+              style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "#fff", border: "1px solid #333", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, cursor: "pointer" }}>
               VIEW TEAMS
             </button>
           </div>
