@@ -325,9 +325,8 @@ export default function JerseyStore() {
           .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
           .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
 
-          .hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:4px; }
           .hamburger span { display:block; width:24px; height:3px; background:#fff; border-radius:2px; transition:all 0.3s; }
-          .hamburger { display:none; flex-direction:column; gap:6px; background:none; border:none; cursor:pointer; padding:6px; }
+          .hamburger { display:none; flex-direction:column; gap:12px; background:none; border:none; cursor:pointer; padding:6px; }
           .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
           .hamburger.open span:nth-child(2) { opacity:0; }
           .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
