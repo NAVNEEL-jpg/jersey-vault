@@ -290,12 +290,12 @@ export default function JerseyStore() {
           .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
           .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
-          .add-btn { background:#39ff14; color:#000; border:none; width:100%; padding:12px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
-          .add-btn:hover { background:#fff; }
+          .add-btn { background:#39ff14; color:#000; border:2px solid #39ff14 !important; width:100%; padding:12px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; box-shadow: 0 0 16px #39ff1455; }
+          .add-btn:hover { background:#000; color:#39ff14; }
 
-          .size-btn { background:transparent; border:1px solid #333; color:#888; width:44px; height:44px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
-          .size-btn.selected { background:#39ff14; border-color:#39ff14; color:#000; }
-          .size-btn:hover:not(.selected):not(:disabled) { border-color:#39ff14; color:#39ff14; }
+          .size-btn { background:transparent; border:1px solid #2a2a2a; color:#666; width:44px; height:44px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
+          .size-btn.selected { background:#39ff14; border-color:#39ff14; color:#000; box-shadow: 0 0 12px #39ff1466; }
+          .size-btn:hover:not(.selected):not(:disabled) { border-color:#39ff14; color:#39ff14; box-shadow: 0 0 8px #39ff1433; }
 
           .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px; }
           .modal { background:#111; border:1px solid #2a2a2a; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s ease; max-height:calc(100vh - 32px); overflow-y:auto; border-radius:2px; }
@@ -305,7 +305,7 @@ export default function JerseyStore() {
           .cart-panel { position:fixed; right:0; top:0; bottom:0; width:360px; background:#0f0f0f; border-left:1px solid #222; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.3s ease; }
           .cart-item { display:flex; gap:12px; padding:16px; border-bottom:1px solid #1a1a1a; align-items:center; }
           .cart-item-img { width:50px; height:50px; object-fit:cover; background:#0d0d0d; flex-shrink:0; }
-          .checkout-btn { background:linear-gradient(90deg,#39ff14,#00ff88); color:#000; border:none; width:calc(100% - 32px); margin:16px; padding:16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:16px; letter-spacing:3px; cursor:pointer; animation:glow 2s infinite; }
+          .checkout-btn { background:linear-gradient(90deg,#39ff14,#00ff88); color:#000; border:none; width:calc(100% - 32px); margin:16px; padding:16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:16px; letter-spacing:3px; cursor:pointer; animation:glow 2s infinite; box-shadow: 0 0 18px #39ff1466; border: 2px solid #39ff14 !important; }
           .checkout-btn:hover { background:#fff; }
 
           .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s, box-shadow 0.2s; }
@@ -321,8 +321,8 @@ export default function JerseyStore() {
           .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
           .filter-bar::-webkit-scrollbar { display:none; }
           .filter-btn { background:transparent; color:#888; border:1px solid #333; padding:8px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
-          .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
-          .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
+          .filter-btn:hover { border-color:#39ff14; color:#39ff14; box-shadow: 0 0 8px #39ff1433; }
+          .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; box-shadow: 0 0 12px #39ff1466; }
 
           .hamburger { display:none; flex-direction:column; justify-content:space-between; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
           .hamburger span { display:block !important; width:100%; height:3px; background:white !important; border-radius:2px; }
@@ -687,8 +687,8 @@ export default function JerseyStore() {
               {cart.length > 0 && (
                 <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", padding: "0 20px 12px", fontSize: 18, fontWeight: 900, letterSpacing: 2 }}>
-                    <span style={{ color: "#555" }}>TOTAL</span>
-                    <span>₹{total.toLocaleString()}</span>
+                    <span style={{ color: "#39ff14", fontFamily: "'Barlow Condensed',sans-serif", letterSpacing: 4, fontSize: 16, border: "1px solid #39ff1444", padding: "4px 12px", background: "#39ff1410" }}>TOTAL</span>
+                    <span style={{ color: "#fff", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 22, fontWeight: 900, letterSpacing: 2 }}>₹{total.toLocaleString()}</span>
                   </div>
                   <button className="checkout-btn" onClick={handleCheckout}>
                     PROCEED TO CHECKOUT →
