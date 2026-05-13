@@ -114,7 +114,14 @@ export default function JerseyStore() {
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
   const [toast, setToast] = useState(null);
-  const [heroVisible, setHeroVisible] = useState(false);
+
+  // FIX: If returning from auth page, skip entrance animation entirely —
+  // start heroVisible=true so nothing fades/slides in on remount after login.
+  const [heroVisible, setHeroVisible] = useState(() => {
+    try { return sessionStorage.getItem("jv_visited") === "1"; }
+    catch { return false; }
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -144,11 +151,18 @@ export default function JerseyStore() {
       });
   }, []);
 
-  // FIX 3: Cleanup timeout so heroVisible never flickers on re-render
+  // Mark visited so post-login remount skips entrance animation
   useEffect(() => {
-    const t = setTimeout(() => setHeroVisible(true), 100);
-    return () => clearTimeout(t);
+    try { sessionStorage.setItem("jv_visited", "1"); } catch {}
   }, []);
+
+  // Only animate on the very first visit; heroVisible already true on return visits
+  useEffect(() => {
+    if (!heroVisible) {
+      const t = setTimeout(() => setHeroVisible(true), 100);
+      return () => clearTimeout(t);
+    }
+  }, []); // eslint-disable-line
 
   // FIX 4: Auth effect — both setUser + setIsAdmin called together so only ONE re-render fires
   useEffect(() => {
@@ -235,7 +249,8 @@ export default function JerseyStore() {
     return jersey.size_stock[size] ?? 0;
   };
 
-  const navLinks = (
+  // FIX: useMemo so nav doesn't re-render (and flash) on unrelated state changes
+  const navLinks = useMemo(() => (
     <>
       <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
       <span className="nav-link" onClick={scrollToShop}>SHOP</span>
@@ -252,7 +267,7 @@ export default function JerseyStore() {
         <span className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
       )}
     </>
-  );
+  ), [user, isAdmin, handleLogout, scrollToShop, navigate]);
 
   return (
     <>
@@ -425,7 +440,7 @@ export default function JerseyStore() {
           className="hero-section"
           style={{
             opacity: heroVisible ? 1 : 0,
-            transition: "opacity 0.8s ease",
+            transition: heroVisible ? "none" : "opacity 0.8s ease",
             backgroundImage: `url(${heroBg})`,
           }}
         >
@@ -436,11 +451,11 @@ export default function JerseyStore() {
             pointerEvents: "none"
           }} />
 
-          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, animation: "fadeUp 0.6s ease 0.2s both", position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
+          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
 
           <h1 style={{
             lineHeight: 0.9,
-            animation: "fadeUp 0.6s ease 0.3s both, breathe 3s ease-in-out 1s infinite",
+            animation: "breathe 3s ease-in-out 1s infinite",
             position: "relative",
             display: "inline-block",
             zIndex: 1,
@@ -454,8 +469,8 @@ export default function JerseyStore() {
             </span>
           </h1>
 
-          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, animation: "fadeUp 0.6s ease 0.4s both", position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
-          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", animation: "fadeUp 0.6s ease 0.5s both", position: "relative", zIndex: 1 }}>
+          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
+          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <button onClick={scrollToShop}
               style={{ background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
               SHOP NOW
