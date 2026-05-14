@@ -625,7 +625,7 @@ export default function JerseyStore() {
               {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }}
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
-                  {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK 'n</div>}
+                  {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
                   {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
                   <div className="card-img-wrap">
                     {jersey.image_url ? (
