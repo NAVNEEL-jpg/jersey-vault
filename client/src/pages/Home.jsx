@@ -6,8 +6,6 @@ import heroBg from "../assets/hero-bg.jpeg";
 
 const LOGO_SRC = logo;
 
-// FINAL FIX: Fully static hardcoded SVG IDs — no Math.random(), no useRef, no remount issues.
-// There is only ever one CartoonFlameText on the page so IDs will never collide.
 const FLAME_ID = "jv-flame";
 
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
@@ -67,7 +65,6 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   );
 });
 
-// FIX 2: memo() prevents ticker animation from restarting when auth state changes
 const Ticker = memo(function Ticker() {
   return (
     <div style={{ background: "#39ff14", color: "#000", padding: "8px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
@@ -108,8 +105,6 @@ export default function JerseyStore() {
   const [selectedSize, setSelectedSize] = useState("M");
   const [toast, setToast] = useState(null);
 
-  // FIX: If returning from auth page, skip entrance animation entirely —
-  // start heroVisible=true so nothing fades/slides in on remount after login.
   const [heroVisible, setHeroVisible] = useState(() => {
     try { return sessionStorage.getItem("jv_visited") === "1"; }
     catch { return false; }
@@ -121,7 +116,6 @@ export default function JerseyStore() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Products
   useEffect(() => {
     supabase
       .from("products")
@@ -144,12 +138,10 @@ export default function JerseyStore() {
       });
   }, []);
 
-  // Mark visited so post-login remount skips entrance animation
   useEffect(() => {
     try { sessionStorage.setItem("jv_visited", "1"); } catch {}
   }, []);
 
-  // Only animate on the very first visit; heroVisible already true on return visits
   useEffect(() => {
     if (!heroVisible) {
       const t = setTimeout(() => setHeroVisible(true), 100);
@@ -157,7 +149,6 @@ export default function JerseyStore() {
     }
   }, []); // eslint-disable-line
 
-  // FIX 4: Auth effect — both setUser + setIsAdmin called together so only ONE re-render fires
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       if (data?.session) {
@@ -167,21 +158,18 @@ export default function JerseyStore() {
           .select("role")
           .eq("id", sessionUser.id)
           .single();
-        // React 18 auto-batches these — one re-render instead of two
         setUser(sessionUser);
         if (profile?.role === "admin") setIsAdmin(true);
       }
     });
   }, []);
 
-  // Persist cart
   useEffect(() => {
     try {
       sessionStorage.setItem("cart", JSON.stringify(cart));
     } catch {}
   }, [cart]);
 
-  // Close mobile menu on resize
   useEffect(() => {
     const onResize = () => { if (window.innerWidth > 768) setMobileMenuOpen(false); };
     window.addEventListener("resize", onResize);
@@ -242,7 +230,6 @@ export default function JerseyStore() {
     return jersey.size_stock[size] ?? 0;
   };
 
-  // FIX: useMemo so nav doesn't re-render (and flash) on unrelated state changes
   const navLinks = useMemo(() => (
     <>
       <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
@@ -266,10 +253,11 @@ export default function JerseyStore() {
     <>
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Black+Han+Sans&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
           #jv-root button:not(.hamburger) { all: unset; box-sizing: border-box; cursor: pointer; }
           ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
+
           @keyframes slideDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
           @keyframes fadeUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
           @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
@@ -279,6 +267,18 @@ export default function JerseyStore() {
           @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
           @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
           @keyframes mobileMenuSlide { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
+
+          /* ── SIZE BTN GLITCH FLICKER ── */
+          @keyframes sizePop { 0%{transform:scale(1);} 40%{transform:scale(1.18) skewX(-4deg);} 70%{transform:scale(0.96);} 100%{transform:scale(1);} }
+          @keyframes sizeGlowPulse { 0%,100%{box-shadow:0 0 0px #39ff1400, inset 0 0 0px #39ff1400;} 50%{box-shadow:0 0 18px #39ff1488, inset 0 0 8px #39ff1433;} }
+          @keyframes filterStamp { 0%{transform:scale(1.3) rotate(-2deg); opacity:0;} 60%{transform:scale(0.95) rotate(0.5deg); opacity:1;} 100%{transform:scale(1) rotate(0);} }
+          @keyframes checkoutPulse { 0%,100%{box-shadow: 0 0 0px #39ff1400, inset 0 1px 0 rgba(255,255,255,0.1);} 50%{box-shadow: 0 0 28px #39ff1477, inset 0 1px 0 rgba(255,255,255,0.1);} }
+          @keyframes cartItemSlide { from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
+          @keyframes addBtnShine {
+            0%{background-position:-200% center;}
+            100%{background-position:200% center;}
+          }
+          @keyframes scanline { 0%{transform:translateY(-100%);} 100%{transform:translateY(400%);} }
 
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
@@ -290,23 +290,336 @@ export default function JerseyStore() {
           .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
           .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
-        .add-btn { background:#39ff14; color:#000; border:2px solid #39ff14 !important; width:100%; padding:12px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:15px; font-style:italic; letter-spacing:3px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
-        .add-btn:hover { background:#000; color:#39ff14; box-shadow:0 0 16px #39ff1455; }
+          /* ── ADD TO CART / SELECT SIZE BUTTON ── */
+          .add-btn {
+            position: relative;
+            overflow: hidden;
+            background: #39ff14;
+            color: #000;
+            border: none !important;
+            width: 100%;
+            padding: 13px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            font-style: italic;
+            letter-spacing: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.22s cubic-bezier(0.23,1,0.32,1);
+            clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+          }
+          .add-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%);
+            transition: left 0.45s ease;
+            pointer-events: none;
+          }
+          .add-btn:hover::before { left: 160%; }
+          .add-btn:hover {
+            background: #000;
+            color: #39ff14;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            box-shadow: 0 0 22px #39ff1466, inset 0 0 0 1.5px #39ff14;
+            letter-spacing: 6px;
+          }
+          .add-btn:active { transform: scale(0.97); }
 
-         .size-btn { background:#39ff14; border:2px solid #39ff14; color:#000; width:48px; height:48px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; font-style:italic; cursor:pointer; transition:all 0.2s; letter-spacing:1px; }
-         .size-btn.selected { background:#39ff14; border-color:#39ff14; color:#000; }
-         .size-btn:hover:not(.selected):not(:disabled) { background:#000; color:#39ff14; border-color:#39ff14; box-shadow:0 0 12px #39ff1466; }
+          /* ── SIZE BUTTONS ── */
+          .size-btn {
+            position: relative;
+            background: transparent;
+            border: 1.5px solid #333 !important;
+            color: #666;
+            width: 52px;
+            height: 52px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 900;
+            font-style: italic;
+            cursor: pointer;
+            transition: all 0.18s cubic-bezier(0.23,1,0.32,1);
+            letter-spacing: 1px;
+            clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+          }
+          .size-btn::after {
+            content: attr(data-size);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            font-size: 9px;
+            letter-spacing: 3px;
+            color: #39ff14;
+            transition: opacity 0.15s;
+          }
+          .size-btn:hover:not(.selected):not(:disabled) {
+            border-color: #39ff14 !important;
+            color: #39ff14;
+            box-shadow: 0 0 14px #39ff1444, inset 0 0 8px #39ff1411;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            transform: translateY(-2px);
+          }
+          .size-btn.selected {
+            background: #39ff14;
+            border-color: #39ff14 !important;
+            color: #000;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            box-shadow: 0 0 20px #39ff1466, inset 0 0 10px rgba(255,255,255,0.2);
+            animation: sizeGlowPulse 1.6s ease-in-out infinite, sizePop 0.3s cubic-bezier(0.23,1,0.32,1);
+            transform: translateY(-1px) scale(1.06);
+            font-size: 15px;
+          }
 
-          .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:16px; }
-          .modal { background:#111; border:1px solid #2a2a2a; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s ease; max-height:calc(100vh - 32px); overflow-y:auto; border-radius:2px; }
+          /* ── SIZE LABEL ── */
+          .size-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 5px;
+            color: #39ff14;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+          }
+          .size-label::before, .size-label::after {
+            content: '';
+            height: 1px;
+            width: 24px;
+            background: linear-gradient(90deg, transparent, #39ff1466);
+          }
+          .size-label::after { background: linear-gradient(270deg, transparent, #39ff1466); }
+
+          /* ── FILTER BUTTONS ── */
+          .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
+          .filter-bar::-webkit-scrollbar { display:none; }
+
+          .filter-btn {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            color: #555;
+            border: 1.5px solid #252525 !important;
+            padding: 9px 18px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.23,1,0.32,1);
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
+            clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+          }
+          .filter-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #39ff1411 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+          .filter-btn:hover {
+            border-color: #39ff1466 !important;
+            color: #39ff14;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+          }
+          .filter-btn:hover::before { opacity: 1; }
+
+          .filter-btn.active {
+            background: #39ff14;
+            border-color: #39ff14 !important;
+            color: #000;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            box-shadow: 0 0 18px #39ff1455, 0 2px 0 #00000066;
+            animation: filterStamp 0.3s cubic-bezier(0.23,1,0.32,1);
+            font-size: 14px;
+          }
+          /* Small version label inside active filter */
+          .filter-btn.active::after {
+            content: '●';
+            font-size: 6px;
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            opacity: 0.6;
+          }
+
+          /* ── MODAL ── */
+          .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:16px; }
+          .modal {
+            background: #0e0e0e;
+            border: 1px solid #222;
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            animation: fadeUp 0.3s ease;
+            max-height: calc(100vh - 32px);
+            overflow-y: auto;
+            border-radius: 2px;
+            box-shadow: 0 0 60px rgba(57,255,20,0.08), 0 40px 80px rgba(0,0,0,0.8);
+          }
           .modal-img { width:100%; height:220px; object-fit:cover; display:block; }
           .modal-img-placeholder { width:100%; height:220px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
 
-          .cart-panel { position:fixed; right:0; top:0; bottom:0; width:360px; background:#0f0f0f; border-left:1px solid #222; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.3s ease; }
-          .cart-item { display:flex; gap:12px; padding:16px; border-bottom:1px solid #1a1a1a; align-items:center; }
-          .cart-item-img { width:50px; height:50px; object-fit:cover; background:#0d0d0d; flex-shrink:0; }
-          .checkout-btn { background:#39ff14; color:#000; border:2px solid #39ff14 !important; width:calc(100% - 32px); margin:16px; padding:16px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; font-style:italic; letter-spacing:3px; cursor:pointer; transition:all 0.2s; }
-          .checkout-btn:hover { background:#000; color:#39ff14; box-shadow:0 0 20px #39ff1466; }
+          /* ── CART PANEL ── */
+          .cart-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 380px;
+            background: #0a0a0a;
+            border-left: 1px solid #1e1e1e;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            animation: slideDown 0.28s cubic-bezier(0.23,1,0.32,1);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.7);
+          }
+
+          /* ── CART ITEM ── */
+          .cart-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #141414;
+            align-items: center;
+            animation: cartItemSlide 0.25s ease both;
+            transition: background 0.15s;
+          }
+          .cart-item:hover { background: #0f0f0f; }
+          .cart-item-img { width: 54px; height: 54px; object-fit: cover; background: #0d0d0d; flex-shrink: 0; border: 1px solid #1a1a1a; }
+
+          /* ── CART ITEM NAME / META ── */
+          .cart-item-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 1px;
+            color: #eee;
+            line-height: 1.1;
+          }
+          .cart-item-meta {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #444;
+            margin-top: 3px;
+            font-weight: 700;
+          }
+          .cart-item-price {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 17px;
+            font-weight: 900;
+            color: #39ff14;
+            margin-top: 5px;
+            letter-spacing: 1px;
+          }
+
+          /* ── CART SIZE/QTY TAG ── */
+          .cart-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+          }
+          .cart-tag-size {
+            background: #39ff14;
+            color: #000;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 10px;
+            letter-spacing: 2px;
+            padding: 2px 7px;
+            clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
+          }
+          .cart-tag-qty {
+            color: #555;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+          }
+
+          /* ── CHECKOUT BUTTON ── */
+          .checkout-btn {
+            position: relative;
+            overflow: hidden;
+            background: #39ff14;
+            color: #000;
+            border: none !important;
+            width: calc(100% - 32px);
+            margin: 16px;
+            padding: 18px 0;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 17px;
+            font-style: italic;
+            letter-spacing: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+            transition: all 0.25s cubic-bezier(0.23,1,0.32,1);
+            animation: checkoutPulse 2.5s ease-in-out infinite;
+          }
+          .checkout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 55%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.5) 50%, transparent 80%);
+            transition: left 0.5s ease;
+            pointer-events: none;
+          }
+          .checkout-btn:hover::before { left: 170%; }
+          .checkout-btn:hover {
+            background: #000;
+            color: #39ff14;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+            box-shadow: 0 0 32px #39ff1488, inset 0 0 0 1.5px #39ff14;
+            letter-spacing: 7px;
+            animation: none;
+          }
+          .checkout-btn:active { transform: scale(0.98); }
+
+          /* ── CART TOTAL AREA ── */
+          .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px 12px;
+          }
+          .cart-total-label {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: #444;
+            text-transform: uppercase;
+            border-left: 2px solid #39ff14;
+            padding-left: 10px;
+          }
+          .cart-total-amount {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #39ff14;
+            letter-spacing: 1px;
+            font-style: italic;
+            line-height: 1;
+          }
 
           .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; max-width:480px; flex:1; transition:border-color 0.2s, box-shadow 0.2s; }
           .search-input:focus { border-color:#39ff14; box-shadow: 0 0 0 2px rgba(57,255,20,0.15); }
@@ -318,29 +631,21 @@ export default function JerseyStore() {
           .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
           .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
 
-          .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
-          .filter-bar::-webkit-scrollbar { display:none; }
-          .filter-btn { background:transparent; color:#888; border:1px solid #333; padding:8px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
-          .filter-btn:hover { border-color:#39ff14; color:#39ff14; }
-          .filter-btn.active { background:#39ff14; border-color:#39ff14; color:#000; }
+          .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a; background:#0d0d0d; }
+          .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #1a1a1a; }
+          .stat-cell:last-child { border-right:none; }
+
+          .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
           .hamburger { display:none; flex-direction:column; justify-content:space-between; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
           .hamburger span { display:block !important; width:100%; height:3px; background:white !important; border-radius:2px; }
           .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
           .hamburger.open span:nth-child(2) { opacity:0; }
           .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
-
           .desktop-nav { display:flex; gap:28px; align-items:center; }
-
           .mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(10,10,10,0.98); border-bottom:1px solid #222; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; }
           .mobile-menu.open { display:flex; }
           .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #1a1a1a; }
-
-          .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a; background:#0d0d0d; }
-          .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #1a1a1a; }
-          .stat-cell:last-child { border-right:none; }
-
-          .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
           @media(max-width:768px) {
             .hamburger { display:flex; }
@@ -360,20 +665,18 @@ export default function JerseyStore() {
 
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "fixed", bottom: 24, right: 24, background: "#39ff14", color: "#000", padding: "14px 20px", fontWeight: 900, letterSpacing: 2, fontSize: 13, zIndex: 999, animation: "toastIn 0.3s ease", maxWidth: "calc(100vw - 48px)" }}>
+          <div style={{ position: "fixed", bottom: 24, right: 24, background: "#39ff14", color: "#000", padding: "14px 20px", fontWeight: 900, letterSpacing: 2, fontSize: 13, zIndex: 999, animation: "toastIn 0.3s ease", maxWidth: "calc(100vw - 48px)", clipPath: "polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)" }}>
             ✓ {toast}
           </div>
         )}
 
         {/* NAVBAR */}
         <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 0 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
-          {/* LEFT: Logo */}
           <div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
             <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
             <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
           </div>
 
-          {/* CENTER: Search — desktop only */}
           <div className="desktop-nav" style={{ flex: 1, justifyContent: "center", maxWidth: 520 }}>
             <input
               className="search-input"
@@ -383,12 +686,10 @@ export default function JerseyStore() {
             />
           </div>
 
-          {/* Desktop nav links */}
           <div className="desktop-nav" style={{ flexShrink: 0 }}>
             {navLinks}
           </div>
 
-          {/* RIGHT: Cart + hamburger */}
           <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, paddingRight: 20 }}>
             <button
               onClick={() => setCartOpen(true)}
@@ -413,7 +714,6 @@ export default function JerseyStore() {
             </button>
           </div>
 
-          {/* Mobile dropdown */}
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
             <input
               className="search-input"
@@ -426,7 +726,6 @@ export default function JerseyStore() {
           </div>
         </nav>
 
-        {/* FIX 2: Ticker extracted as memo component — never remounts on auth change */}
         <Ticker />
 
         {/* HERO */}
@@ -454,7 +753,6 @@ export default function JerseyStore() {
             display: "inline-block",
             zIndex: 1,
           }}>
-            {/* FIX 1: CartoonFlameText is memo'd — auth re-renders won't touch it */}
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
               <CartoonFlameText text="WEAR YOUR" />
             </span>
@@ -557,7 +855,7 @@ export default function JerseyStore() {
                   <div style={{ padding: "12px 16px 16px" }}>
                     <button className="add-btn"
                       disabled={jersey.stock === 0}
-                      style={jersey.stock === 0 ? { background: "#222", color: "#444", cursor: "not-allowed", letterSpacing: 3 } : {}}
+                      style={jersey.stock === 0 ? { background: "#1a1a1a", color: "#333", cursor: "not-allowed", letterSpacing: 3, clipPath: "none" } : {}}
                       onClick={e => { e.stopPropagation(); if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); } }}>
                       {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE →"}
                     </button>
@@ -606,25 +904,42 @@ export default function JerseyStore() {
           <div className="modal-bg" onClick={() => setSelectedJersey(null)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
               <div style={{ position: "relative" }}>
-                <button onClick={() => setSelectedJersey(null)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.6)", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>✕</button>
+                <button onClick={() => setSelectedJersey(null)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.7)", border: "1px solid #333", color: "#fff", fontSize: 16, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, letterSpacing: 1 }}>✕</button>
                 {selectedJersey.image_url ? (
                   <img src={selectedJersey.image_url} alt={selectedJersey.name} className="modal-img" />
                 ) : (
                   <div className="modal-img-placeholder">👕</div>
                 )}
+                {/* Green scan line effect over modal image */}
+                <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, #39ff1444, transparent)", animation: "scanline 2.5s linear infinite" }} />
+                </div>
               </div>
               <div style={{ padding: "20px 24px 8px" }}>
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 1 }}>{selectedJersey.name}</div>
+                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
                 {selectedJersey.type && (
-                  <div style={{ fontSize: 10, letterSpacing: 3, color: "#39ff14", fontWeight: 900, marginTop: 4 }}>{selectedJersey.type}</div>
+                  <div style={{
+                    display: "inline-block",
+                    fontSize: 9,
+                    letterSpacing: 4,
+                    color: "#000",
+                    fontWeight: 900,
+                    marginTop: 6,
+                    background: "#39ff14",
+                    padding: "3px 10px",
+                    clipPath: "polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%)"
+                  }}>{selectedJersey.type}</div>
                 )}
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#39ff14", marginTop: 4 }}>₹{selectedJersey.price}</div>
+                <div style={{ fontSize: 26, fontWeight: 900, color: "#39ff14", marginTop: 8, fontStyle: "italic", letterSpacing: 1 }}>₹{selectedJersey.price}</div>
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
                   <div style={{ fontSize: 11, color: "#ff9900", letterSpacing: 2, marginTop: 6, fontWeight: 700 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
                 )}
               </div>
               <div style={{ padding: "8px 24px 32px" }}>
-                <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 12, fontWeight: 700 }}>SELECT SIZE</div>
+                {/* Size label */}
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+                  <span className="size-label">SELECT SIZE</span>
+                </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {sizes.map(s => {
                     const sizeStock = getSizeStock(selectedJersey, s);
@@ -633,16 +948,17 @@ export default function JerseyStore() {
                       <button
                         key={s}
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
+                        data-size={s}
                         onClick={() => !outOfStock && setSelectedSize(s)}
                         disabled={outOfStock}
-                        style={outOfStock ? { opacity: 0.3, cursor: "not-allowed", textDecoration: "line-through" } : {}}
+                        style={outOfStock ? { opacity: 0.2, cursor: "not-allowed", textDecoration: "line-through", color: "#333", borderColor: "#1a1a1a !important" } : {}}
                       >
                         {s}
                       </button>
                     );
                   })}
                 </div>
-                <button className="add-btn" style={{ marginTop: 24, fontSize: 16 }} onClick={() => addToCart(selectedJersey, selectedSize)}>
+                <button className="add-btn" style={{ marginTop: 24, fontSize: 17, padding: "15px" }} onClick={() => addToCart(selectedJersey, selectedSize)}>
                   ADD TO CART — ₹{selectedJersey.price}
                 </button>
               </div>
@@ -653,47 +969,77 @@ export default function JerseyStore() {
         {/* CART PANEL */}
         {cartOpen && (
           <div style={{ position: "fixed", inset: 0, zIndex: 150 }}>
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)" }} onClick={() => setCartOpen(false)} />
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)" }} onClick={() => setCartOpen(false)} />
             <div className="cart-panel">
+              {/* Cart Header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px", borderBottom: "1px solid #1a1a1a" }}>
-                <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>YOUR CART</span>
-                <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "none", color: "#555", fontSize: 22, cursor: "pointer" }}>✕</button>
+                <div>
+                  <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: 4, fontStyle: "italic" }}>YOUR</span>
+                  {" "}
+                  <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
+                  {cartCount > 0 && (
+                    <span style={{
+                      display: "inline-block",
+                      marginLeft: 10,
+                      background: "#39ff14",
+                      color: "#000",
+                      fontFamily: "'Barlow Condensed',sans-serif",
+                      fontWeight: 900,
+                      fontSize: 11,
+                      letterSpacing: 2,
+                      padding: "2px 8px",
+                      clipPath: "polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%)",
+                      verticalAlign: "middle",
+                    }}>{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
+                  )}
+                </div>
+                <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "1px solid #222", color: "#555", fontSize: 18, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, transition: "border-color 0.2s, color 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#39ff14"; e.currentTarget.style.color="#39ff14"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#222"; e.currentTarget.style.color="#555"; }}>✕</button>
               </div>
+
               <div style={{ flex: 1, overflowY: "auto" }}>
                 {cart.length === 0 ? (
                   <div style={{ textAlign: "center", padding: "60px 20px", color: "#333" }}>
                     <div style={{ fontSize: 50 }}>🛒</div>
-                    <p style={{ marginTop: 12, letterSpacing: 2, fontSize: 13 }}>CART IS EMPTY</p>
+                    <p style={{ marginTop: 12, letterSpacing: 4, fontSize: 13, fontWeight: 900, fontStyle: "italic" }}>CART IS EMPTY</p>
+                    <p style={{ marginTop: 8, letterSpacing: 2, fontSize: 11, color: "#222" }}>ADD SOME FIRE JERSEYS</p>
                   </div>
                 ) : (
-                  cart.map(item => (
-                    <div key={`${item.id}-${item.size}`} className="cart-item">
+                  cart.map((item, idx) => (
+                    <div key={`${item.id}-${item.size}`} className="cart-item" style={{ animationDelay: `${idx * 0.05}s` }}>
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="cart-item-img" />
                       ) : (
-                        <div style={{ width: 50, height: 50, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
+                        <div style={{ width: 54, height: 54, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, border: "1px solid #1a1a1a" }}>👕</div>
                       )}
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 900, fontSize: 14, letterSpacing: 1 }}>{item.name}</div>
-                        <div style={{ color: "#555", fontSize: 11, letterSpacing: 2, marginTop: 2 }}>SIZE {item.size} · QTY {item.qty}</div>
-                        <div style={{ color: "#39ff14", fontWeight: 700, marginTop: 4 }}>₹{item.price * item.qty}</div>
+                        <div className="cart-item-name">{item.name}</div>
+                        <div className="cart-tag">
+                          <span className="cart-tag-size">{item.size}</span>
+                          <span className="cart-tag-qty">× {item.qty}</span>
+                        </div>
+                        <div className="cart-item-price">₹{(item.price * item.qty).toLocaleString()}</div>
                       </div>
-                      <button onClick={() => removeFromCart(item.id, item.size)} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 18, transition: "color 0.2s" }}
-                        onMouseEnter={e => e.target.style.color = "#ff4444"} onMouseLeave={e => e.target.style.color = "#444"}>✕</button>
+                      <button onClick={() => removeFromCart(item.id, item.size)}
+                        style={{ background: "none", border: "1px solid #1a1a1a", color: "#333", cursor: "pointer", fontSize: 14, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, flexShrink: 0, transition: "all 0.15s" }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor="#ff4444"; e.currentTarget.style.color="#ff4444"; e.currentTarget.style.background="#ff44440d"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="#1a1a1a"; e.currentTarget.style.color="#333"; e.currentTarget.style.background="none"; }}>✕</button>
                     </div>
                   ))
                 )}
               </div>
+
               {cart.length > 0 && (
-                <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16 }}>
-                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 20px 12px" }}>
-                 <span style={{ background:"#39ff14", color:"#000", fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:4, fontSize:16, fontWeight:700, fontStyle:"italic", border:"2px solid #39ff14", padding:"4px 14px" }}>TOTAL</span>
-                 <span style={{ color:"#fff", fontFamily:"'Barlow Condensed',sans-serif", fontSize:22, fontWeight:900, letterSpacing:2, fontStyle:"italic" }}>₹{total.toLocaleString()}</span>
-                </div>
+                <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, background: "#080808" }}>
+                  <div className="cart-total-row">
+                    <span className="cart-total-label">TOTAL</span>
+                    <span className="cart-total-amount">₹{total.toLocaleString()}</span>
+                  </div>
                   <button className="checkout-btn" onClick={handleCheckout}>
                     PROCEED TO CHECKOUT →
                   </button>
-                  <p style={{ textAlign: "center", color: "#333", fontSize: 11, letterSpacing: 2, paddingBottom: 16 }}>FREE SHIPPING ON ORDERS ABOVE ₹1999</p>
+                  <p style={{ textAlign: "center", color: "#2a2a2a", fontSize: 10, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ FREE SHIPPING ABOVE ₹1999 ✦</p>
                 </div>
               )}
             </div>
