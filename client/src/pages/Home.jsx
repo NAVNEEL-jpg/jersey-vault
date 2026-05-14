@@ -397,15 +397,15 @@ export default function JerseyStore() {
   opacity: 0.9;
   text-shadow: 0 0 12px rgba(57,255,20,0.5);
 }
-         .filter-btn {
+/* ── FILTER BUTTONS — SHOP NOW STYLE ── */
+.filter-btn {
   background: transparent;
   color: #39ff14;
-  border: 2px solid #39ff14 !important;
+  border: none !important;
   padding: 11px 24px;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-weight: 400;
-  font-size: 17px;
-  font-style: normal;
+  font-size: 18px;
   letter-spacing: 5px;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -418,69 +418,41 @@ export default function JerseyStore() {
   min-width: 80px;
   position: relative;
   overflow: hidden;
-  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  text-shadow: 0 0 10px rgba(57,255,20,0.5);
 }
-.filter-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: #39ff14;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s ease;
-  z-index: 0;
-}
-.filter-btn span, .filter-btn { position: relative; z-index: 1; }
+
+/* No box, no border at rest — just glowing green text */
+.filter-btn::before { display: none; }
+
 .filter-btn:hover {
+  background: #39ff14;
   color: #000;
+  text-shadow: none;
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(57,255,20,0.4);
+  box-shadow: 0 6px 24px rgba(57,255,20,0.45),
+              inset 0 1px 0 rgba(255,255,255,0.15);
+  letter-spacing: 6px;
+  animation: filterStamp 0.18s ease both;
 }
-.filter-btn:hover::before { transform: scaleX(1); }
+
 .filter-btn.active {
   background: #39ff14;
-  border-color: #39ff14 !important;
   color: #000;
-  box-shadow: 0 0 0 3px rgba(57,255,20,0.25), 0 6px 28px rgba(57,255,20,0.55);
+  text-shadow: none;
+  box-shadow: 0 0 0 2px rgba(57,255,20,0.3),
+              0 6px 28px rgba(57,255,20,0.55);
   transform: translateY(-2px);
   letter-spacing: 6px;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+  font-size: 18px;
+  border: none !important;
 }
 .filter-btn.active::before { display: none; }
 
-          /* ── MODAL ── */
-          .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:16px; }
-          .modal {
-            background: #0e0e0e;
-            border: 1px solid #222;
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-            animation: fadeUp 0.3s ease;
-            max-height: calc(100vh - 32px);
-            overflow-y: auto;
-            border-radius: 2px;
-            box-shadow: 0 0 60px rgba(57,255,20,0.08), 0 40px 80px rgba(0,0,0,0.8);
-          }
-          .modal-img { width:100%; height:220px; object-fit:cover; display:block; }
-          .modal-img-placeholder { width:100%; height:220px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
-
-          /* ── CART PANEL ── */
-          .cart-panel {
-            position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 380px;
-            background: #0a0a0a;
-            border-left: 1px solid #1e1e1e;
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            animation: slideDown 0.28s cubic-bezier(0.23,1,0.32,1);
-            box-shadow: -20px 0 60px rgba(0,0,0,0.7);
-          }
-
+@keyframes filterStamp {
+  0%  { transform: scale(1.12) translateY(-2px); }
+  60% { transform: scale(0.97) translateY(-2px); }
+  100%{ transform: scale(1)   translateY(-2px); }
+}
           /* ── CART ITEM ── */
           .cart-item {
             display: flex;
