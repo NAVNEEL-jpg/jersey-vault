@@ -252,7 +252,7 @@ export default function JerseyStore() {
   return (
     <>
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
-       <style>{`
+  <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
