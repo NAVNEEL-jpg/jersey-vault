@@ -253,7 +253,15 @@ export default function JerseyStore() {
     <>
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Black+Han+Sans&display=swap');
+        .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:16px; }
+.modal { background:#0e0e0e; border:1px solid #222; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s ease; max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 60px rgba(57,255,20,0.08), 0 40px 80px rgba(0,0,0,0.8); }
+.modal-img { width:100%; height:220px; object-fit:cover; display:block; }
+.modal-img-placeholder { width:100%; height:220px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
+
+.cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#0a0a0a; border-left:1px solid #1e1e1e; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-20px 0 60px rgba(0,0,0,0.7); }
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&family=Rajdhani:wght@600;700&display=swap');
+
+
           * { box-sizing: border-box; margin: 0; padding: 0; }
           #jv-root button:not(.hamburger) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
           #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
@@ -285,13 +293,39 @@ export default function JerseyStore() {
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
 
-          .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; isolation:isolate; }
-          .card:hover { transform:translateY(-6px); border-color:#39ff14; }
-          .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
-          .card:hover .card-img { transform:scale(1.04); }
-          .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
-          .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
+        .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
+.card:hover { transform:translateY(-6px); border-color:#39ff14; }
+.card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
+.card:hover .card-img { transform:scale(1.04); }
+.card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
+.card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
+.card::after {
+  content: 'JERSEY VAULT';
+  position: absolute;
+  top: 42%;
+  left: -150%;
+  width: 160%;
+  padding: 10px 0;
+  background: #000;
+  color: #39ff14;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 10px;
+  text-align: center;
+  transform: rotate(-20deg) skewX(-10deg);
+  border-top: 1px solid #39ff14;
+  border-bottom: 1px solid #39ff14;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: left 0.4s cubic-bezier(0.23,1,0.32,1), opacity 0.15s ease;
+}
+
+.card:hover::after {
+  left: -10%;
+  opacity: 1;
+}
 /* ── ADD TO CART / SELECT SIZE BUTTON — CONCEPT A ── */
 #jv-root .add-btn {
   position: relative;
@@ -308,40 +342,33 @@ export default function JerseyStore() {
   letter-spacing: 6px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: color 0.22s ease, letter-spacing 0.22s ease, text-shadow 0.22s ease;
+  transition: color 0.22s ease, letter-spacing 0.22s ease;
   display: block;
-  text-align: left;
+  text-align: left !important;
   text-shadow: 0 0 12px rgba(57,255,20,0.4);
-  z-index: 0;
   isolation: isolate;
 }
+
 #jv-root .add-btn::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: -110%;
-  width: 110%;
-  height: 100%;
-  background: #39ff14;
-  transition: left 0.28s cubic-bezier(0.23, 1, 0.32, 1);
-  z-index: 0;
-  clip-path: none;
+  display: none;
 }
+
 #jv-root .add-btn::after {
-display: none;
+  display: none;
 }
+
 #jv-root .add-btn:hover {
   color: #000 !important;
   text-shadow: none !important;
   letter-spacing: 8px;
+  background: #39ff14 !important;
   border-bottom-color: #39ff14 !important;
 }
-#jv-root .add-btn:hover::before { left: 0; }
-#jv-root .add-btn:hover::after {
-  color: #000;
-  transform: translateY(-50%) translateX(5px);
+
+#jv-root .add-btn:active {
+  transform: scale(0.98);
 }
-#jv-root .add-btn:active { transform: scale(0.98); }
+
 #jv-root .add-btn:disabled,
 #jv-root .add-btn[disabled] {
   background: transparent !important;
@@ -352,14 +379,6 @@ display: none;
   letter-spacing: 3px;
   text-align: center;
 }
-#jv-root .add-btn:disabled::before,
-#jv-root .add-btn[disabled]::before,
-#jv-root .add-btn:disabled::after,
-#jv-root .add-btn[disabled]::after { display: none; }
-
-          /* ── SIZE BUTTONS ── */
-         
-
           /* ── FILTER BUTTONS ── */
           .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; align-items:center; }
           .filter-bar::-webkit-scrollbar { display:none; }
@@ -425,7 +444,7 @@ display: none;
   text-shadow: 0 0 12px rgba(57,255,20,0.5);
 }
 /* ── FILTER BUTTONS — SHOP NOW STYLE ── */
-/* ── FILTER BUTTONS — SHOP NOW STYLE (FIXED) ── */
+
 #jv-root .filter-btn {
   background: transparent !important;
   color: #39ff14 !important;
