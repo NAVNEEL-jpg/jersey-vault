@@ -296,110 +296,123 @@ export default function JerseyStore() {
             overflow: hidden;
             background: #39ff14;
             color: #000;
-            border: 2px solid #39ff14 !important;
+            border: none !important;
             width: 100%;
-            padding: 13px;
+            padding: 15px;
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 15px;
-            font-style: italic;
-            letter-spacing: 3px;
+            font-size: 16px;
+            font-style: normal;
+            letter-spacing: 4px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s, letter-spacing 0.2s;
+            transition: all 0.2s ease;
+            display: block;
+            text-align: center;
           }
-          .add-btn::before {
+          .add-btn::after {
             content: '';
             position: absolute;
             top: 0; left: -100%;
-            width: 60%;
+            width: 50%;
             height: 100%;
-            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%);
-            transition: left 0.4s ease;
+            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+            transition: left 0.5s ease;
             pointer-events: none;
           }
-          .add-btn:hover::before { left: 160%; }
+          .add-btn:hover::after { left: 160%; }
           .add-btn:hover {
-            background: #000;
-            color: #39ff14;
-            box-shadow: 0 0 20px #39ff1455;
-            letter-spacing: 5px;
+            background: #2be010;
+            box-shadow: 0 4px 24px #39ff1455, 0 0 0 2px #39ff14;
+            transform: translateY(-1px);
           }
-          .add-btn:active { transform: scale(0.98); }
+          .add-btn:active { transform: scale(0.98) translateY(0); }
 
           /* ── SIZE BUTTONS ── */
           .size-btn {
-            background: #111;
-            border: 1.5px solid #2a2a2a !important;
-            color: #555;
-            width: 54px;
-            height: 54px;
+            background: #141414;
+            border: 2px solid #2a2a2a !important;
+            color: #777;
+            width: 56px;
+            height: 56px;
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 900;
+            font-style: normal;
             cursor: pointer;
             transition: all 0.15s ease;
-            letter-spacing: 1px;
+            letter-spacing: 0px;
             text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
           }
           .size-btn:hover:not(.selected):not(:disabled) {
             border-color: #39ff14 !important;
             color: #39ff14;
-            background: #0d1a0d;
-            transform: translateY(-2px);
+            background: #0a1a0a;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(57,255,20,0.2);
           }
           .size-btn.selected {
             background: #39ff14;
             border-color: #39ff14 !important;
             color: #000;
-            box-shadow: 0 0 16px #39ff1466;
-            animation: sizePop 0.25s ease;
-            transform: translateY(-2px);
-            font-size: 16px;
+            font-size: 17px;
+            box-shadow: 0 0 0 3px #39ff1433, 0 6px 20px #39ff1455;
+            transform: translateY(-3px);
           }
 
           /* ── SIZE LABEL ── */
           .size-label {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
-            letter-spacing: 5px;
-            color: #555;
+            letter-spacing: 6px;
+            color: #444;
             text-transform: uppercase;
             display: block;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
           }
 
           /* ── FILTER BUTTONS ── */
-          .filter-bar { display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; }
+          .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; align-items:center; }
           .filter-bar::-webkit-scrollbar { display:none; }
 
           .filter-btn {
-            background: transparent;
+            background: #111;
             color: #555;
-            border: 1.5px solid #222 !important;
-            padding: 8px 20px;
+            border: 2px solid #1e1e1e !important;
+            padding: 10px 22px;
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 13px;
+            font-size: 14px;
+            font-style: normal;
             letter-spacing: 3px;
             cursor: pointer;
             transition: all 0.15s ease;
             text-transform: uppercase;
             white-space: nowrap;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
           }
           .filter-btn:hover {
-            border-color: #39ff1488 !important;
+            border-color: #39ff14 !important;
             color: #39ff14;
-            background: #0d1a0d;
+            background: #0a1a0a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(57,255,20,0.15);
           }
           .filter-btn.active {
             background: #39ff14;
             border-color: #39ff14 !important;
             color: #000;
-            box-shadow: 0 0 14px #39ff1444;
-            font-size: 13px;
+            box-shadow: 0 0 0 3px #39ff1422, 0 4px 18px #39ff1455;
+            transform: translateY(-2px);
+            font-size: 14px;
           }
 
           /* ── MODAL ── */
@@ -448,11 +461,10 @@ export default function JerseyStore() {
           .cart-item:hover { background: #0f0f0f; }
           .cart-item-img { width: 54px; height: 54px; object-fit: cover; background: #0d0d0d; flex-shrink: 0; border: 1px solid #1a1a1a; }
 
-          /* ── CART ITEM NAME / META ── */
           .cart-item-name {
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 15px;
+            font-size: 17px;
             letter-spacing: 1px;
             color: #eee;
             line-height: 1.1;
@@ -467,10 +479,10 @@ export default function JerseyStore() {
           }
           .cart-item-price {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 17px;
+            font-size: 20px;
             font-weight: 900;
             color: #39ff14;
-            margin-top: 5px;
+            margin-top: 6px;
             letter-spacing: 1px;
           }
 
@@ -479,22 +491,21 @@ export default function JerseyStore() {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            margin-top: 4px;
+            margin-top: 5px;
           }
           .cart-tag-size {
             background: #39ff14;
             color: #000;
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 10px;
+            font-size: 11px;
             letter-spacing: 2px;
-            padding: 2px 7px;
-            clip-path: polygon(3px 0%, 100% 0%, calc(100% - 3px) 100%, 0% 100%);
+            padding: 3px 8px;
           }
           .cart-tag-qty {
-            color: #555;
+            color: #444;
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 700;
             letter-spacing: 2px;
           }
@@ -505,36 +516,38 @@ export default function JerseyStore() {
             overflow: hidden;
             background: #39ff14;
             color: #000;
-            border: 2px solid #39ff14 !important;
+            border: none !important;
             width: calc(100% - 32px);
-            margin: 16px;
-            padding: 17px 0;
+            margin: 12px 16px;
+            padding: 18px 0;
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 16px;
-            font-style: italic;
-            letter-spacing: 4px;
+            font-size: 18px;
+            font-style: normal;
+            letter-spacing: 5px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s, letter-spacing 0.2s;
-            box-shadow: 0 0 18px #39ff1433;
+            transition: all 0.2s ease;
+            display: block;
+            text-align: center;
+            box-shadow: 0 4px 28px #39ff1444;
           }
-          .checkout-btn::before {
+          .checkout-btn::after {
             content: '';
             position: absolute;
             top: 0; left: -100%;
-            width: 55%;
+            width: 50%;
             height: 100%;
-            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.4) 50%, transparent 80%);
-            transition: left 0.45s ease;
+            background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+            transition: left 0.5s ease;
             pointer-events: none;
           }
-          .checkout-btn:hover::before { left: 170%; }
+          .checkout-btn:hover::after { left: 170%; }
           .checkout-btn:hover {
-            background: #000;
-            color: #39ff14;
-            box-shadow: 0 0 28px #39ff1477;
-            letter-spacing: 6px;
+            background: #2be010;
+            box-shadow: 0 6px 36px #39ff1466, 0 0 0 2px #39ff14;
+            transform: translateY(-2px);
+            letter-spacing: 7px;
           }
           .checkout-btn:active { transform: scale(0.98); }
 
@@ -543,25 +556,24 @@ export default function JerseyStore() {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px 12px;
+            padding: 16px 20px 8px;
+            background: #0d0d0d;
+            border-top: 1px solid #1a1a1a;
           }
           .cart-total-label {
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 11px;
-            letter-spacing: 5px;
-            color: #444;
+            font-size: 13px;
+            letter-spacing: 6px;
+            color: #555;
             text-transform: uppercase;
-            border-left: 2px solid #39ff14;
-            padding-left: 10px;
           }
           .cart-total-amount {
             font-family: 'Barlow Condensed', sans-serif;
             font-weight: 900;
-            font-size: 28px;
+            font-size: 32px;
             color: #39ff14;
-            letter-spacing: 1px;
-            font-style: italic;
+            letter-spacing: 2px;
             line-height: 1;
           }
 
