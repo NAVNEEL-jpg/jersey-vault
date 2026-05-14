@@ -325,19 +325,10 @@ export default function JerseyStore() {
   background: #39ff14;
   transition: left 0.28s cubic-bezier(0.23, 1, 0.32, 1);
   z-index: 0;
-  clip-path: polygon(0 0, 88% 0, 100% 100%, 12% 100%);
+  clip-path: none;
 }
 #jv-root .add-btn::after {
-  content: '→';
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%) translateX(0px);
-  transition: transform 0.22s ease, color 0.22s ease;
-  font-size: 20px;
-  color: #39ff14;
-  z-index: 2;
-  line-height: 1;
+display: none;
 }
 #jv-root .add-btn:hover {
   color: #000 !important;
@@ -836,13 +827,20 @@ export default function JerseyStore() {
                     </div>
                   </div>
                   <div style={{ padding: "12px 16px 16px" }}>
-                   // AFTER — no style override needed, CSS handles it:
-                   <button className="add-btn"
-                    disabled={jersey.stock === 0}
-                    onClick={e => { e.stopPropagation(); if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); } }}>
-                   {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
-                   </button>
-                  </div>
+  <button
+    className="add-btn"
+    disabled={jersey.stock === 0}
+    onClick={e => {
+      e.stopPropagation();
+      if (jersey.stock > 0) {
+        setSelectedJersey(jersey);
+        setSelectedSize("M");
+      }
+    }}
+  >
+    {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
+  </button>
+</div>
                 </div>
               ))}
             </div>
