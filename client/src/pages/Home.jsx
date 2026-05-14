@@ -285,7 +285,7 @@ export default function JerseyStore() {
           .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
           .nav-link:hover { color:#39ff14; }
 
-          .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
+          .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; isolation:isolate; }
           .card:hover { transform:translateY(-6px); border-color:#39ff14; }
           .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
           .card:hover .card-img { transform:scale(1.04); }
