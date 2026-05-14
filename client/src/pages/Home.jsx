@@ -255,7 +255,9 @@ export default function JerseyStore() {
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Black+Han+Sans&display=swap');
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          #jv-root button:not(.hamburger) { all: unset; box-sizing: border-box; cursor: pointer; }
+          #jv-root button:not(.hamburger) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
+          #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
+          #jv-root .filter-btn, #jv-root .size-btn { display: inline-flex; }
           ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
 
           @keyframes slideDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
