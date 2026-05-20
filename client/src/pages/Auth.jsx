@@ -57,26 +57,34 @@ export default function AuthPage() {
 
         #jv-auth-root .auth-field-wrap { position: relative; margin-bottom: 4px; }
         #jv-auth-root .auth-field {
-          background: #111; border: 1px solid #222; color: #fff;
+          background: #111; border: 1px solid #555; color: #fff;
           padding: 14px 16px; font-family: 'Barlow Condensed', sans-serif;
           font-size: 15px; width: 100%; outline: none; letter-spacing: 1px;
           transition: border-color 0.2s;
         }
-        #jv-auth-root .auth-field:focus  { border-color: #39ff14; }
+        #jv-auth-root .auth-field:focus  { border-color: #39ff14; box-shadow: 0 0 12px rgba(57,255,20,0.2); }
+        #jv-auth-root .auth-panel {
+          background: rgba(17,17,17,0.75); border: 1px solid rgba(255,255,255,0.06);
+          backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+          padding: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+        }
         #jv-auth-root .auth-field.err    { border-color: #ff4444; }
-        #jv-auth-root .auth-field::placeholder { color: #333; }
+        #jv-auth-root .auth-field::placeholder { color: #52525b; }
 
         #jv-auth-root .auth-label {
-          font-size: 11px; letter-spacing: 3px; color: #555;
-          margin-bottom: 7px; font-weight: 700; display: block;
+          font-family: 'Barlow', sans-serif;
+          font-size: 11px; letter-spacing: 3px; color: #a1a1aa;
+          margin-bottom: 7px; font-weight: 600; display: block;
+          text-transform: uppercase;
         }
         #jv-auth-root .auth-submit-btn {
           background: #39ff14; color: #000; border: none; width: 100%;
           padding: 16px; font-family: 'Barlow Condensed', sans-serif;
           font-weight: 900; font-size: 16px; letter-spacing: 4px;
-          cursor: pointer; transition: all 0.2s; animation: auth-glow 2s infinite;
+          cursor: pointer; transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease;
+          animation: auth-glow 2s infinite;
         }
-        #jv-auth-root .auth-submit-btn:hover { background: #fff; }
+        #jv-auth-root .auth-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(57,255,20,0.4); }
 
         #jv-auth-root .auth-google-btn {
           background: #111; color: #fff; border: 1px solid #222; width: 100%;
@@ -89,10 +97,10 @@ export default function AuthPage() {
 
         #jv-auth-root .auth-tab {
           flex: 1; padding: 16px; background: transparent; border: none;
-          font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
-          font-size: 18px; letter-spacing: 4px; cursor: pointer;
+          font-family: 'Barlow', sans-serif; font-weight: 700;
+          font-size: 14px; letter-spacing: 4px; cursor: pointer;
           transition: all 0.2s; border-bottom: 2px solid transparent;
-          color: #666;
+          color: #666; text-transform: uppercase;
         }
         #jv-auth-root .auth-tab.active     { color: #39ff14; border-bottom-color: #39ff14; }
         #jv-auth-root .auth-tab:not(.active):hover { color: #aaa; }
@@ -225,13 +233,13 @@ export default function AuthPage() {
 
       {/* MAIN */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", position: "relative", zIndex: 1 }}>
-        <div style={{ width: "100%", maxWidth: 440 }}>
+        <div className="auth-panel" style={{ width: "100%", maxWidth: 440 }}>
 
           {success ? (
             <div style={{ textAlign: "center" }} className="auth-fade-up">
               <div className="auth-pop-in" style={{ width: 90, height: 90, borderRadius: "50%", background: "#39ff1420", border: "2px solid #39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, margin: "0 auto 24px" }}>✓</div>
-              <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic" }}>ACCOUNT CREATED!</h2>
-              <p style={{ color: "#555", marginTop: 8, letterSpacing: 2, fontSize: 13, fontFamily: "'Barlow', sans-serif" }}>
+              <h2 style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>ACCOUNT CREATED!</h2>
+              <p style={{ color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>
                 Welcome to JerseyVault, {form.name}!
               </p>
               <button onClick={() => navigate('/', { replace: true })}
@@ -243,8 +251,8 @@ export default function AuthPage() {
           ) : mode === "forgot" ? (
             <div className="auth-fade-up">
               <button onClick={() => switchMode("login")} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 13, letterSpacing: 2, marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>← BACK TO LOGIN</button>
-              <h2 style={{ fontSize: 34, fontWeight: 900, fontStyle: "italic", marginBottom: 6 }}>FORGOT <span style={{ color: "#39ff14" }}>PASSWORD?</span></h2>
-              <p style={{ color: "#555", fontSize: 13, fontFamily: "'Barlow', sans-serif", marginBottom: 28, lineHeight: 1.5 }}>Enter your email and we'll send you a reset link.</p>
+              <h2 style={{ fontSize: 34, fontWeight: 800, marginBottom: 6, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>FORGOT <span style={{ color: "#39ff14" }}>PASSWORD?</span></h2>
+              <p style={{ color: "#71717a", fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginBottom: 28, lineHeight: 1.5 }}>Enter your email and we'll send you a reset link.</p>
               {forgotSent ? (
                 <div style={{ background: "#39ff1410", border: "1px solid #39ff1440", padding: 20, textAlign: "center" }}>
                   <div style={{ fontSize: 32, marginBottom: 8 }}>📬</div>
@@ -272,10 +280,10 @@ export default function AuthPage() {
               {/* LOGO */}
               <div style={{ marginBottom: 28, textAlign: "center" }}>
                 <img src={logo} alt="JerseyVault" style={{ width: 72, height: 72, objectFit: "contain", mixBlendMode: "screen", filter: "brightness(1.1) contrast(1.05)", margin: "0 auto 16px", display: "block" }} />
-                <h1 style={{ fontSize: 32, fontWeight: 900, fontStyle: "italic" }}>
+                <h1 style={{ fontSize: 32, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                   {mode === "login" ? <>WELCOME <span style={{ color: "#39ff14" }}>BACK</span></> : <>CREATE <span style={{ color: "#39ff14" }}>ACCOUNT</span></>}
                 </h1>
-                <p style={{ color: "#555", fontSize: 13, marginTop: 6, fontFamily: "'Barlow', sans-serif", letterSpacing: 1 }}>
+                <p style={{ color: "#71717a", fontSize: 13, marginTop: 6, fontFamily: "'Barlow', sans-serif", fontWeight: 400, letterSpacing: 0.5 }}>
                   {mode === "login" ? "Log in to access your orders & wishlist" : "Join JerseyVault — it's free"}
                 </p>
               </div>

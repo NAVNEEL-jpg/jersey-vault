@@ -1,9 +1,102 @@
 import { supabase } from './supabase';
+import { calcOrderTotals } from './utils/shipping';
+
+async function finalizeOrder({
+  orderId,
+  name,
+  email,
+  phone,
+  cart,
+  navigate,
+  decrementStock,
+  form,
+  user,
+  isCOD,
+  amountPaid,
+}) {
+  const { subtotal, shipping, total } = calcOrderTotals(cart);
+  const customerEmail = email || user?.email || "";
+
+  const order = {
+    id: orderId,
+    items: cart,
+    total,
+    amountPaid,
+    date: new Date().toLocaleDateString(),
+    customer: { name, email: customerEmail, phone },
+    payMethod: isCOD ? "COD" : "Online",
+    subtotal,
+    shipping,
+  };
+
+  const { error: insertError } = await supabase.from("orders").insert({
+    id: orderId,
+    customer_name: name,
+    customer_email: customerEmail,
+    customer_phone: phone,
+    address: form.address,
+    city: form.city,
+    state: form.state,
+    pincode: form.pincode,
+    items: cart,
+    subtotal,
+    shipping,
+    total,
+    pay_method: isCOD ? "COD" : "Online",
+    status: "pending",
+  });
+
+  if (insertError) {
+    console.error("Supabase Insert Error:", insertError);
+    alert("Payment successful, but failed to save order. Please contact support.");
+  }
+
+  if (decrementStock) await decrementStock();
+
+  await supabase.functions.invoke("smooth-worker", {
+    body: {
+      customerName: name,
+      customerEmail,
+      orderId,
+      date: order.date,
+      items: cart,
+      subtotal,
+      shipping,
+      total,
+      amountPaid,
+      address: form.address,
+      city: form.city,
+      state: form.state,
+      pincode: form.pincode,
+      phone,
+      payMethod: isCOD ? "Cash on Delivery" : "Online Payment",
+    },
+  }).catch(() => {});
+
+  localStorage.setItem("latestOrder", JSON.stringify(order));
+  navigate("/success");
+}
+
+/** COD with free shipping — no Razorpay charge */
+export async function placeCodOrderFree(name, email, phone, cart, navigate, decrementStock, form, user) {
+  const orderId = `COD-${Date.now()}`;
+  await finalizeOrder({
+    orderId,
+    name,
+    email,
+    phone,
+    cart,
+    navigate,
+    decrementStock,
+    form,
+    user,
+    isCOD: true,
+    amountPaid: 0,
+  });
+}
 
 export const initiatePayment = (amountToPayNow, name, email, phone, cart, navigate, decrementStock, form, user, isCOD) => {
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping = subtotal >= 1999 ? 0 : 99;
-  const fullTotal = subtotal + shipping;
+  const { shipping, total } = calcOrderTotals(cart);
   const customerEmail = email || user?.email || "";
 
   const options = {
@@ -11,64 +104,23 @@ export const initiatePayment = (amountToPayNow, name, email, phone, cart, naviga
     amount: Math.round(amountToPayNow) * 100,
     currency: "INR",
     name: "JerseyVault",
-    description: isCOD ? "Shipping Charge (COD)" : "Jersey Purchase",
+    description: isCOD
+      ? (shipping > 0 ? `Shipping fee (₹${shipping}) — COD order` : "Jersey Purchase")
+      : `Order total (₹${total})`,
     handler: async function (response) {
-      const order = {
-        id: response.razorpay_payment_id,
-        items: cart,
-        total: fullTotal,
+      await finalizeOrder({
+        orderId: response.razorpay_payment_id,
+        name,
+        email,
+        phone,
+        cart,
+        navigate,
+        decrementStock,
+        form,
+        user,
+        isCOD,
         amountPaid: amountToPayNow,
-        date: new Date().toLocaleDateString(),
-        customer: { name, email: customerEmail, phone },
-        payMethod: isCOD ? "COD (Shipping Paid Online)" : "Online",
-      };
-
-      const { error: insertError } = await supabase.from("orders").insert({
-        id: response.razorpay_payment_id,
-        customer_name: name,
-        customer_email: customerEmail,
-        customer_phone: phone,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        pincode: form.pincode,
-        items: cart,
-        subtotal,
-        shipping,
-        total: fullTotal,
-        pay_method: isCOD ? "COD" : "Online",
-        status: "pending",
       });
-
-      if (insertError) {
-        console.error("Supabase Insert Error:", insertError);
-        alert("Payment successful, but failed to save order. Please contact support.");
-      }
-
-      if (decrementStock) await decrementStock();
-      
-      await supabase.functions.invoke("smooth-worker", {
-        body: {
-          customerName: name,
-          customerEmail: customerEmail,
-          orderId: response.razorpay_payment_id,
-          date: new Date().toLocaleDateString(),
-          items: cart,
-          subtotal,
-          shipping,
-          total: fullTotal,
-          amountPaid: amountToPayNow,
-          address: form.address,
-          city: form.city,
-          state: form.state,
-          pincode: form.pincode,
-          phone,
-          payMethod: isCOD ? "Cash on Delivery (Shipping Paid)" : "Online Payment",
-        },
-      });
-      
-      localStorage.setItem("latestOrder", JSON.stringify(order));
-      navigate("/success");
     },
     prefill: { name, email: customerEmail, contact: phone },
     theme: { color: "#39ff14" },

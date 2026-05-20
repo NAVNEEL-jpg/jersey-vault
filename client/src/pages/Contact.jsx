@@ -33,12 +33,14 @@ export default function Contact() {
         ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#39ff14; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
-        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; position:relative; }
+        .nav-link::after { content:''; position:absolute; left:0; bottom:-3px; width:0; height:2px; background:#39ff14; transition:width 0.25s cubic-bezier(0.25,1,0.5,1); border-radius:2px; }
         .nav-link:hover { color:#39ff14; }
+        .nav-link:hover::after { width:100%; }
         .contact-card { background:#111; border:1px solid #1a1a1a; padding:32px; animation:fadeUp 0.4s ease both; border-left:3px solid #1a1a1a; transition:all 0.3s; cursor:pointer; text-decoration:none; display:block; color:#fff; }
-        .contact-card:hover { border-left-color:#39ff14; transform:translateY(-4px); }
-        .contact-card.wa:hover { border-left-color:#25D366; box-shadow:0 8px 32px #25D36620; }
-        .contact-card.ig:hover { border-left-color:#bc1888; box-shadow:0 8px 32px #bc188820; }
+        .contact-card:hover { border-left-color:#39ff14; transform:translateY(-4px); box-shadow:0 12px 40px rgba(57,255,20,0.12); }
+        .contact-card.wa:hover { border-left-color:#25D366; box-shadow:0 12px 40px rgba(37,211,102,0.25); }
+        .contact-card.ig:hover { border-left-color:#bc1888; box-shadow:0 12px 40px rgba(188,24,136,0.25); }
         .number-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
         .number { font-size:22px; font-weight:900; letter-spacing:2px; color:#fff; }
         .sublabel { font-size:11px; letter-spacing:3px; color:#555; font-weight:700; margin-bottom:16px; }

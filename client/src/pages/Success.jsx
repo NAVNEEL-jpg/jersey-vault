@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { downloadInvoice } from "../utils/downloadInvoice";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500;600&display=swap');
@@ -566,16 +567,15 @@ useEffect(() => {
           <Link to="/tracking" className="btn-primary">
             TRACK YOUR ORDER →
           </Link>
-          <a 
-            href={`http://localhost:5000/api/orders/${order?.id}/invoice`} 
-            target="_blank" 
-            rel="noreferrer" 
-            style={{ textDecoration: "none", width: "100%" }}
+          <button
+            type="button"
+            className="btn-secondary"
+            style={{ color: "var(--green)", borderColor: "var(--green-border)", width: "100%" }}
+            disabled={!order?.id}
+            onClick={() => downloadInvoice(order.id)}
           >
-            <button className="btn-secondary" style={{ color: "var(--green)", borderColor: "var(--green-border)" }}>
-              📄 DOWNLOAD INVOICE
-            </button>
-          </a>
+            📄 DOWNLOAD INVOICE
+          </button>
           <Link to="/" className="btn-secondary">
             Continue Shopping
           </Link>

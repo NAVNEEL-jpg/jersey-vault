@@ -51,15 +51,17 @@ export default function MyOrders() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
         @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
         @keyframes glow { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
-        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; position:relative; }
+        .nav-link::after { content:''; position:absolute; left:0; bottom:-3px; width:0; height:2px; background:#39ff14; transition:width 0.25s cubic-bezier(0.25,1,0.5,1); border-radius:2px; }
         .nav-link:hover { color:#39ff14; }
+        .nav-link:hover::after { width:100%; }
         .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-        .order-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; margin-bottom: 12px; animation: fadeUp 0.4s ease; border-left: 3px solid #1a1a1a; transition: border-color 0.2s; }
-        .order-card:hover { border-left-color: #39ff14; }
+        .order-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; margin-bottom: 12px; animation: fadeUp 0.4s ease; border-left: 3px solid #1a1a1a; transition: border-color 0.25s, transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s; }
+        .order-card:hover { border-left-color: #39ff14; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
         .track-btn { display:inline-block; background:transparent; border:1px solid #39ff14; color:#39ff14; padding:8px 20px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:3px; text-decoration:none; transition:all 0.2s; }
         .track-btn:hover { background:#39ff14; color:#000; }
-        .login-btn { background:#39ff14; color:#000; padding:14px 36px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; text-decoration:none; display:inline-block; transition:all 0.2s; animation:glow 2s infinite; }
-        .login-btn:hover { background:#fff; }
+        .login-btn { background:#39ff14; color:#000; padding:14px 36px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; text-decoration:none; display:inline-block; transition:transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease; animation:glow 2s infinite; }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(57,255,20,0.4); }
       `}</style>
 
       {/* NAV */}
@@ -134,7 +136,7 @@ export default function MyOrders() {
             </div>
 
             {/* STATS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 2, marginBottom: 32, animation: "fadeUp 0.4s ease 0.1s both" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 32, animation: "fadeUp 0.4s ease 0.1s both" }}>
               {[
                 ["TOTAL ORDERS", orders.length, "#39ff14"],
                 ["DELIVERED", orders.filter(o => o.status === "delivered").length, "#39ff14"],

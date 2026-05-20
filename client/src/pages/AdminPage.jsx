@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { downloadInvoice } from "../utils/downloadInvoice";
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
 const statusColors = {
@@ -63,7 +64,7 @@ export default function AdminPage() {
       const token = session?.access_token;
 
       // Fetch Stats
-      fetch("http://localhost:5000/api/admin/stats", {
+      fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -72,7 +73,7 @@ export default function AdminPage() {
 
       // Fetch Users
       setLoadingUsers(true);
-      fetch("http://localhost:5000/api/admin/users", {
+      fetch(`${process.env.REACT_APP_API_URL}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => {
@@ -155,7 +156,7 @@ export default function AdminPage() {
     setDeletingId(id);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
@@ -427,16 +428,14 @@ export default function AdminPage() {
                       {updatingId === order.id && <div style={{ color: "#39ff14", fontSize: 11, marginTop: 6, letterSpacing: 2 }}>UPDATING...</div>}
                       
                       <div style={{ marginTop: 12 }}>
-                        <a 
-                          href={`http://localhost:5000/api/admin/orders/${order.id}/invoice`} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          style={{ textDecoration: "none" }}
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          style={{ width: "100%", padding: "8px", fontSize: "11px", borderColor: "#39ff1444", color: "#39ff14" }}
+                          onClick={() => downloadInvoice(order.id, { admin: true })}
                         >
-                          <button className="btn-ghost" style={{ width: "100%", padding: "8px", fontSize: "11px", borderColor: "#39ff1444", color: "#39ff14" }}>
-                            📄 DOWNLOAD INVOICE
-                          </button>
-                        </a>
+                          📄 DOWNLOAD INVOICE
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -118,13 +118,16 @@ export default function FAQ() {
         ::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:#39ff14; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
         @keyframes expandIn { from{opacity:0;max-height:0;} to{opacity:1;max-height:400px;} }
-        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; position:relative; }
+        .nav-link::after { content:''; position:absolute; left:0; bottom:-3px; width:0; height:2px; background:#39ff14; transition:width 0.25s cubic-bezier(0.25,1,0.5,1); border-radius:2px; }
         .nav-link:hover { color:#39ff14; }
+        .nav-link:hover::after { width:100%; }
         .faq-item { background:#111; border:1px solid #1a1a1a; margin-bottom:6px; transition:border-color 0.2s; }
         .faq-item.open { border-color:#39ff1440; }
         .faq-q { display:flex; justify-content:space-between; align-items:center; padding:18px 20px; cursor:pointer; gap:16px; }
         .faq-q:hover { background:#151515; }
-        .faq-a { padding:0 20px 18px; font-family:'Barlow',sans-serif; font-size:14px; color:#888; line-height:1.8; border-top:1px solid #1a1a1a; padding-top:14px; }
+        .faq-a { padding:0 20px 18px; font-family:'Barlow',sans-serif; font-size:14px; color:#888; line-height:1.8; border-top:1px solid #1a1a1a; padding-top:14px; overflow:hidden; }
+        .faq-a.open { animation: expandIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
         .cat-label { font-size:11px; letterSpacing:4px; color:#39ff14; fontWeight:700; margin:28px 0 10px; }
         .plus { width:24px; height:24px; border:1px solid #333; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; transition:all 0.2s; color:#555; }
         .plus.open { background:#39ff14; color:#000; border-color:#39ff14; }
@@ -177,7 +180,7 @@ export default function FAQ() {
                     </div>
                   </div>
                   {isOpen && (
-                    <div className="faq-a">{item.a}</div>
+                    <div className="faq-a open">{item.a}</div>
                   )}
                 </div>
               );
