@@ -353,6 +353,7 @@ export default function JerseyStore() {
   border-radius: 0;
   position: relative;
   overflow: hidden;
+  margin-top: 12px;
 }
 #jv-root .add-btn::before { display: none; }
 #jv-root .add-btn::after  { display: none; }
@@ -811,7 +812,7 @@ export default function JerseyStore() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ padding: "0", marginTop: "auto" }}>
+                  <div style={{ marginTop: "auto" }}>
   <button
     className="add-btn"
     disabled={jersey.stock === 0}
