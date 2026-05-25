@@ -321,7 +321,7 @@ export default function JerseyStore() {
   .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
   .nav-link:hover { color:#39ff14; }
 
-  .card { background: var(--card-bg); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
+ .card { background: var(--card-bg); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
   .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(57,255,20,0.15); }
   .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
   .card:hover .card-img { transform:scale(1.06); }
