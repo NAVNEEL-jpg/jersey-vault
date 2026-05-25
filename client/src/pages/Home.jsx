@@ -269,7 +269,7 @@ export default function JerseyStore() {
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 #jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn):not(.checkout-btn) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
-  #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
+  #jv-root .add-btn { display: block; width: 100%; text-align: center; }
   #jv-root .filter-btn, #jv-root .size-btn { display: inline-flex; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
 
@@ -559,10 +559,6 @@ export default function JerseyStore() {
      — High-contrast CTA with animated
        arrow and layered gradient fill
   ══════════════════════════════════════ */
- <button className="checkout-btn" onClick={handleCheckout}>
-  <span>PROCEED TO CHECKOUT</span>
-  <span className="checkout-arrow">→</span>
-</button>
 .checkout-btn {
   position: relative;
   overflow: hidden;
@@ -638,7 +634,7 @@ export default function JerseyStore() {
   /* ══════════════════════════════════════
      CART PANEL
   ══════════════════════════════════════ */
-  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#070707; border-left:1px solid #181818; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-30px 0 80px rgba(0,0,0,0.8); }
+  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#070707; border-left:none; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-30px 0 80px rgba(0,0,0,0.8); }
 
   .cart-item { display:flex; gap:14px; padding:16px 20px; border-bottom:1px solid #111; align-items:center; animation:cartItemSlide 0.25s ease both; transition:background 0.2s; }
   .cart-item:hover { background:#0c0c0c; }
