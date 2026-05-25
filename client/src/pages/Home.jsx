@@ -483,11 +483,7 @@ export default function JerseyStore() {
 #jv-root .size-btn::after { display: none; }
 
 /* HOVER */
-#jv-root .size-btn.selected:hover {
-  background: var(--green) !important;
-  color: #000 !important;
-  border-color: var(--green) !important;
-}
+#jv-root .size-btn:hover:not(.selected):not(:disabled) {
   border-color: rgba(57,255,20,0.5) !important;
   color: var(--green);
   background: rgba(57,255,20,0.05);
@@ -499,10 +495,12 @@ export default function JerseyStore() {
 }
 
 /* SELECTED */
-#jv-root .size-btn.selected {
-  background: var(--green);
+#jv-root .size-btn.selected,
+#jv-root .size-btn.selected:hover,
+#jv-root .size-btn.selected:focus {
+  background: var(--green) !important;
   border-color: var(--green) !important;
-  color: #000;
+  color: #000 !important;
   font-weight: 900;
   font-size: 17px;
   transform: translateY(-2px);
