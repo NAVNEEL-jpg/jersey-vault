@@ -334,25 +334,25 @@ export default function JerseyStore() {
        diagonal shine sweep on hover
   ══════════════════════════════════════ */
 #jv-root .add-btn {
-  position: relative;
-  overflow: hidden;
   background: var(--green);
   color: #000;
   border: none !important;
   width: 100%;
-  padding: 14px 16px;
-  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  letter-spacing: 6px;
+  padding: 11px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 5px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   border-radius: 0;
+  position: relative;
+  overflow: hidden;
 }
 #jv-root .add-btn::before { display: none; }
 #jv-root .add-btn::after  { display: none; }
@@ -811,21 +811,20 @@ export default function JerseyStore() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ padding: "12px 16px 16px" }}>
-                    {/* ── UPGRADED CARD BUTTON ── */}
-                    <button
-                      className="add-btn"
-                      disabled={jersey.stock === 0}
-                      onClick={e => {
-                        e.stopPropagation();
-                        if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
-                      }}
-                    >
-                      {jersey.stock === 0 ? "OUT OF STOCK" : (
-                        <><span>SELECT SIZE</span><span style={{ fontSize: 18, lineHeight: 1, opacity: 0.8 }}>→</span></>
-                      )}
-                    </button>
-                  </div>
+                  <div style={{ padding: "0", marginTop: "auto" }}>
+  <button
+    className="add-btn"
+    disabled={jersey.stock === 0}
+    onClick={e => {
+      e.stopPropagation();
+      if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
+    }}
+  >
+    {jersey.stock === 0 ? "OUT OF STOCK" : (
+      <><span>SELECT SIZE</span><span style={{ fontSize: 14, opacity: 1 }}>→</span></>
+    )}
+  </button>
+</div>
                 </div>
               ))}
             </div>
