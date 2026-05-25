@@ -1,3 +1,11 @@
+import nikelogo from "../assets/brands/nike.png";
+import adidaslogo from "../assets/brands/adidas.png";
+import pumalogo from "../assets/brands/puma.png";
+import nblogo from "../assets/brands/newbalance.png";
+import umbrologo from "../assets/brands/umbro.png";
+import kappalogo from "../assets/brands/kappa.png";
+import macronlogo from "../assets/brands/macron.png";
+import hummellogo from "../assets/brands/hummel.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from '../supabase';
@@ -81,18 +89,25 @@ const Ticker = memo(function Ticker() {
 });
 
 const BrandLogos = memo(function BrandLogos() {
-  const brands = ["NIKE", "ADIDAS", "PUMA", "UMBRO", "NEW BALANCE", "KAPPA", "MACRON", "HUMMEL"];
+  const brands = [
+    nikelogo, adidaslogo, pumalogo, nblogo,
+    umbrologo, kappalogo, macronlogo, hummellogo
+  ];
   return (
-    <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "18px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
-      <div style={{ display: "inline-flex", animation: "marquee 22s linear infinite", gap: 0 }}>
+    <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "20px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
+      <div style={{ display: "inline-flex", alignItems: "center", animation: "marquee 26s linear infinite" }}>
         {[...Array(2)].map((_, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
-            {brands.map(b => (
-              <span key={b} style={{ fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 6, color: "#222", padding: "0 36px", transition: "color 0.3s", cursor: "default", display: "inline-flex", alignItems: "center", gap: 12 }}
-                onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
-                onMouseLeave={e => e.currentTarget.style.color = "#222"}
+            {brands.map((src, idx) => (
+              <span key={idx} style={{ display: "inline-flex", alignItems: "center", padding: "0 40px", opacity: 0.8, transition: "opacity 0.3s", cursor: "default" }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "1"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "0.8"}
               >
-                ✦ {b}
+                <img
+                  src={src}
+                  alt=""
+                  style={{ height: 28, width: "auto", objectFit: "contain", filter: "brightness(0) invert(1) opacity(0.8)" }}
+                />
               </span>
             ))}
           </span>
