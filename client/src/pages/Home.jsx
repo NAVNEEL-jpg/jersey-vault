@@ -456,7 +456,7 @@ export default function JerseyStore() {
   position: relative;
   background: #111;
   border: 1px solid #2a2a2a !important;
-  color: #555;
+  color: #aaa;
   width: 52px;
   height: 52px;
   font-family: 'Bebas Neue', sans-serif;
