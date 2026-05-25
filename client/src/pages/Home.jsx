@@ -559,27 +559,31 @@ export default function JerseyStore() {
      — High-contrast CTA with animated
        arrow and layered gradient fill
   ══════════════════════════════════════ */
- .checkout-btn {
+ <button className="checkout-btn" onClick={handleCheckout}>
+  <span>PROCEED TO CHECKOUT</span>
+.checkout-btn {
   position: relative;
   overflow: hidden;
   background: var(--green);
   color: #000;
   border: none !important;
   width: calc(100% - 32px);
-  margin: 12px 16px;
-  padding: 22px 0;
-  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 22px;
-  letter-spacing: 6px;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
+  margin: 16px auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 14px;
+  padding: 24px 0;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 24px;
+  letter-spacing: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
   border-radius: 0;
+  left: 0;
+  right: 0;
 }
 
 .checkout-btn::before { display: none; }
@@ -588,28 +592,29 @@ export default function JerseyStore() {
 .checkout-btn:hover {
   background: #000;
   color: var(--green);
-  letter-spacing: 8px;
-  box-shadow: 0 0 40px rgba(57,255,20,0.2),
-              0 8px 24px rgba(0,0,0,0.5);
+  letter-spacing: 10px;
+  box-shadow: 
+    inset 0 0 0 2px var(--green),
+    0 0 40px rgba(57,255,20,0.15);
   transform: translateY(-1px);
 }
 
 .checkout-btn:active {
   background: #000;
   color: var(--green);
-  transform: scale(0.98) translateY(0);
+  transform: scale(0.98);
 }
 
 .checkout-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.2);
   font-style: normal;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 900;
   transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
   flex-shrink: 0;
@@ -618,7 +623,7 @@ export default function JerseyStore() {
 .checkout-btn:hover .checkout-arrow {
   background: rgba(57,255,20,0.15);
   color: var(--green);
-  transform: translateX(5px);
+  transform: translateX(6px);
 }
 
 .checkout-btn:active .checkout-arrow {
@@ -1023,9 +1028,9 @@ export default function JerseyStore() {
 
                   {/* ── UPGRADED CHECKOUT BUTTON ── */}
                   <button className="checkout-btn" onClick={handleCheckout}>
-                    <span>PROCEED TO CHECKOUT</span>
-                    <span className="checkout-arrow">→</span>
-                  </button>
+  <span>PROCEED TO CHECKOUT</span>
+  <span className="checkout-arrow">→</span>
+</button>
                   <p style={{ textAlign: "center", color: "#1a1a1a", fontSize: 9, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ SECURED BY RAZORPAY ✦</p>
                 </div>
               )}
