@@ -263,7 +263,7 @@ export default function JerseyStore() {
     --card-bg: #0f0f0f;
     --border: #1e1e1e;
     --border-hover: #2e2e2e;
-    --text-muted: #555;
+    --text-muted: #888;
     --text-dim: #888;
   }
 
@@ -456,7 +456,7 @@ export default function JerseyStore() {
   position: relative;
   background: #111;
   border: 1px solid #2a2a2a !important;
-  color: #aaa;
+  color: #aaa !important;
   width: 52px;
   height: 52px;
   font-family: 'Bebas Neue', sans-serif;
@@ -751,7 +751,7 @@ export default function JerseyStore() {
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
             <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
           </h1>
-          <p style={{ color: "#777", marginTop: 20, fontSize: 14, letterSpacing: 3, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
+          <p style={{ color: "#aaa", marginTop: 20, fontSize: 14, letterSpacing: 3, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
             <button onClick={scrollToShop} style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#39ff14", color: "#000", border: "none", padding: "14px 40px", fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontWeight: 400, fontSize: 16, letterSpacing: 5, cursor: "pointer", animation: "pulse 2s infinite", borderRadius: 2 }}>
               SHOP NOW
@@ -768,7 +768,7 @@ export default function JerseyStore() {
           {[["500+", "JERSEYS"], ["50K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
               <div style={{ fontSize: 30, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>{num}</div>
-              <div style={{ fontSize: 10, letterSpacing: 4, color: "#333", marginTop: 4, fontWeight: 700 }}>{label}</div>
+              <div style={{ fontSize: 10, letterSpacing: 4, color: "#666", marginTop: 4, fontWeight: 700 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -870,7 +870,7 @@ export default function JerseyStore() {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#111"; e.currentTarget.style.background = "#0a0a0a"; }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{icon}</div>
                 <div style={{ fontWeight: 900, letterSpacing: 3, fontSize: 13, marginBottom: 8, color: "#ddd" }}>{title}</div>
-                <div style={{ color: "#444", fontSize: 13, fontFamily: "'Barlow',sans-serif", lineHeight: 1.6 }}>{desc}</div>
+                <div style={{ color: "#666", fontSize: 13, fontFamily: "'Barlow',sans-serif", lineHeight: 1.6 }}>{desc}</div>
               </div>
             ))}
           </div>
