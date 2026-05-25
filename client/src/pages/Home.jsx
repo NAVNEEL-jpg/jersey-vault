@@ -374,9 +374,9 @@ export default function JerseyStore() {
      diagonal shine sweep on hover
 ══════════════════════════════════════ */
 #jv-root .add-btn {
-  background: transparent;
-  color: var(--green);
-  box-shadow: inset 0 0 0 2px var(--green);
+  background: var(--green);
+  color: #000;
+  box-shadow: none;
   border: none !important;
   width: 100%;
   padding: 11px 16px;
@@ -400,10 +400,10 @@ export default function JerseyStore() {
 #jv-root .add-btn::after  { display: none; }
 
 #jv-root .add-btn:hover {
-  background: var(--green);
-  color: #000;
+  background: transparent;
+  color: var(--green);
   letter-spacing: 6px;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 2px var(--green);
 }
 #jv-root .add-btn:active { transform: scale(0.98); }
 #jv-root .add-btn:disabled,
