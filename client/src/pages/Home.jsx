@@ -566,8 +566,8 @@ export default function JerseyStore() {
 .checkout-btn {
   position: relative;
   overflow: hidden;
-  background: var(--green);
-  color: #000;
+  background: var(--green) !important;
+  color: #000 !important;
   border: none !important;
   width: calc(100% - 32px);
   margin: 16px 16px;
@@ -576,13 +576,13 @@ export default function JerseyStore() {
   justify-content: center;
   gap: 14px;
   padding: 24px 0;
-  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 24px;
-  letter-spacing: 8px;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-weight: 900 !important;
+  font-size: 26px !important;
+  letter-spacing: 6px !important;
   cursor: pointer;
   text-transform: uppercase;
-  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   border-radius: 0;
 }
 
@@ -590,18 +590,16 @@ export default function JerseyStore() {
 .checkout-btn::after { display: none; }
 
 .checkout-btn:hover {
-  background: #000;
-  color: var(--green);
-  letter-spacing: 10px;
-  box-shadow: 
-    inset 0 0 0 2px var(--green),
-    0 0 40px rgba(57,255,20,0.15);
-  transform: translateY(-1px);
+  background: #000 !important;
+  color: var(--green) !important;
+  letter-spacing: 6px !important;
+  box-shadow: inset 0 0 0 2px var(--green);
+  transform: none;
 }
 
 .checkout-btn:active {
-  background: #000;
-  color: var(--green);
+  background: #000 !important;
+  color: var(--green) !important;
   transform: scale(0.98);
 }
 
@@ -616,7 +614,7 @@ export default function JerseyStore() {
   font-style: normal;
   font-size: 18px;
   font-weight: 900;
-  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
+  transition: background 0.3s ease, transform 0.3s ease;
   flex-shrink: 0;
 }
 
@@ -627,8 +625,6 @@ export default function JerseyStore() {
 }
 
 .checkout-btn:active .checkout-arrow {
-  background: rgba(57,255,20,0.15);
-  color: var(--green);
   transform: translateX(3px);
 }
   /* ══════════════════════════════════════
@@ -1017,14 +1013,28 @@ export default function JerseyStore() {
               {cart.length > 0 && (
                 <div style={{ borderTop: "1px solid #0f0f0f", paddingTop: 16, background: "#050505" }}>
                   <div className="cart-total-row">
-                    <div>
-                      <span className="cart-total-label">ORDER TOTAL</span>
-                      <div style={{ fontSize: 9, letterSpacing: 3, color: "#1e1e1e", marginTop: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700 }}>
-                        {total >= 1999 ? "✓ FREE SHIPPING APPLIED" : `ADD ₹${(1999 - total).toLocaleString()} FOR FREE SHIP`}
-                      </div>
-                    </div>
-                    <span className="cart-total-amount">₹{total.toLocaleString()}</span>
-                  </div>
+  <div>
+    <span className="cart-total-label" style={{ 
+      color: "#aaa", 
+      fontSize: 13, 
+      letterSpacing: 4, 
+      fontWeight: 900 
+    }}>ORDER TOTAL</span>
+    <div style={{ 
+      fontSize: 11, 
+      color: "#888", 
+      marginTop: 4, 
+      fontFamily: "'Barlow Condensed',sans-serif", 
+      fontWeight: 700,
+      letterSpacing: 2
+    }}>
+      {total >= 1999 
+        ? "✓ FREE SHIPPING APPLIED" 
+        : `ADD ₹${(1999 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
+    </div>
+  </div>
+  <span className="cart-total-amount">₹{total.toLocaleString()}</span>
+</div>
 
                   {/* ── UPGRADED CHECKOUT BUTTON ── */}
                   <button className="checkout-btn" onClick={handleCheckout}>
