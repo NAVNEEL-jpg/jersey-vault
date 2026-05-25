@@ -396,10 +396,10 @@ export default function JerseyStore() {
   border: none !important;
   background: transparent !important;
   color: #fff !important;
-  font-size: 15px !important;
+  font-size: 18px !important;
   letter-spacing: 4px !important;
-  padding: 5px 16px;
-  height: 36px;
+  padding: 8px 18px;
+  height: 40px;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-weight: 900 !important;
   font-style: italic !important;
@@ -416,12 +416,12 @@ export default function JerseyStore() {
   color: #000 !important;
   border: none !important;
   box-shadow: none !important;
-  font-size: 15px !important;
+  font-size: 18px !important;
   letter-spacing: 4px !important;
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
-  padding: 5px 16px;
+  padding: 6px 18px;
   border-radius: 0 !important;
   transform: skewX(-8deg);
   clip-path: polygon(10px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
