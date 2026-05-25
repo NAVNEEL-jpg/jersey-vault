@@ -268,7 +268,7 @@ export default function JerseyStore() {
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-#jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
+#jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn):not(.checkout-btn) { all: unset; ... }
   #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
   #jv-root .filter-btn, #jv-root .size-btn { display: inline-flex; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
@@ -561,6 +561,8 @@ export default function JerseyStore() {
   ══════════════════════════════════════ */
  <button className="checkout-btn" onClick={handleCheckout}>
   <span>PROCEED TO CHECKOUT</span>
+  <span className="checkout-arrow">→</span>
+</button>
 .checkout-btn {
   position: relative;
   overflow: hidden;
@@ -568,7 +570,7 @@ export default function JerseyStore() {
   color: #000;
   border: none !important;
   width: calc(100% - 32px);
-  margin: 16px auto;
+  margin: 16px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -582,8 +584,6 @@ export default function JerseyStore() {
   text-transform: uppercase;
   transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
   border-radius: 0;
-  left: 0;
-  right: 0;
 }
 
 .checkout-btn::before { display: none; }
