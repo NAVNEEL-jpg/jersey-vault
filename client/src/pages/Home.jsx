@@ -380,7 +380,7 @@ export default function JerseyStore() {
   ══════════════════════════════════════ */
   .filter-bar {
     display: flex;
-    gap: 10px;
+    gap: 8px !important;
     flex-wrap: wrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -396,10 +396,10 @@ export default function JerseyStore() {
   border: none !important;
   background: transparent !important;
   color: #fff !important;
-  font-size: 20px !important;
+  font-size: 15px !important;
   letter-spacing: 4px !important;
-  padding: 11px 20px;
-  height: 46px;
+  padding: 5px 16px;
+  height: 36px;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-weight: 900 !important;
   font-style: italic !important;
@@ -416,12 +416,12 @@ export default function JerseyStore() {
   color: #000 !important;
   border: none !important;
   box-shadow: none !important;
-  font-size: 20px !important;
+  font-size: 15px !important;
   letter-spacing: 4px !important;
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
-  padding: 5px 20px;
+  padding: 5px 16px;
   border-radius: 0 !important;
   transform: skewX(-8deg);
   clip-path: polygon(10px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
@@ -440,7 +440,7 @@ export default function JerseyStore() {
 }
 
 .filter-bar {
-  gap: 10px !important;
+  gap: 8px !important;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
