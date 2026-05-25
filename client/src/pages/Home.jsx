@@ -84,8 +84,8 @@ const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 const filterButtons = [
   { key: "ALL",            label: "ALL" },
-  { key: "FAN VERSION",    label: "FAN" },
-  { key: "PLAYER VERSION", label: "PLAYER" },
+  { key: "FAN VERSION",    label: "FAN VERSION" },
+  { key: "PLAYER VERSION", label: "PLAYER VERSION" },
   { key: "RETRO",          label: "RETRO" },
 ];
 
@@ -317,18 +317,18 @@ export default function JerseyStore() {
     box-shadow: none !important;
   }
 
-  .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; align-items:center; }
+  .filter-bar { display:flex; gap:4px; flex-wrap:wrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; align-items:center; }
   .filter-bar::-webkit-scrollbar { display:none; }
 
   #jv-root .filter-btn {
     background: transparent !important;
     color: #39ff14 !important;
-    border: none !important;
-    padding: 10px 20px;
+    border: 2px solid transparent !important;
+    padding: 8px 18px;
     font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
     font-weight: 400;
-    font-size: 16px;
-    letter-spacing: 4px;
+    font-size: 15px;
+    letter-spacing: 3px;
     cursor: pointer;
     transition: all 0.15s ease;
     text-transform: uppercase;
@@ -337,20 +337,23 @@ export default function JerseyStore() {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
+    min-width: 56px;
+    border-radius: 4px;
     text-shadow: 0 0 8px rgba(57,255,20,0.4);
   }
   #jv-root .filter-btn:hover {
-    background: #39ff14 !important;
-    color: #000 !important;
+    background: rgba(57,255,20,0.12) !important;
+    border-color: #39ff14 !important;
+    color: #39ff14 !important;
     text-shadow: none !important;
-    transform: translateY(-1px);
   }
   #jv-root .filter-btn.active {
     background: #39ff14 !important;
     color: #000 !important;
+    border-color: #39ff14 !important;
     text-shadow: none !important;
-    box-shadow: 0 4px 20px rgba(57,255,20,0.4);
+    box-shadow: 0 0 16px rgba(57,255,20,0.5);
+    border-radius: 4px;
   }
 
   .size-btn {
@@ -676,7 +679,7 @@ export default function JerseyStore() {
                         }
                       }}
                     >
-                      {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
+                      {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE →"}
                     </button>
                   </div>
                 </div>
