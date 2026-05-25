@@ -560,75 +560,102 @@ export default function JerseyStore() {
        arrow and layered gradient fill
   ══════════════════════════════════════ */
   .checkout-btn {
-    position: relative;
-    overflow: hidden;
-    background: var(--green);
-    color: #000;
-    border: none !important;
-    width: calc(100% - 32px);
-    margin: 12px 16px;
-    padding: 18px 0;
-    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-    font-weight: 400;
-    font-size: 17px;
-    letter-spacing: 6px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.3s ease, color 0.3s ease, letter-spacing 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    border-radius: 2px;
-  }
-  /* Shine sweep */
-  .checkout-btn::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -120%;
-    width: 60%;
-    height: 200%;
-    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%);
-    transform: skewX(-15deg);
-    pointer-events: none;
-  }
-  /* Bottom border reveal */
-  .checkout-btn::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #000, transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .checkout-btn:hover {
-    background: #000;
-    color: var(--green);
-    letter-spacing: 8px;
-    box-shadow: inset 0 0 0 1px rgba(57,255,20,0.5), 0 0 40px rgba(57,255,20,0.15);
-  }
-  .checkout-btn:hover::before {
-    animation: btnShine 0.75s ease forwards;
-  }
-  .checkout-btn:hover::after {
-    opacity: 1;
-  }
-  .checkout-btn:active { transform: scale(0.99); }
+  position: relative;
+  overflow: hidden;
+  background: var(--green);
+  color: #000;
+  border: none !important;
+  width: calc(100% - 32px);
+  margin: 12px 16px;
+  padding: 18px 0;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.4s cubic-bezier(0.23,1,0.32,1), 
+              color 0.4s cubic-bezier(0.23,1,0.32,1), 
+              letter-spacing 0.4s cubic-bezier(0.23,1,0.32,1),
+              box-shadow 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+}
 
-  /* Arrow inside checkout */
-  .checkout-arrow {
-    display: inline-block;
-    transition: transform 0.25s ease;
-    font-style: normal;
-  }
-  .checkout-btn:hover .checkout-arrow {
-    animation: arrowNudge 0.6s ease infinite;
-  }
+/* Left accent bar */
+.checkout-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: rgba(0,0,0,0.25);
+  transition: width 0.3s ease;
+}
 
+/* Shine sweep */
+.checkout-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -120%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
+  transform: skewX(-15deg);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.checkout-btn:hover {
+  background: #0a0a0a;
+  color: var(--green);
+  letter-spacing: 10px;
+  box-shadow: 
+    inset 0 0 0 1px rgba(57,255,20,0.4),
+    0 0 50px rgba(57,255,20,0.12),
+    0 8px 32px rgba(0,0,0,0.6);
+}
+
+.checkout-btn:hover::before {
+  width: 6px;
+  background: var(--green);
+}
+
+.checkout-btn:hover::after {
+  animation: btnShine 0.6s ease forwards;
+}
+
+.checkout-btn:active { 
+  transform: scale(0.985);
+  letter-spacing: 8px;
+}
+
+/* Arrow inside checkout */
+.checkout-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0,0,0,0.3);
+  border-radius: 50%;
+  font-style: normal;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.checkout-btn:hover .checkout-arrow {
+  border-color: rgba(57,255,20,0.4);
+  background: rgba(57,255,20,0.08);
+  animation: arrowNudge 0.6s ease infinite;
+}
   /* ══════════════════════════════════════
      MODAL
   ══════════════════════════════════════ */
