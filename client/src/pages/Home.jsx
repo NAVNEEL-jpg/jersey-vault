@@ -380,7 +380,6 @@ export default function JerseyStore() {
   ══════════════════════════════════════ */
  .filter-bar {
   display: flex;
-  gap: 1px !important;
   flex-wrap: wrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
