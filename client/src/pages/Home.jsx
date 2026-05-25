@@ -420,8 +420,21 @@ export default function JerseyStore() {
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
-  padding: 11px 20px;
-  border-radius: 2px;
+  padding: 11px 28px;
+  border-radius: 0 !important;
+  transform: skewX(-8deg);
+}
+
+#jv-root .filter-btn.active span,
+#jv-root .filter-btn.active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* counter-skew the text so it stays straight */
+#jv-root .filter-btn.active {
+  transform: skewX(-8deg);
 }
 
 .filter-bar {
@@ -744,10 +757,12 @@ export default function JerseyStore() {
             {/* ── UPGRADED FILTER BAR ── */}
             <div className="filter-bar">
               {filterButtons.map(({ key, label }) => (
-                <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
-                  {label}
-                </button>
-              ))}
+  <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
+    <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
+      {label}
+    </span>
+  </button>
+))}
             </div>
           </div>
 
