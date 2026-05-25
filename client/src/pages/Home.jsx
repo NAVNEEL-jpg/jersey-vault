@@ -291,7 +291,8 @@ export default function JerseyStore() {
     <>
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
+        .section-divider { height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); opacity:0.3; border:none; }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
 
   :root {
     --green: #39ff14;
@@ -360,11 +361,11 @@ export default function JerseyStore() {
   .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
   .nav-link:hover { color:#39ff14; }
 
-.card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
+  .card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; height:420px; }
   .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 0 0 1px #39ff14, 0 0 30px rgba(57,255,20,0.2), 0 20px 60px rgba(0,0,0,0.6); }
- .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
+  .card-img { width:100%; height:240px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
+  .card-img-wrap { overflow:hidden; position:relative; height:240px; background:#0d0d0d; }
   .card:hover .card-img { transform:scale(1.06); }
-  .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
  /* ══════════════════════════════════════
@@ -701,6 +702,9 @@ export default function JerseyStore() {
   nav {
     padding: 0 12px !important;
   }
+.card-img { height:200px; }
+.card-img-wrap { height:200px; }
+.card { height:380px; }
 }
 
 @media(max-width:380px) {
@@ -711,6 +715,9 @@ export default function JerseyStore() {
   .checkout-arrow {
     font-size: 16px;
   }
+    .card-img { height:180px; }
+    .card-img-wrap { height:180px; }
+    .card { height:360px; }
 }
   /* ══════════════════════════════════════
      MODAL
@@ -873,6 +880,7 @@ export default function JerseyStore() {
 
         <Ticker />
         <BrandLogos />
+        <div className="section-divider" />
 
         {/* HERO */}
         <section className="hero-section" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
@@ -903,6 +911,7 @@ export default function JerseyStore() {
             </div>
           ))}
         </div>
+        <div className="section-divider" />
 
         {/* SHOP */}
         <section id="shop" style={{ padding: "60px 16px" }}>
@@ -954,17 +963,13 @@ export default function JerseyStore() {
                     <div className="card-overlay" />
                   </div>
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-<div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "46px" }}>{jersey.name}</div>
-                        {jersey.stock > 0 && jersey.stock <= 5 && (
-                          <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, marginTop: 4, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
-                        )}
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>₹{jersey.price}</div>
-                      </div>
-                    </div>
+                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+  <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "46px" }}>{jersey.name}</div>
+  <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{jersey.price}</div>
+  {jersey.stock > 0 && jersey.stock <= 5 && (
+    <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
+  )}
+</div>
                   </div>
                   <div style={{ marginTop: "auto" }}>
   <button
@@ -985,6 +990,7 @@ export default function JerseyStore() {
             </div>
           )}
         </section>
+        <div className="section-divider" />
 
         {/* FEATURES */}
         <section style={{ background: "#070707", padding: "60px 16px", borderTop: "1px solid #111" }}>
@@ -1006,6 +1012,7 @@ export default function JerseyStore() {
             ))}
           </div>
         </section>
+        <div className="section-divider" />
 
         {/* FOOTER */}
         <footer style={{ background: "#040404", borderTop: "1px solid #111", padding: "40px 24px", textAlign: "center" }}>
