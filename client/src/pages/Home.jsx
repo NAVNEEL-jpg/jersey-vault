@@ -340,9 +340,9 @@ export default function JerseyStore() {
   width: 100%;
   padding: 11px 16px;
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 11px;
-  letter-spacing: 5px;
+  font-weight: 900 !important;
+  font-size: 16px !important;
+  letter-spacing: 5px !important;
   cursor: pointer;
   text-transform: uppercase;
   transition: background 0.2s ease, color 0.2s ease;
@@ -421,10 +421,10 @@ export default function JerseyStore() {
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
-  padding: 7px 22px;
+  padding: 5px 20px;
   border-radius: 0 !important;
   transform: skewX(-8deg);
-  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
 }
 
 #jv-root .filter-btn.active span,
@@ -436,11 +436,11 @@ export default function JerseyStore() {
 
 /* counter-skew the text so it stays straight */
 #jv-root .filter-btn.active {
-  transform: skewX(-8deg);
+  transform: skewX(-10deg);
 }
 
 .filter-bar {
-  gap: 24px !important;
+  gap: 22px !important;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
