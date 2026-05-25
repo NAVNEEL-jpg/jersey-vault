@@ -412,8 +412,8 @@ export default function JerseyStore() {
   color: var(--green) !important;
   border: none !important;
   box-shadow: none !important;
-  font-size: 22px !important;
-  letter-spacing: 8px !important;
+  font-size: 15px !important;
+  letter-spacing: 4px !important;
   font-weight: 400;
 }
 #jv-root .filter-btn.active::before { display: none; }
