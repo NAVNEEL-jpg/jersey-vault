@@ -411,8 +411,8 @@ export default function JerseyStore() {
 }
 
 #jv-root .filter-btn.active {
-  background: transparent !important;
-  color: var(--green) !important;
+  background: var(--green) !important;
+  color: #000 !important;
   border: none !important;
   box-shadow: none !important;
   font-size: 20px !important;
@@ -420,6 +420,8 @@ export default function JerseyStore() {
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
+  padding: 11px 20px;
+  border-radius: 2px;
 }
 
 .filter-bar {
