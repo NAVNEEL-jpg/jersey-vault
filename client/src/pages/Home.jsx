@@ -650,6 +650,17 @@ export default function JerseyStore() {
     letter-spacing: 6px !important;
     padding: 13px 0;
   }
+  .nav-right { 
+    gap: 12px !important; 
+    align-items: center !important;
+  }
+  .hamburger { 
+    margin-left: 4px;
+    align-self: center;
+  }
+  nav {
+    padding: 0 12px !important;
+  }
 }
 
 @media(max-width:380px) {
@@ -789,7 +800,7 @@ export default function JerseyStore() {
             <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           <div className="desktop-nav-links">{navLinks}</div>
-          <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+          <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: "auto" }}>
             <button
               onClick={() => setCartOpen(true)}
               style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 1, padding: 0, transition: "color 0.2s" }}
@@ -804,9 +815,10 @@ export default function JerseyStore() {
                 <span style={{ color: "#39ff14", fontSize: 19, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
               )}
             </button>
-            <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
-              <span /><span /><span />
-            </button>
+          <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
+  <span /><span /><span />
+</button>
+  
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
             <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
