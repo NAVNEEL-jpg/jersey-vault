@@ -420,7 +420,7 @@ export default function JerseyStore() {
   font-weight: 900 !important;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-style: italic !important;
-  padding: 9px 26px;
+  padding: 7px 24px;
   border-radius: 0 !important;
   transform: skewX(-8deg);
   clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
