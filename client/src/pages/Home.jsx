@@ -415,6 +415,8 @@ export default function JerseyStore() {
   font-size: 15px !important;
   letter-spacing: 4px !important;
   font-weight: 400;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif !important;
+  font-style: normal !important;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
