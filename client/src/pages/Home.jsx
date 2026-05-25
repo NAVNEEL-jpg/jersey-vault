@@ -392,45 +392,28 @@ export default function JerseyStore() {
   .filter-bar::-webkit-scrollbar { display: none; }
 
  #jv-root .filter-btn {
-  position: relative;
+  border: none !important;
   background: transparent !important;
   color: #fff !important;
-  border: 1px solid #333 !important;
-  padding: 11px 22px;
-  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-  font-weight: 400;
-  font-size: 17px;
-  letter-spacing: 5px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-transform: uppercase;
-  white-space: nowrap;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 56px;
-  border-radius: 2px;
-  text-shadow: none;
+  font-size: 22px !important;
+  letter-spacing: 8px !important;
+  padding: 11px 28px;
   height: 46px;
-  box-sizing: border-box;
 }
-#jv-root .filter-btn::before { display: none; }
+
 #jv-root .filter-btn:hover {
-  background: rgba(57,255,20,0.1) !important;
-  border-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
   color: var(--green) !important;
 }
+
 #jv-root .filter-btn.active {
   background: transparent !important;
-  color: #000 !important;
-  border-color: var(--green) !important;
-  text-shadow: none !important;
-  box-shadow: 0 0 20px rgba(57,255,20,0.3);
-  border-radius: 2px;
-  font-size: 17px;
-  letter-spacing: 5px;
-  height: 46px;
+  color: var(--green) !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 22px !important;
+  letter-spacing: 8px !important;
   font-weight: 400;
 }
 #jv-root .filter-btn.active::before { display: none; }
