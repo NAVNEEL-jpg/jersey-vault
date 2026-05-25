@@ -422,19 +422,14 @@ export default function JerseyStore() {
   font-style: italic !important;
   padding: 7px 22px;
   border-radius: 0 !important;
-  transform: skewX(-8deg);
-}
-
-#jv-root .filter-btn.active span,
-#jv-root .filter-btn.active {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transform: skewX(-11deg);
+  animation: glowPulse 2.5s ease-in-out infinite;
 }
 
 /* counter-skew the text so it stays straight */
-#jv-root .filter-btn.active {
-  transform: skewX(-8deg);
+#jv-root .filter-btn.active span {
+ display: inline-block;
+  transform: skewX(-11deg);
 }
 
 .filter-bar {
