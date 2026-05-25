@@ -423,7 +423,6 @@ export default function JerseyStore() {
   padding: 7px 22px;
   border-radius: 0 !important;
   transform: skewX(-8deg);
-  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
 }
 
 #jv-root .filter-btn.active span,
