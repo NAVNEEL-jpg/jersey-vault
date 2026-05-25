@@ -80,6 +80,28 @@ const Ticker = memo(function Ticker() {
   );
 });
 
+const BrandLogos = memo(function BrandLogos() {
+  const brands = ["NIKE", "ADIDAS", "PUMA", "UMBRO", "NEW BALANCE", "KAPPA", "MACRON", "HUMMEL"];
+  return (
+    <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "18px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
+      <div style={{ display: "inline-flex", animation: "marquee 22s linear infinite", gap: 0 }}>
+        {[...Array(2)].map((_, i) => (
+          <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
+            {brands.map(b => (
+              <span key={b} style={{ fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 13, letterSpacing: 6, color: "#222", padding: "0 36px", transition: "color 0.3s", cursor: "default", display: "inline-flex", alignItems: "center", gap: 12 }}
+                onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
+                onMouseLeave={e => e.currentTarget.style.color = "#222"}
+              >
+                ✦ {b}
+              </span>
+            ))}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 const filterButtons = [
@@ -321,9 +343,9 @@ export default function JerseyStore() {
   .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
   .nav-link:hover { color:#39ff14; }
 
- .card { background: var(--card-bg); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
-  .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(57,255,20,0.15); }
-  .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
+.card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
+  .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 0 0 1px #39ff14, 0 0 30px rgba(57,255,20,0.2), 0 20px 60px rgba(0,0,0,0.6); }
+ .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
   .card:hover .card-img { transform:scale(1.06); }
   .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
@@ -334,8 +356,9 @@ export default function JerseyStore() {
      diagonal shine sweep on hover
 ══════════════════════════════════════ */
 #jv-root .add-btn {
-  background: var(--green);
-  color: #000;
+  background: transparent;
+  color: var(--green);
+  box-shadow: inset 0 0 0 2px var(--green);
   border: none !important;
   width: 100%;
   padding: 11px 16px;
@@ -359,10 +382,10 @@ export default function JerseyStore() {
 #jv-root .add-btn::after  { display: none; }
 
 #jv-root .add-btn:hover {
-  background: #000;
-  color: var(--green);
+  background: var(--green);
+  color: #000;
   letter-spacing: 6px;
-  box-shadow: inset 0 0 0 2px var(--green);
+  box-shadow: none;
 }
 #jv-root .add-btn:active { transform: scale(0.98); }
 #jv-root .add-btn:disabled,
@@ -832,6 +855,7 @@ export default function JerseyStore() {
         </nav>
 
         <Ticker />
+        <BrandLogos />
 
         {/* HERO */}
         <section className="hero-section" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
@@ -915,7 +939,7 @@ export default function JerseyStore() {
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
-                        <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1 }}>{jersey.name}</div>
+<div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "46px" }}>{jersey.name}</div>
                         {jersey.stock > 0 && jersey.stock <= 5 && (
                           <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, marginTop: 4, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
                         )}
