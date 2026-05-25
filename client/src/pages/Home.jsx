@@ -291,9 +291,8 @@ export default function JerseyStore() {
     <>
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
-        .section-divider { height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); opacity:0.3; border:none; }
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
-
+.section-divider { height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); opacity:0.3; border:none; }
   :root {
     --green: #39ff14;
     --green-dim: rgba(57,255,20,0.12);
@@ -367,6 +366,26 @@ export default function JerseyStore() {
   .card-img-wrap { overflow:hidden; position:relative; height:240px; background:#0d0d0d; }
   .card:hover .card-img { transform:scale(1.06); }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
+  .card-hover-bar {
+  position: absolute;
+  bottom: -40px;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px);
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #888;
+  transition: bottom 0.3s cubic-bezier(0.23,1,0.32,1);
+  border-top: 1px solid rgba(57,255,20,0.15);
+}
+.card:hover .card-hover-bar { bottom: 0; }
 
  /* ══════════════════════════════════════
    ADD-TO-CART / SELECT SIZE BUTTON
@@ -960,8 +979,16 @@ export default function JerseyStore() {
                     ) : (
                       <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }}>👕</div>
                     )}
-                    <div className="card-overlay" />
-                  </div>
+                  <div className="card-overlay" />
+<div className="card-hover-bar">
+  <span>{jersey.type || "JERSEY"}</span>
+  {jersey.stock > 0 ? (
+    <span style={{ color: "#39ff14" }}>● IN STOCK</span>
+  ) : (
+    <span style={{ color: "#c0392b" }}>● OUT OF STOCK</span>
+  )}
+</div>
+</div>
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
   <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "46px" }}>{jersey.name}</div>
