@@ -378,21 +378,21 @@ export default function JerseyStore() {
      — Segmented-control feel with
        animated active indicator
   ══════════════════════════════════════ */
-  .filter-bar {
-    display: flex;
-    gap: 8px !important;
-    flex-wrap: wrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-    scrollbar-width: none;
-    align-items: center;
-    background: transparent;
-    border: none;
-  }
-  .filter-bar::-webkit-scrollbar { display: none; }
+ .filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  align-items: center;
+  background: transparent;
+  border: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
 
- #jv-root .filter-btn {
+#jv-root .filter-btn {
   border: none !important;
   background: transparent !important;
   color: #fff !important;
@@ -423,25 +423,25 @@ export default function JerseyStore() {
   font-style: italic !important;
   padding: 6px 18px;
   border-radius: 0 !important;
-  transform: skewX(-8deg);
-  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-}
-
-#jv-root .filter-btn.active span,
-#jv-root .filter-btn.active {
+  transform: skewX(-10deg);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* counter-skew the text so it stays straight */
-#jv-root .filter-btn.active {
-  transform: skewX(-10deg);
+/* First button - flat left edge */
+#jv-root .filter-btn.active:first-child {
+  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transform: skewX(0deg);
 }
 
-.filter-bar {
-  gap: 8px !important;
+/* Last button - flat right edge */
+#jv-root .filter-btn.active:last-child {
+  clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 0% 100%);
+  transform: skewX(0deg);
 }
+
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
      SIZE BUTTONS
