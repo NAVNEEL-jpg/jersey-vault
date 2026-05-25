@@ -704,23 +704,62 @@ export default function JerseyStore() {
   .mobile-menu.open { display:flex; }
   .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
-  @media(max-width:768px) {
-    .hamburger { display:flex; }
-    .desktop-nav-links { display:none; }
-    .desktop-search { display:none; }
-    .cart-panel { width:100%; border-left:none; }
-    .search-input { max-width:100%; font-size:13px; padding:8px 16px; }
-    .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
-    .modal-img { height:180px; }
-    .modal-img-placeholder { height:180px; }
-    .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
-    .nav-right { gap:8px !important; }
-    .filter-bar { border-radius:4px; }
+ @media(max-width:768px) {
+  /* existing ones stay */
+  .hamburger { display:flex; }
+  .desktop-nav-links { display:none; }
+  .desktop-search { display:none; }
+  .cart-panel { width:100%; border-left:none; }
+  .hero-section { padding:60px 16px 40px; }
+  .modal-img { height:180px; }
+  .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
+
+  /* ADD THESE NEW ONES */
+  .cart-total-row { padding:12px 16px 8px; }
+  .cart-total-amount { font-size:26px; }
+  .cart-total-label { font-size:11px; }
+  .cart-item { padding:12px 16px; gap:10px; }
+  .cart-item-name { font-size:15px; }
+  .cart-item-price { font-size:17px; }
+  .cart-item-img { width:48px; height:48px; }
+  .card-img { height:180px; }
+  .card-img-wrap { height:180px; }
+  .stats-grid { grid-template-columns:repeat(3,1fr); }
+  .stat-cell { padding:14px 0; }
+  .filter-btn { font-size:14px !important; padding:6px 12px; }
+  .size-btn { width:44px; height:44px; font-size:14px; }
+  .modal { max-width:100%; margin:0; border-radius:0; }
+  .size-grid { gap:6px; }
+  .checkout-btn {
+    width:calc(100% - 24px);
+    margin:10px 12px;
+    font-size:17px !important;
+    letter-spacing:6px !important;
+    padding:13px 0;
   }
-  @media(max-width:480px) {
-    .stat-cell { padding:14px 0; }
-    .size-btn { width:48px; height:48px; }
+}
+ @media(max-width:480px) {
+  .stat-cell { padding:12px 0; }
+  .size-btn { width:42px; height:42px; }
+  .card-img { height:160px; }
+  .card-img-wrap { height:160px; }
+  .cart-item-img { width:44px; height:44px; }
+  .cart-total-amount { font-size:24px; }
+  .modal-img { height:160px; }
+}
+  @media(max-width:380px) {
+  .checkout-btn {
+    font-size:14px !important;
+    letter-spacing:4px !important;
   }
+  .checkout-arrow { font-size:16px; }
+  .cart-item-name { font-size:13px; }
+  .cart-item-price { font-size:15px; }
+  .size-btn { width:38px; height:38px; font-size:13px; }
+  .filter-btn { font-size:12px !important; padding:4px 8px; }
+  .cart-total-amount { font-size:22px; }
+  .stat-cell { padding:10px 0; }
+}
 `}</style>
 
         {/* TOAST */}
@@ -834,7 +873,7 @@ export default function JerseyStore() {
               <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 6}}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6}}>
               {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
@@ -883,7 +922,7 @@ export default function JerseyStore() {
         {/* FEATURES */}
         <section style={{ background: "#070707", padding: "60px 16px", borderTop: "1px solid #111" }}>
           <h2 style={{ fontSize: 30, fontWeight: 900, fontStyle: "italic", textAlign: "center", marginBottom: 40, letterSpacing: 2 }}>WHY <span style={{ color: "#39ff14" }}>JERSEYVAULT</span></h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 1 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 1 }}>
             {[
               ["🏅", "LICENSED AUTHENTIC", "Every jersey is officially licensed and verified"],
               ["🚚", "FAST DELIVERY", "Ships within 24–48 hours across India"],
