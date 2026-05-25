@@ -1,3 +1,5 @@
+import jordanlogo from "../assets/brands/jordan.png";
+import adidas2logo from "../assets/brands/adidas2.png";
 import nikelogo from "../assets/brands/nike.png";
 import adidaslogo from "../assets/brands/adidas.png";
 import pumalogo from "../assets/brands/puma.png";
@@ -89,9 +91,9 @@ const Ticker = memo(function Ticker() {
 });
 
 const BrandLogos = memo(function BrandLogos() {
-  const brands = [
-    nikelogo, adidaslogo, pumalogo, nblogo,
-    umbrologo, kappalogo, macronlogo, hummellogo
+ const brands = [
+    nikelogo, adidaslogo, adidas2logo, pumalogo, nblogo,
+    umbrologo, kappalogo, macronlogo, hummellogo, jordanlogo
   ];
   return (
     <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "20px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
