@@ -393,7 +393,7 @@ export default function JerseyStore() {
 .filter-bar::-webkit-scrollbar { display: none; }
 
 #jv-root .filter-btn {
-  border: none !important;
+  border: 1px solid #2a2a2a !important;
   background: transparent !important;
   color: #fff !important;
   font-size: 18px !important;
@@ -403,11 +403,20 @@ export default function JerseyStore() {
   font-family: 'Barlow Condensed', sans-serif !important;
   font-weight: 900 !important;
   font-style: italic !important;
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+
+#jv-root .filter-btn:first-child {
+  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+}
+
+#jv-root .filter-btn:last-child {
+  clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 0% 100%);
 }
 
 #jv-root .filter-btn:hover {
   background: transparent !important;
-  border: none !important;
+  border: 1px solid #888 !important;
   color: var(--green) !important;
 }
 
