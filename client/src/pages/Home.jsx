@@ -379,10 +379,11 @@ export default function JerseyStore() {
   border: none !important;
   width: 100%;
   padding: 11px 16px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900 !important;
-  font-size: 16px !important;
-  letter-spacing: 5px !important;
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 400 !important;
+  font-size: 17px !important;
+  letter-spacing: 4px !important;
+  white-space: nowrap !important;
   cursor: pointer;
   text-transform: uppercase;
   transition: background 0.2s ease, color 0.2s ease;
@@ -408,9 +409,11 @@ export default function JerseyStore() {
 #jv-root .add-btn:disabled,
 #jv-root .add-btn[disabled] {
   background: #1a1a1a !important;
-  color: #333 !important;
+  color: #666 !important;
   cursor: not-allowed;
   box-shadow: none !important;
+  letter-spacing: 3px !important;
+  font-size: 13px !important;
 }
 #jv-root .add-btn:disabled::before { display: none; }
 
@@ -703,7 +706,7 @@ export default function JerseyStore() {
   }
 .card-img { height:200px; }
 .card-img-wrap { height:200px; }
-.card { height:380px; }
+.card { height:400px; }
 .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
@@ -715,7 +718,7 @@ export default function JerseyStore() {
   .checkout-arrow {
     font-size: 16px;
   }
-    .card { height:360px; }
+    .card { height:390px; }
     .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
   /* ══════════════════════════════════════
@@ -931,7 +934,7 @@ export default function JerseyStore() {
           </div>
 
           {loadingProducts ? (
-            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6}}>
+            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6}}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} style={{ background: "#0f0f0f", border: "1px solid #151515" }}>
                   <div className="skeleton" style={{ height: 220 }} />
@@ -964,7 +967,7 @@ export default function JerseyStore() {
 </div>
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-  <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "46px" }}>{jersey.name}</div>
+<div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "54px" }}>{jersey.name}</div>
   <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{jersey.price}</div>
   {jersey.stock > 0 && jersey.stock <= 5 && (
     <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
@@ -980,9 +983,7 @@ export default function JerseyStore() {
       if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
     }}
   >
-    {jersey.stock === 0 ? "OUT OF STOCK" : (
-      <><span>SELECT SIZE</span><span style={{ fontSize: 14, opacity: 1 }}>→</span></>
-    )}
+   {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE →"}
   </button>
 </div>
                 </div>
