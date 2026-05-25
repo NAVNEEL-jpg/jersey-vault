@@ -84,8 +84,8 @@ const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 const filterButtons = [
   { key: "ALL",            label: "ALL" },
-  { key: "FAN VERSION",    label: "FAN" },
-  { key: "PLAYER VERSION", label: "PLAYER" },
+  { key: "FAN VERSION",    label: "FAN VERSION" },
+  { key: "PLAYER VERSION", label: "PLAYER VERSION" },
   { key: "RETRO",          label: "RETRO" },
 ];
 
@@ -254,6 +254,19 @@ export default function JerseyStore() {
         <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
 
+  :root {
+    --green: #39ff14;
+    --green-dim: rgba(57,255,20,0.12);
+    --green-glow: rgba(57,255,20,0.35);
+    --green-soft: rgba(57,255,20,0.06);
+    --dark: #0a0a0a;
+    --card-bg: #0f0f0f;
+    --border: #1e1e1e;
+    --border-hover: #2e2e2e;
+    --text-muted: #555;
+    --text-dim: #888;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   #jv-root button:not(.hamburger) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
   #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
@@ -263,7 +276,7 @@ export default function JerseyStore() {
   @keyframes slideDown { from { opacity:0; transform:translateY(-30px); } to { opacity:1; transform:translateY(0); } }
   @keyframes fadeUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
   @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.05);} }
-  @keyframes toastIn { from{opacity:0;transform:translateX(100px);} to{opacity:1;transform:translateX(0);} }
+  @keyframes toastIn { from{opacity:0;transform:translateX(100px) scale(0.9);} to{opacity:1;transform:translateX(0) scale(1);} }
   @keyframes marquee { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
   @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
   @keyframes breathe { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
@@ -271,191 +284,451 @@ export default function JerseyStore() {
   @keyframes scanline { 0%{transform:translateY(-100%);} 100%{transform:translateY(400%);} }
   @keyframes cartItemSlide { from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
 
+  /* ── SHINE sweep used on buttons ── */
+  @keyframes btnShine {
+    0%   { left: -120%; }
+    60%  { left: 130%; }
+    100% { left: 130%; }
+  }
+  /* ── size-btn selected pulse ── */
+  @keyframes sizePop {
+    0%   { transform: scale(1) translateY(-2px); }
+    40%  { transform: scale(1.12) translateY(-4px); }
+    70%  { transform: scale(0.97) translateY(-2px); }
+    100% { transform: scale(1) translateY(-2px); }
+  }
+  /* ── filter pill slide-in ── */
+  @keyframes filterPillIn {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
+  }
+  /* ── checkout arrow nudge ── */
+  @keyframes arrowNudge {
+    0%,100% { transform: translateX(0); }
+    50%     { transform: translateX(5px); }
+  }
+  /* ── subtle glow pulse on active filter ── */
+  @keyframes glowPulse {
+    0%,100% { box-shadow: 0 0 14px var(--green-glow); }
+    50%     { box-shadow: 0 0 28px var(--green-glow), 0 0 8px var(--green); }
+  }
+  /* ── cart price count-up feel ── */
+  @keyframes priceReveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
   .nav-link:hover { color:#39ff14; }
 
-  .card { background:#111; border:1px solid #1a1a1a; overflow:hidden; cursor:pointer; transition:transform 0.3s, border-color 0.3s; position:relative; display:flex; flex-direction:column; }
-  .card:hover { transform:translateY(-4px); border-color:#39ff14; }
-  .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.4s; }
-  .card:hover .card-img { transform:scale(1.04); }
+  .card { background: var(--card-bg); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; }
+  .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(57,255,20,0.15); }
+  .card-img { width:100%; height:220px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
+  .card:hover .card-img { transform:scale(1.06); }
   .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
+  /* ══════════════════════════════════════
+     ADD-TO-CART / SELECT SIZE BUTTON
+     — Sleek split-light design with
+       diagonal shine sweep on hover
+  ══════════════════════════════════════ */
   #jv-root .add-btn {
     position: relative;
     overflow: hidden;
-    background: #39ff14;
-    color: #000;
-    border: none !important;
+    background: #0f0f0f;
+    color: var(--green);
+    border: 1px solid rgba(57,255,20,0.35) !important;
     width: 100%;
-    padding: 14px 16px;
+    padding: 15px 20px;
     font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
     font-weight: 400;
-    font-size: 16px;
-    letter-spacing: 6px;
+    font-size: 15px;
+    letter-spacing: 5px;
     cursor: pointer;
     text-transform: uppercase;
-    transition: all 0.2s ease;
-    display: block;
-    text-align: center;
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, letter-spacing 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
   }
-  #jv-root .add-btn::before { display: none; }
-  #jv-root .add-btn::after { display: none; }
+  /* Diagonal shine layer */
+  #jv-root .add-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent 20%, rgba(57,255,20,0.18) 50%, transparent 80%);
+    transform: skewX(-15deg);
+    transition: none;
+    pointer-events: none;
+  }
+  /* Bottom accent line */
+  #jv-root .add-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: var(--green);
+    transition: width 0.35s cubic-bezier(0.23,1,0.32,1);
+    pointer-events: none;
+  }
   #jv-root .add-btn:hover {
-    background: #000 !important;
-    color: #39ff14 !important;
-    box-shadow: inset 0 0 0 2px #39ff14;
+    background: rgba(57,255,20,0.07);
+    color: #fff;
+    border-color: var(--green) !important;
+    letter-spacing: 7px;
+  }
+  #jv-root .add-btn:hover::before {
+    animation: btnShine 0.7s ease forwards;
+  }
+  #jv-root .add-btn:hover::after {
+    width: 100%;
+  }
+  #jv-root .add-btn:active {
+    transform: scale(0.98);
+    letter-spacing: 5px;
+  }
+  /* Modal add-to-cart variant — filled green */
+  #jv-root .add-btn.filled-variant {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green) !important;
+    font-size: 16px;
+    letter-spacing: 6px;
+  }
+  #jv-root .add-btn.filled-variant::before {
+    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
+  }
+  #jv-root .add-btn.filled-variant:hover {
+    background: #000;
+    color: var(--green);
     letter-spacing: 8px;
   }
-  #jv-root .add-btn:active { transform: scale(0.98); }
   #jv-root .add-btn:disabled,
   #jv-root .add-btn[disabled] {
-    background: #1a1a1a !important;
-    color: #333 !important;
+    background: #111 !important;
+    color: #2a2a2a !important;
+    border-color: #1a1a1a !important;
     cursor: not-allowed;
     letter-spacing: 3px;
     box-shadow: none !important;
   }
+  #jv-root .add-btn:disabled::before,
+  #jv-root .add-btn:disabled::after { display: none; }
 
-  .filter-bar { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; scrollbar-width:none; align-items:center; }
-  .filter-bar::-webkit-scrollbar { display:none; }
+  /* ══════════════════════════════════════
+     FILTER BAR & PILLS
+     — Segmented-control feel with
+       animated active indicator
+  ══════════════════════════════════════ */
+  .filter-bar {
+    display: flex;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px;
+    scrollbar-width: none;
+    align-items: center;
+    background: #0d0d0d;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
 
   #jv-root .filter-btn {
+    position: relative;
     background: transparent !important;
-    color: #39ff14 !important;
+    color: var(--text-muted) !important;
     border: none !important;
-    padding: 10px 20px;
+    padding: 9px 20px;
     font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
     font-weight: 400;
-    font-size: 16px;
-    letter-spacing: 4px;
+    font-size: 14px;
+    letter-spacing: 3px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: color 0.2s ease;
     text-transform: uppercase;
     white-space: nowrap;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
-    text-shadow: 0 0 8px rgba(57,255,20,0.4);
+    min-width: 56px;
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 0;
+  }
+  #jv-root .filter-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(57,255,20,0.07);
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
   #jv-root .filter-btn:hover {
-    background: #39ff14 !important;
-    color: #000 !important;
-    text-shadow: none !important;
-    transform: translateY(-1px);
+    color: rgba(57,255,20,0.85) !important;
+  }
+  #jv-root .filter-btn:hover::before {
+    opacity: 1;
   }
   #jv-root .filter-btn.active {
-    background: #39ff14 !important;
+    background: var(--green) !important;
     color: #000 !important;
-    text-shadow: none !important;
-    box-shadow: 0 4px 20px rgba(57,255,20,0.4);
+    border: none !important;
+    letter-spacing: 3px;
+    animation: glowPulse 2s ease-in-out infinite;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  #jv-root .filter-btn.active::before { display: none; }
+
+  /* Count badge on filter button */
+  #jv-root .filter-btn .filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: rgba(57,255,20,0.15);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 900;
+    margin-left: 6px;
+    color: var(--green);
+    transition: background 0.2s;
+    letter-spacing: 0;
+  }
+  #jv-root .filter-btn.active .filter-count {
+    background: rgba(0,0,0,0.2);
+    color: #000;
+  }
+
+  /* ══════════════════════════════════════
+     SIZE BUTTONS
+     — Premium card-style with layered
+       depth and kinetic selection state
+  ══════════════════════════════════════ */
+  .size-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .size-btn {
+    position: relative;
     background: #0d0d0d;
-    border: 2px solid #2a2a2a !important;
-    color: #555;
-    width: 56px;
-    height: 56px;
+    border: 1px solid #222 !important;
+    color: #444;
+    width: 54px;
+    height: 54px;
     font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 400;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.23,1,0.32,1), box-shadow 0.2s ease;
     letter-spacing: 1px;
     text-align: center;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    flex-direction: column;
+    gap: 1px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  /* Stock indicator dot */
+  .size-btn .stock-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #2a2a2a;
+    transition: background 0.2s;
+    flex-shrink: 0;
   }
   .size-btn:hover:not(.selected):not(:disabled) {
-    border-color: #39ff14 !important;
-    color: #39ff14;
-    background: #071007;
-    transform: translateY(-2px);
+    border-color: rgba(57,255,20,0.6) !important;
+    color: var(--green);
+    background: var(--green-soft);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(57,255,20,0.1);
+  }
+  .size-btn:hover:not(.selected):not(:disabled) .stock-dot {
+    background: var(--green);
   }
   .size-btn.selected {
-    background: #39ff14;
-    border-color: #39ff14 !important;
+    background: var(--green);
+    border-color: var(--green) !important;
     color: #000;
-    font-size: 18px;
-    box-shadow: 0 0 0 3px rgba(57,255,20,0.2), 0 6px 20px rgba(57,255,20,0.35);
-    transform: translateY(-2px);
+    font-size: 16px;
+    font-weight: 900;
+    animation: sizePop 0.35s cubic-bezier(0.23,1,0.32,1) both;
+    box-shadow: 0 0 0 3px rgba(57,255,20,0.2), 0 8px 24px rgba(57,255,20,0.3);
   }
+  .size-btn.selected .stock-dot { background: rgba(0,0,0,0.3); }
+
   .size-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 6px;
-    color: #555;
+    letter-spacing: 5px;
+    color: var(--text-muted);
     text-transform: uppercase;
-    display: block;
-    margin-bottom: 12px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .size-label::before,
+  .size-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #222);
+  }
+  .size-label::after {
+    background: linear-gradient(to left, transparent, #222);
   }
 
-  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(6px); padding:16px; }
-  .modal { background:#0e0e0e; border:1px solid #222; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s ease; max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 60px rgba(57,255,20,0.08), 0 40px 80px rgba(0,0,0,0.8); }
-  .modal-img { width:100%; height:220px; object-fit:cover; display:block; }
-  .modal-img-placeholder { width:100%; height:220px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
+  /* ══════════════════════════════════════
+     CHECKOUT BUTTON
+     — High-contrast CTA with animated
+       arrow and layered gradient fill
+  ══════════════════════════════════════ */
+  .checkout-btn {
+    position: relative;
+    overflow: hidden;
+    background: var(--green);
+    color: #000;
+    border: none !important;
+    width: calc(100% - 32px);
+    margin: 12px 16px;
+    padding: 18px 0;
+    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+    font-weight: 400;
+    font-size: 17px;
+    letter-spacing: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.3s ease, color 0.3s ease, letter-spacing 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 2px;
+  }
+  /* Shine sweep */
+  .checkout-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -120%;
+    width: 60%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.3) 50%, transparent 80%);
+    transform: skewX(-15deg);
+    pointer-events: none;
+  }
+  /* Bottom border reveal */
+  .checkout-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #000, transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .checkout-btn:hover {
+    background: #000;
+    color: var(--green);
+    letter-spacing: 8px;
+    box-shadow: inset 0 0 0 1px rgba(57,255,20,0.5), 0 0 40px rgba(57,255,20,0.15);
+  }
+  .checkout-btn:hover::before {
+    animation: btnShine 0.75s ease forwards;
+  }
+  .checkout-btn:hover::after {
+    opacity: 1;
+  }
+  .checkout-btn:active { transform: scale(0.99); }
 
-  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#0a0a0a; border-left:1px solid #1e1e1e; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-20px 0 60px rgba(0,0,0,0.7); }
+  /* Arrow inside checkout */
+  .checkout-arrow {
+    display: inline-block;
+    transition: transform 0.25s ease;
+    font-style: normal;
+  }
+  .checkout-btn:hover .checkout-arrow {
+    animation: arrowNudge 0.6s ease infinite;
+  }
 
-  .cart-item { display:flex; gap:14px; padding:16px 20px; border-bottom:1px solid #141414; align-items:center; animation:cartItemSlide 0.25s ease both; transition:background 0.15s; }
-  .cart-item:hover { background:#0f0f0f; }
-  .cart-item-img { width:54px; height:54px; object-fit:cover; background:#0d0d0d; flex-shrink:0; border:1px solid #1a1a1a; }
+  /* ══════════════════════════════════════
+     MODAL
+  ══════════════════════════════════════ */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); padding:16px; }
+  .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; }
+  .modal-img { width:100%; height:240px; object-fit:cover; display:block; }
+  .modal-img-placeholder { width:100%; height:240px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
+
+  /* ══════════════════════════════════════
+     CART PANEL
+  ══════════════════════════════════════ */
+  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#070707; border-left:1px solid #181818; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-30px 0 80px rgba(0,0,0,0.8); }
+
+  .cart-item { display:flex; gap:14px; padding:16px 20px; border-bottom:1px solid #111; align-items:center; animation:cartItemSlide 0.25s ease both; transition:background 0.2s; }
+  .cart-item:hover { background:#0c0c0c; }
+  .cart-item-img { width:56px; height:56px; object-fit:cover; background:#0d0d0d; flex-shrink:0; border:1px solid #1a1a1a; border-radius:2px; }
   .cart-item-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:17px; letter-spacing:1px; color:#eee; line-height:1.1; }
-  .cart-item-meta { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:3px; color:#444; margin-top:3px; font-weight:700; }
-  .cart-item-price { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:900; color:#39ff14; margin-top:6px; letter-spacing:1px; }
+  .cart-item-meta { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:3px; color:#333; margin-top:3px; font-weight:700; }
+  .cart-item-price { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:900; color:#39ff14; margin-top:6px; letter-spacing:1px; animation: priceReveal 0.3s ease; }
   .cart-tag { display:inline-flex; align-items:center; gap:6px; margin-top:5px; }
-  .cart-tag-size { background:#39ff14; color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:2px; padding:3px 8px; }
-  .cart-tag-qty { color:#444; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; }
+  .cart-tag-size { background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:2px; padding:3px 8px; border-radius:2px; }
+  .cart-tag-qty { color:#333; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; }
 
-  .cart-total-row { display:flex; justify-content:space-between; align-items:center; padding:16px 20px 8px; background:#0d0d0d; border-top:1px solid #1a1a1a; }
-  .cart-total-label { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:13px; letter-spacing:6px; color:#555; text-transform:uppercase; }
-  .cart-total-amount { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:32px; color:#39ff14; letter-spacing:2px; line-height:1; }
+  .cart-total-row { display:flex; justify-content:space-between; align-items:center; padding:16px 20px 8px; background:#050505; border-top:1px solid #141414; }
+  .cart-total-label { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:6px; color:#333; text-transform:uppercase; }
+  .cart-total-amount { font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:36px; color:var(--green); letter-spacing:2px; line-height:1; animation: priceReveal 0.25s ease; }
 
-  .checkout-btn { position:relative; overflow:hidden; background:#39ff14; color:#000; border:none !important; width:calc(100% - 32px); margin:12px 16px; padding:18px 0; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:18px; letter-spacing:5px; cursor:pointer; text-transform:uppercase; transition:all 0.2s ease; display:block; text-align:center; box-shadow:0 4px 28px #39ff1444; }
-  .checkout-btn:hover { background:#000; color:#39ff14; box-shadow:inset 0 0 0 2px #39ff14, 0 6px 36px #39ff1444; letter-spacing:7px; }
-  .checkout-btn:active { transform:scale(0.98); }
-
-  .search-input { background:#161616; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
-  .search-input:focus { border-color:#39ff14; box-shadow:0 0 0 2px rgba(57,255,20,0.15); }
-  .search-input::placeholder { color:#888; letter-spacing:2px; }
-  .skeleton { background:linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+  .search-input { background:#0d0d0d; border:1px solid #2a2a2a; border-radius:4px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
+  .search-input:focus { border-color:var(--green); box-shadow:0 0 0 2px rgba(57,255,20,0.1), 0 4px 16px rgba(0,0,0,0.4); }
+  .search-input::placeholder { color:#333; letter-spacing:2px; }
+  .skeleton { background:linear-gradient(90deg, #0f0f0f 25%, #161616 50%, #0f0f0f 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
   .logo-img { width:52px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.3) contrast(1.13) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; background:transparent; }
   .logo-wrap { display:flex; align-items:center; gap:8px; }
-  .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#ff4444; color:#fff; font-size:10px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; }
-  .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:2px; padding:3px 8px; z-index:2; background:#00000088; border:1px solid #39ff1466; color:#39ff14; }
-  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #1a1a1a; border-bottom:1px solid #1a1a1a; background:#0d0d0d; }
-  .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #1a1a1a; }
+  .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#c0392b; color:#fff; font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; border-radius:2px; }
+  .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; background:rgba(0,0,0,0.75); border:1px solid rgba(57,255,20,0.3); color:var(--green); border-radius:2px; backdrop-filter:blur(4px); }
+  .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #151515; border-bottom:1px solid #151515; background:#070707; }
+  .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #151515; }
   .stat-cell:last-child { border-right:none; }
   .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
-  /* ── NAVBAR LAYOUT ── */
+  /* ── NAVBAR ── */
   .desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
   .desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
-
   .hamburger { display:none; flex-direction:column; justify-content:space-between; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
-  .hamburger span { display:block !important; width:100%; height:3px; background:white !important; border-radius:2px; }
+  .hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; transition: transform 0.3s ease, opacity 0.3s ease; }
   .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
   .hamburger.open span:nth-child(2) { opacity:0; }
   .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
-
-  .mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(10,10,10,0.98); border-bottom:1px solid #222; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; }
+  .mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(7,7,7,0.99); border-bottom:1px solid #1a1a1a; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; backdrop-filter:blur(12px); }
   .mobile-menu.open { display:flex; }
-  .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #1a1a1a; }
+  .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
   @media(max-width:768px) {
-    /* Hide desktop-only elements */
     .hamburger { display:flex; }
     .desktop-nav-links { display:none; }
     .desktop-search { display:none; }
-
-    /* Layout */
     .cart-panel { width:100%; border-left:none; }
     .search-input { max-width:100%; font-size:13px; padding:8px 16px; }
     .hero-section { padding:60px 16px 40px; background-position:center center; background-size:cover; }
@@ -463,44 +736,32 @@ export default function JerseyStore() {
     .modal-img-placeholder { height:180px; }
     .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
     .nav-right { gap:8px !important; }
+    .filter-bar { border-radius:4px; }
   }
   @media(max-width:480px) {
     .stat-cell { padding:14px 0; }
+    .size-btn { width:48px; height:48px; }
   }
 `}</style>
 
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "fixed", bottom: 24, right: 24, background: "#39ff14", color: "#000", padding: "14px 20px", fontWeight: 900, letterSpacing: 2, fontSize: 13, zIndex: 999, animation: "toastIn 0.3s ease", maxWidth: "calc(100vw - 48px)", clipPath: "polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%)" }}>
-            ✓ {toast}
+          <div style={{ position: "fixed", bottom: 24, right: 24, background: "var(--green)", color: "#000", padding: "13px 20px 13px 16px", fontWeight: 900, letterSpacing: 2, fontSize: 12, zIndex: 999, animation: "toastIn 0.35s cubic-bezier(0.23,1,0.32,1)", maxWidth: "calc(100vw - 48px)", display: "flex", alignItems: "center", gap: 10, borderRadius: 2, boxShadow: "0 8px 32px rgba(57,255,20,0.3)" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, background: "rgba(0,0,0,0.2)", borderRadius: "50%", fontSize: 11, flexShrink: 0 }}>✓</span>
+            {toast}
           </div>
         )}
 
         {/* NAVBAR */}
-        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(10,10,10,0.97)", backdropFilter: "blur(10px)", borderBottom: "1px solid #1a1a1a", padding: "0 20px 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
-
-          {/* LOGO */}
+        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(7,7,7,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #151515", padding: "0 20px 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
           <div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
             <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
             <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
           </div>
-
-          {/* DESKTOP SEARCH — hidden on mobile */}
           <div className="desktop-search">
-            <input
-              className="search-input"
-              placeholder="SEARCH..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-            />
+            <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
-
-          {/* DESKTOP NAV LINKS — hidden on mobile */}
-          <div className="desktop-nav-links">
-            {navLinks}
-          </div>
-
-          {/* RIGHT SIDE: cart icon + hamburger (always visible) */}
+          <div className="desktop-nav-links">{navLinks}</div>
           <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
             <button
               onClick={() => setCartOpen(true)}
@@ -508,32 +769,20 @@ export default function JerseyStore() {
               onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
               onMouseLeave={e => e.currentTarget.style.color = "#fff"}
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
               {cartCount > 0 && (
-                <span style={{ color: "#39ff14", fontSize: 20, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
+                <span style={{ color: "#39ff14", fontSize: 19, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
               )}
             </button>
-            <button
-              className={`hamburger${mobileMenuOpen ? " open" : ""}`}
-              onClick={() => setMobileMenuOpen(o => !o)}
-              aria-label="Toggle menu"
-            >
+            <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
               <span /><span /><span />
             </button>
           </div>
-
-          {/* MOBILE MENU DROPDOWN */}
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-            <input
-              className="search-input"
-              placeholder="SEARCH..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ marginBottom: 8 }}
-            />
+            <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
             {navLinks}
           </div>
         </nav>
@@ -541,47 +790,19 @@ export default function JerseyStore() {
         <Ticker />
 
         {/* HERO */}
-        <section
-          className="hero-section"
-          style={{
-            opacity: heroVisible ? 1 : 0,
-            transition: heroVisible ? "none" : "opacity 0.8s ease",
-            backgroundImage: `url(${heroBg})`,
-          }}
-        >
-          <div style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to bottom, rgba(10,10,10,0.9) 0%, rgba(10,10,10,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(10,10,10,0.98) 100%)",
-            pointerEvents: "none"
-          }} />
-
-          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 12, fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1 }}>THE ULTIMATE COLLECTION</p>
-
-          <h1 style={{
-            lineHeight: 0.9,
-            animation: "breathe 3s ease-in-out 1s infinite",
-            position: "relative",
-            display: "inline-block",
-            zIndex: 1,
-          }}>
-            <span style={{ display: "block", position: "relative", marginBottom: 4 }}>
-              <CartoonFlameText text="WEAR YOUR" />
-            </span>
-            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>
-              LEGEND
-            </span>
+        <section className="hero-section" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(7,7,7,0.99) 100%)", pointerEvents: "none" }} />
+          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 11, fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1, opacity: 0.8 }}>THE ULTIMATE COLLECTION</p>
+          <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 1 }}>
+            <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
+            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
           </h1>
-
-          <p style={{ color: "#ccc", marginTop: 20, fontSize: 16, letterSpacing: 2, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
+          <p style={{ color: "#777", marginTop: 20, fontSize: 14, letterSpacing: 3, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
           <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
-            <button onClick={scrollToShop}
-              style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 3, cursor: "pointer", animation: "pulse 2s infinite" }}>
+            <button onClick={scrollToShop} style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#39ff14", color: "#000", border: "none", padding: "14px 40px", fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontWeight: 400, fontSize: 16, letterSpacing: 5, cursor: "pointer", animation: "pulse 2s infinite", borderRadius: 2 }}>
               SHOP NOW
             </button>
-            <button
-              onClick={() => navigate("/teams")}
-              style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "#fff", border: "1px solid #333", padding: "14px 36px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: 3, cursor: "pointer" }}>
+            <button onClick={() => navigate("/teams")} style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "#fff", border: "1px solid #2a2a2a", padding: "14px 40px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: 4, cursor: "pointer", borderRadius: 2, transition: "border-color 0.2s" }}>
               VIEW TEAMS
             </button>
           </div>
@@ -592,8 +813,8 @@ export default function JerseyStore() {
         <div className="stats-grid">
           {[["500+", "JERSEYS"], ["50K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
-              <div style={{ fontSize: 28, fontWeight: 900, color: "#39ff14" }}>{num}</div>
-              <div style={{ fontSize: 11, letterSpacing: 3, color: "#ccc", marginTop: 4 }}>{label}</div>
+              <div style={{ fontSize: 30, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>{num}</div>
+              <div style={{ fontSize: 10, letterSpacing: 4, color: "#333", marginTop: 4, fontWeight: 700 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -604,13 +825,10 @@ export default function JerseyStore() {
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
               <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
+            {/* ── UPGRADED FILTER BAR ── */}
             <div className="filter-bar">
               {filterButtons.map(({ key, label }) => (
-                <button
-                  key={key}
-                  className={`filter-btn${activeFilter === key ? " active" : ""}`}
-                  onClick={() => setActiveFilter(key)}
-                >
+                <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
                   {label}
                 </button>
               ))}
@@ -620,7 +838,7 @@ export default function JerseyStore() {
           {loadingProducts ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
               {[...Array(4)].map((_, i) => (
-                <div key={i} style={{ background: "#111", border: "1px solid #1a1a1a" }}>
+                <div key={i} style={{ background: "#0f0f0f", border: "1px solid #151515" }}>
                   <div className="skeleton" style={{ height: 220 }} />
                   <div style={{ padding: 16 }}>
                     <div className="skeleton" style={{ height: 18, marginBottom: 10, width: "60%" }} />
@@ -630,53 +848,50 @@ export default function JerseyStore() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "80px 0", color: "#333" }}>
-              <div style={{ fontSize: 60 }}>🔍</div>
-              <p style={{ marginTop: 16, letterSpacing: 3, fontSize: 14 }}>NO RESULTS FOUND</p>
+            <div style={{ textAlign: "center", padding: "80px 0", color: "#222" }}>
+              <div style={{ fontSize: 56 }}>🔍</div>
+              <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
               {filtered.map((jersey, i) => (
-                <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }}
-                  style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
+                <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
                   {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
                   <div className="card-img-wrap">
                     {jersey.image_url ? (
                       <img src={jersey.image_url} alt={jersey.name} className="card-img" />
                     ) : (
-                      <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 60 }}>👕</div>
+                      <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }}>👕</div>
                     )}
                     <div className="card-overlay" />
                   </div>
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
-                        <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: 1 }}>{jersey.name}</div>
+                        <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 1 }}>{jersey.name}</div>
                         {jersey.stock > 0 && jersey.stock <= 5 && (
-                          <div style={{ fontSize: 11, color: "#ff9900", letterSpacing: 2, marginTop: 4, fontWeight: 700 }}>
-                            ONLY {jersey.stock} LEFT
-                          </div>
+                          <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, marginTop: 4, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
                         )}
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>₹{jersey.price}</div>
+                        <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 1 }}>₹{jersey.price}</div>
                       </div>
                     </div>
                   </div>
                   <div style={{ padding: "12px 16px 16px" }}>
+                    {/* ── UPGRADED CARD BUTTON ── */}
                     <button
                       className="add-btn"
                       disabled={jersey.stock === 0}
                       onClick={e => {
                         e.stopPropagation();
-                        if (jersey.stock > 0) {
-                          setSelectedJersey(jersey);
-                          setSelectedSize("M");
-                        }
+                        if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
                       }}
                     >
-                      {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
+                      {jersey.stock === 0 ? "OUT OF STOCK" : (
+                        <><span>SELECT SIZE</span><span style={{ fontSize: 18, lineHeight: 1, opacity: 0.8 }}>→</span></>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -686,68 +901,77 @@ export default function JerseyStore() {
         </section>
 
         {/* FEATURES */}
-        <section style={{ background: "#0d0d0d", padding: "60px 16px", borderTop: "1px solid #1a1a1a" }}>
-          <h2 style={{ fontSize: 32, fontWeight: 900, fontStyle: "italic", textAlign: "center", marginBottom: 40 }}>WHY <span style={{ color: "#39ff14" }}>JERSEYVAULT</span></h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 24 }}>
+        <section style={{ background: "#070707", padding: "60px 16px", borderTop: "1px solid #111" }}>
+          <h2 style={{ fontSize: 30, fontWeight: 900, fontStyle: "italic", textAlign: "center", marginBottom: 40, letterSpacing: 2 }}>WHY <span style={{ color: "#39ff14" }}>JERSEYVAULT</span></h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 1 }}>
             {[
               ["🏅", "LICENSED AUTHENTIC", "Every jersey is officially licensed and verified"],
               ["🚚", "FAST DELIVERY", "Ships within 24–48 hours across India"],
               ["↩️", "30-DAY RETURNS", "No questions asked easy returns"],
               ["🔒", "SECURE PAYMENTS", "Razorpay — UPI, Cards, Netbanking"],
             ].map(([icon, title, desc]) => (
-              <div key={title} style={{ background: "#111", border: "1px solid #1a1a1a", padding: 24, textAlign: "center", transition: "border-color 0.3s" }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = "#39ff14"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a1a"}>
-                <div style={{ fontSize: 36, marginBottom: 12 }}>{icon}</div>
-                <div style={{ fontWeight: 900, letterSpacing: 2, fontSize: 14, marginBottom: 8 }}>{title}</div>
-                <div style={{ color: "#555", fontSize: 13, fontFamily: "'Barlow',sans-serif", lineHeight: 1.5 }}>{desc}</div>
+              <div key={title} style={{ background: "#0a0a0a", border: "1px solid #111", padding: "28px 24px", textAlign: "center", transition: "border-color 0.3s, background 0.3s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = "#39ff14"; e.currentTarget.style.background = "#0c0c0c"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = "#111"; e.currentTarget.style.background = "#0a0a0a"; }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>{icon}</div>
+                <div style={{ fontWeight: 900, letterSpacing: 3, fontSize: 13, marginBottom: 8, color: "#ddd" }}>{title}</div>
+                <div style={{ color: "#444", fontSize: 13, fontFamily: "'Barlow',sans-serif", lineHeight: 1.6 }}>{desc}</div>
               </div>
             ))}
           </div>
         </section>
 
         {/* FOOTER */}
-        <footer style={{ background: "#050505", borderTop: "1px solid #1a1a1a", padding: "40px 24px", textAlign: "center" }}>
-          <div style={{ fontWeight: 900, fontSize: 28, letterSpacing: 4, marginBottom: 8 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
-          <p style={{ color: "#333", fontSize: 12, letterSpacing: 2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+        <footer style={{ background: "#040404", borderTop: "1px solid #111", padding: "40px 24px", textAlign: "center" }}>
+          <div style={{ fontWeight: 900, fontSize: 26, letterSpacing: 5, marginBottom: 8, fontFamily: "'Bebas Neue',sans-serif" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
+          <p style={{ color: "#222", fontSize: 11, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
             {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["FAQ", "/faq"]].map(([l, h]) => (
-              <Link key={l} to={h} style={{ color: "#888", fontSize: 12, letterSpacing: 2, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
-                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#888"}>{l}</Link>
+              <Link key={l} to={h} style={{ color: "#333", fontSize: 11, letterSpacing: 3, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
+                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#333"}>{l}</Link>
             ))}
           </div>
         </footer>
 
-        {/* SIZE PICKER MODAL */}
+        {/* ── SIZE PICKER MODAL ── */}
         {selectedJersey && (
           <div className="modal-bg" onClick={() => setSelectedJersey(null)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
               <div style={{ position: "relative" }}>
-                <button onClick={() => setSelectedJersey(null)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.7)", border: "1px solid #333", color: "#fff", fontSize: 16, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, letterSpacing: 1 }}>✕</button>
+                <button onClick={() => setSelectedJersey(null)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.8)", border: "1px solid #2a2a2a", color: "#888", fontSize: 14, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, borderRadius: 2, transition: "border-color 0.2s, color 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#39ff14"; e.currentTarget.style.color="#39ff14"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a2a"; e.currentTarget.style.color="#888"; }}>✕</button>
                 {selectedJersey.image_url ? (
                   <img src={selectedJersey.image_url} alt={selectedJersey.name} className="modal-img" />
                 ) : (
                   <div className="modal-img-placeholder">👕</div>
                 )}
                 <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, #39ff1444, transparent)", animation: "scanline 2.5s linear infinite" }} />
+                  <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, rgba(57,255,20,0.3), transparent)", animation: "scanline 2.5s linear infinite" }} />
                 </div>
+                {/* Gradient overlay on image */}
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, #0a0a0a, transparent)", pointerEvents: "none" }} />
               </div>
-              <div style={{ padding: "20px 24px 8px" }}>
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
-                {selectedJersey.type && (
-                  <div style={{ display: "inline-block", fontSize: 9, letterSpacing: 4, color: "#000", fontWeight: 900, marginTop: 6, background: "#39ff14", padding: "3px 10px" }}>{selectedJersey.type}</div>
-                )}
-                <div style={{ fontSize: 26, fontWeight: 900, color: "#39ff14", marginTop: 8, fontStyle: "italic", letterSpacing: 1 }}>₹{selectedJersey.price}</div>
+
+              <div style={{ padding: "16px 24px 6px" }}>
+                <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                  {selectedJersey.type && (
+                    <span style={{ display: "inline-block", fontSize: 9, letterSpacing: 4, color: "#000", fontWeight: 900, background: "#39ff14", padding: "3px 10px", borderRadius: 2 }}>{selectedJersey.type}</span>
+                  )}
+                  <span style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{selectedJersey.price}</span>
+                </div>
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
-                  <div style={{ fontSize: 11, color: "#ff9900", letterSpacing: 2, marginTop: 6, fontWeight: 700 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
+                  <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, marginTop: 8, fontWeight: 700 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
                 )}
               </div>
-              <div style={{ padding: "8px 24px 32px" }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
-                  <span className="size-label">SELECT SIZE</span>
-                </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+
+              <div style={{ padding: "10px 24px 32px" }}>
+                {/* ── UPGRADED SIZE LABEL ── */}
+                <div className="size-label">SELECT SIZE</div>
+
+                {/* ── UPGRADED SIZE GRID ── */}
+                <div className="size-grid">
                   {sizes.map(s => {
                     const sizeStock = getSizeStock(selectedJersey, s);
                     const outOfStock = sizeStock === 0;
@@ -755,49 +979,58 @@ export default function JerseyStore() {
                       <button
                         key={s}
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
-                        data-size={s}
                         onClick={() => !outOfStock && setSelectedSize(s)}
                         disabled={outOfStock}
-                        style={outOfStock ? { opacity: 0.2, cursor: "not-allowed", textDecoration: "line-through", color: "#333", borderColor: "#1a1a1a !important" } : {}}
+                        style={outOfStock ? { opacity: 0.18, cursor: "not-allowed", textDecoration: "line-through", pointerEvents: "none" } : {}}
                       >
                         {s}
+                        <span className="stock-dot" />
                       </button>
                     );
                   })}
                 </div>
-                <button className="add-btn" style={{ marginTop: 24, fontSize: 17, padding: "15px" }} onClick={() => addToCart(selectedJersey, selectedSize)}>
-                  ADD TO CART — ₹{selectedJersey.price}
+
+                {/* ── UPGRADED ADD TO CART BUTTON ── */}
+                <button
+                  className="add-btn filled-variant"
+                  style={{ marginTop: 24, fontSize: 16, padding: "16px" }}
+                  onClick={() => addToCart(selectedJersey, selectedSize)}
+                >
+                  <span>ADD TO CART</span>
+                  <span style={{ opacity: 0.5, fontWeight: 400, fontSize: 14, letterSpacing: 2 }}>—</span>
+                  <span>₹{selectedJersey.price}</span>
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* CART PANEL */}
+        {/* ── CART PANEL ── */}
         {cartOpen && (
           <div style={{ position: "fixed", inset: 0, zIndex: 150 }}>
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)" }} onClick={() => setCartOpen(false)} />
+            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)" }} onClick={() => setCartOpen(false)} />
             <div className="cart-panel">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px", borderBottom: "1px solid #1a1a1a" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px", borderBottom: "1px solid #111" }}>
                 <div>
-                  <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: 4, fontStyle: "italic" }}>YOUR</span>
+                  <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, fontStyle: "italic", color: "#888" }}>YOUR</span>
                   {" "}
-                  <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
+                  <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
                   {cartCount > 0 && (
-                    <span style={{ display: "inline-block", marginLeft: 10, background: "#39ff14", color: "#000", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 11, letterSpacing: 2, padding: "2px 8px", verticalAlign: "middle" }}>{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
+                    <span style={{ display: "inline-block", marginLeft: 10, background: "var(--green)", color: "#000", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, padding: "2px 8px", verticalAlign: "middle", borderRadius: 2 }}>{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
                   )}
                 </div>
-                <button onClick={() => setCartOpen(false)} style={{ background: "none", border: "1px solid #222", color: "#555", fontSize: 18, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, transition: "border-color 0.2s, color 0.2s" }}
+                <button onClick={() => setCartOpen(false)}
+                  style={{ background: "none", border: "1px solid #1a1a1a", color: "#444", fontSize: 14, cursor: "pointer", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, transition: "border-color 0.2s, color 0.2s", borderRadius: 2 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor="#39ff14"; e.currentTarget.style.color="#39ff14"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="#222"; e.currentTarget.style.color="#555"; }}>✕</button>
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#1a1a1a"; e.currentTarget.style.color="#444"; }}>✕</button>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto" }}>
                 {cart.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "60px 20px", color: "#333" }}>
-                    <div style={{ fontSize: 50 }}>🛒</div>
-                    <p style={{ marginTop: 12, letterSpacing: 4, fontSize: 13, fontWeight: 900, fontStyle: "italic" }}>CART IS EMPTY</p>
-                    <p style={{ marginTop: 8, letterSpacing: 2, fontSize: 11, color: "#222" }}>ADD SOME FIRE JERSEYS</p>
+                  <div style={{ textAlign: "center", padding: "60px 20px", color: "#1e1e1e" }}>
+                    <div style={{ fontSize: 48 }}>🛒</div>
+                    <p style={{ marginTop: 12, letterSpacing: 4, fontSize: 12, fontWeight: 900, fontStyle: "italic", color: "#2a2a2a" }}>CART IS EMPTY</p>
+                    <p style={{ marginTop: 8, letterSpacing: 3, fontSize: 10, color: "#1a1a1a" }}>ADD SOME FIRE JERSEYS</p>
                   </div>
                 ) : (
                   cart.map((item, idx) => (
@@ -805,7 +1038,7 @@ export default function JerseyStore() {
                       {item.image_url ? (
                         <img src={item.image_url} alt={item.name} className="cart-item-img" />
                       ) : (
-                        <div style={{ width: 54, height: 54, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0, border: "1px solid #1a1a1a" }}>👕</div>
+                        <div style={{ width: 56, height: 56, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: "1px solid #1a1a1a", borderRadius: 2 }}>👕</div>
                       )}
                       <div style={{ flex: 1 }}>
                         <div className="cart-item-name">{item.name}</div>
@@ -816,24 +1049,32 @@ export default function JerseyStore() {
                         <div className="cart-item-price">₹{(item.price * item.qty).toLocaleString()}</div>
                       </div>
                       <button onClick={() => removeFromCart(item.id, item.size)}
-                        style={{ background: "none", border: "1px solid #1a1a1a", color: "#333", cursor: "pointer", fontSize: 14, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, flexShrink: 0, transition: "all 0.15s" }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor="#ff4444"; e.currentTarget.style.color="#ff4444"; e.currentTarget.style.background="#ff44440d"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor="#1a1a1a"; e.currentTarget.style.color="#333"; e.currentTarget.style.background="none"; }}>✕</button>
+                        style={{ background: "none", border: "1px solid #151515", color: "#2a2a2a", cursor: "pointer", fontSize: 12, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, flexShrink: 0, transition: "all 0.15s", borderRadius: 2 }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor="#c0392b"; e.currentTarget.style.color="#c0392b"; e.currentTarget.style.background="rgba(192,57,43,0.08)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor="#151515"; e.currentTarget.style.color="#2a2a2a"; e.currentTarget.style.background="none"; }}>✕</button>
                     </div>
                   ))
                 )}
               </div>
 
               {cart.length > 0 && (
-                <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, background: "#080808" }}>
+                <div style={{ borderTop: "1px solid #0f0f0f", paddingTop: 16, background: "#050505" }}>
                   <div className="cart-total-row">
-                    <span className="cart-total-label">TOTAL</span>
+                    <div>
+                      <span className="cart-total-label">ORDER TOTAL</span>
+                      <div style={{ fontSize: 9, letterSpacing: 3, color: "#1e1e1e", marginTop: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700 }}>
+                        {total >= 1999 ? "✓ FREE SHIPPING APPLIED" : `ADD ₹${(1999 - total).toLocaleString()} FOR FREE SHIP`}
+                      </div>
+                    </div>
                     <span className="cart-total-amount">₹{total.toLocaleString()}</span>
                   </div>
+
+                  {/* ── UPGRADED CHECKOUT BUTTON ── */}
                   <button className="checkout-btn" onClick={handleCheckout}>
-                    PROCEED TO CHECKOUT →
+                    <span>PROCEED TO CHECKOUT</span>
+                    <span className="checkout-arrow">→</span>
                   </button>
-                  <p style={{ textAlign: "center", color: "#2a2a2a", fontSize: 10, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ FREE SHIPPING ABOVE ₹1999 ✦</p>
+                  <p style={{ textAlign: "center", color: "#1a1a1a", fontSize: 9, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ SECURED BY RAZORPAY ✦</p>
                 </div>
               )}
             </div>
