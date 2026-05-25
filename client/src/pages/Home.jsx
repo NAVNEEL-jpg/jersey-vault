@@ -422,7 +422,7 @@ export default function JerseyStore() {
   color: var(--green) !important;
 }
 #jv-root .filter-btn.active {
-  background: var(--green) !important;
+  background: transparent !important;
   color: #000 !important;
   border-color: var(--green) !important;
   text-shadow: none !important;
