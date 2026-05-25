@@ -333,7 +333,7 @@ export default function JerseyStore() {
      — Sleek split-light design with
        diagonal shine sweep on hover
   ══════════════════════════════════════ */
- #jv-root .add-btn {
+#jv-root .add-btn {
   position: relative;
   overflow: hidden;
   background: var(--green);
@@ -347,32 +347,21 @@ export default function JerseyStore() {
   letter-spacing: 6px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background 0.2s ease, color 0.2s ease, letter-spacing 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  border-radius: 0;
 }
-#jv-root .add-btn::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -120%;
-  width: 60%;
-  height: 200%;
-  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
-  transform: skewX(-15deg);
-  pointer-events: none;
-}
-#jv-root .add-btn::after { display: none; }
+#jv-root .add-btn::before { display: none; }
+#jv-root .add-btn::after  { display: none; }
+
 #jv-root .add-btn:hover {
   background: #000;
   color: var(--green);
-  letter-spacing: 8px;
+  letter-spacing: 6px;
   box-shadow: inset 0 0 0 2px var(--green);
-}
-#jv-root .add-btn:hover::before {
-  animation: btnShine 0.7s ease forwards;
 }
 #jv-root .add-btn:active { transform: scale(0.98); }
 #jv-root .add-btn:disabled,
@@ -380,7 +369,6 @@ export default function JerseyStore() {
   background: #1a1a1a !important;
   color: #333 !important;
   cursor: not-allowed;
-  letter-spacing: 3px;
   box-shadow: none !important;
 }
 #jv-root .add-btn:disabled::before { display: none; }
@@ -430,7 +418,7 @@ export default function JerseyStore() {
 #jv-root .filter-btn::before { display: none; }
 #jv-root .filter-btn:hover {
   background: rgba(57,255,20,0.1) !important;
-  border-color: var(--green) !important;
+  border-color: transparent !important;
   color: var(--green) !important;
 }
 #jv-root .filter-btn.active {
@@ -443,7 +431,7 @@ export default function JerseyStore() {
   font-size: 17px;
   letter-spacing: 5px;
   height: 46px;
-  font-weight: 900;
+  font-weight: 400;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
