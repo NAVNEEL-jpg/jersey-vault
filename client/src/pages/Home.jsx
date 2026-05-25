@@ -333,64 +333,57 @@ export default function JerseyStore() {
      — Sleek split-light design with
        diagonal shine sweep on hover
   ══════════════════════════════════════ */
-  #jv-root .add-btn {
-    position: relative;
-    overflow: hidden;
-    background: var(--green);
-    color: #000;
-    border: none !important;
-    width: 100%;
-    padding: 14px 16px;
-    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-    font-weight: 400;
-    font-size: 16px;
-    letter-spacing: 6px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.2s ease, color 0.2s ease, letter-spacing 0.2s ease, box-shadow 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-  /* Diagonal shine sweep on hover */
-  #jv-root .add-btn::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -120%;
-    width: 60%;
-    height: 200%;
-    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
-    transform: skewX(-15deg);
-    pointer-events: none;
-  }
-  #jv-root .add-btn::after { display: none; }
-  #jv-root .add-btn:hover {
-    background: #000;
-    color: var(--green);
-    letter-spacing: 8px;
-    box-shadow: inset 0 0 0 2px var(--green);
-  }
-  #jv-root .add-btn:hover::before {
-    animation: btnShine 0.7s ease forwards;
-  }
-  #jv-root .add-btn:active { transform: scale(0.98); }
-  /* Modal add-to-cart — same green filled */
-  #jv-root .add-btn.filled-variant {
-    font-size: 17px;
-    letter-spacing: 6px;
-  }
-  #jv-root .add-btn:disabled,
-  #jv-root .add-btn[disabled] {
-    background: #1a1a1a !important;
-    color: #333 !important;
-    cursor: not-allowed;
-    letter-spacing: 3px;
-    box-shadow: none !important;
-  }
-  #jv-root .add-btn:disabled::before { display: none; }
-
+ #jv-root .add-btn {
+  position: relative;
+  overflow: hidden;
+  background: var(--green);
+  color: #000;
+  border: none !important;
+  width: 100%;
+  padding: 14px 16px;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease, letter-spacing 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+#jv-root .add-btn::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -120%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
+  transform: skewX(-15deg);
+  pointer-events: none;
+}
+#jv-root .add-btn::after { display: none; }
+#jv-root .add-btn:hover {
+  background: #000;
+  color: var(--green);
+  letter-spacing: 8px;
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+#jv-root .add-btn:hover::before {
+  animation: btnShine 0.7s ease forwards;
+}
+#jv-root .add-btn:active { transform: scale(0.98); }
+#jv-root .add-btn:disabled,
+#jv-root .add-btn[disabled] {
+  background: #1a1a1a !important;
+  color: #333 !important;
+  cursor: not-allowed;
+  letter-spacing: 3px;
+  box-shadow: none !important;
+}
+#jv-root .add-btn:disabled::before { display: none; }
   /* ══════════════════════════════════════
      FILTER BAR & PILLS
      — Segmented-control feel with
@@ -411,44 +404,44 @@ export default function JerseyStore() {
   .filter-bar::-webkit-scrollbar { display: none; }
 
   #jv-root .filter-btn {
-    position: relative;
-    background: transparent !important;
-    color: var(--green) !important;
-    border: 2px solid transparent !important;
-    padding: 8px 18px;
-    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-    font-weight: 400;
-    font-size: 15px;
-    letter-spacing: 3px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-transform: uppercase;
-    white-space: nowrap;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 56px;
-    border-radius: 4px;
-    text-shadow: 0 0 8px rgba(57,255,20,0.4);
-  }
-  #jv-root .filter-btn::before { display: none; }
-  #jv-root .filter-btn:hover {
-    background: rgba(57,255,20,0.12) !important;
-    border-color: var(--green) !important;
-    text-shadow: none !important;
-  }
-  #jv-root .filter-btn.active {
-    background: var(--green) !important;
-    color: #000 !important;
-    border-color: var(--green) !important;
-    text-shadow: none !important;
-    box-shadow: 0 0 16px rgba(57,255,20,0.5);
-    border-radius: 4px;
-    font-size: 15px;
-  }
-  #jv-root .filter-btn.active::before { display: none; }
-
+  position: relative;
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid #222 !important;
+  padding: 10px 20px;
+  font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  border-radius: 2px;
+  text-shadow: none;
+}
+#jv-root .filter-btn::before { display: none; }
+#jv-root .filter-btn:hover {
+  background: rgba(57,255,20,0.1) !important;
+  border-color: var(--green) !important;
+  color: var(--green) !important;
+}
+#jv-root .filter-btn.active {
+  background: var(--green) !important;
+  color: #000 !important;
+  border-color: var(--green) !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 20px rgba(57,255,20,0.4);
+  border-radius: 2px;
+  font-size: 15px;
+  letter-spacing: 5px;
+}
+#jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
      SIZE BUTTONS
      — Premium card-style with layered
