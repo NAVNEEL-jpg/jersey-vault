@@ -699,7 +699,7 @@ export default function JerseyStore() {
   .cart-total-label { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:6px; color:#333; text-transform:uppercase; }
   .cart-total-amount { font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:36px; color:var(--green); letter-spacing:2px; line-height:1; animation: priceReveal 0.25s ease; }
 
-  .search-input { background:#1a1a1a; border:1px solid #444; border-radius:4px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
+  .search-input { background:#1a1a1a; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
   .search-input:focus { border-color:var(--green); box-shadow:0 0 0 2px rgba(57,255,20,0.1), 0 4px 16px rgba(0,0,0,0.4); }
   .search-input::placeholder { color:#888; letter-spacing:2px; }
   .skeleton { background:linear-gradient(90deg, #0f0f0f 25%, #161616 50%, #0f0f0f 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
