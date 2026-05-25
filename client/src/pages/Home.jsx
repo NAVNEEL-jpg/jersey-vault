@@ -328,51 +328,94 @@ export default function JerseyStore() {
   .card-img-wrap { overflow:hidden; position:relative; height:220px; background:#0d0d0d; }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
-  /* ══════════════════════════════════════
-     ADD-TO-CART / SELECT SIZE BUTTON
-     — Sleek split-light design with
-       diagonal shine sweep on hover
-  ══════════════════════════════════════ */
-#jv-root .add-btn {
-  background: var(--green);
-  color: #000;
-  border: none !important;
-  width: 100%;
-  padding: 11px 16px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900 !important;
-  font-size: 16px !important;
-  letter-spacing: 5px !important;
-  cursor: pointer;
-  text-transform: uppercase;
-  transition: background 0.2s ease, color 0.2s ease;
+ /* ══════════════════════════════════════
+   SIZE BUTTONS — Professional
+══════════════════════════════════════ */
+#jv-root .size-grid {
   display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 16px;
+}
+
+#jv-root .size-btn {
+  position: relative;
+  background: #111;
+  border: 1px solid #2a2a2a !important;
+  color: #555;
+  width: 52px;
+  height: 52px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 3px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 0;
-  position: relative;
+  flex-direction: column;
+  gap: 3px;
+  transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
   overflow: hidden;
-  margin-top: 12px;
 }
-#jv-root .add-btn::before { display: none; }
-#jv-root .add-btn::after  { display: none; }
 
-#jv-root .add-btn:hover {
-  background: #000;
-  color: var(--green);
-  letter-spacing: 6px;
-  box-shadow: inset 0 0 0 2px var(--green);
+/* Top accent line */
+#jv-root .size-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: #1a1a1a;
+  transition: background 0.2s;
 }
-#jv-root .add-btn:active { transform: scale(0.98); }
-#jv-root .add-btn:disabled,
-#jv-root .add-btn[disabled] {
-  background: #1a1a1a !important;
-  color: #333 !important;
+#jv-root .size-btn::after { display: none; }
+
+/* HOVER */
+#jv-root .size-btn:hover:not(.selected):not(:disabled) {
+  border-color: rgba(57,255,20,0.5) !important;
+  color: var(--green);
+  background: rgba(57,255,20,0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+#jv-root .size-btn:hover:not(.selected):not(:disabled)::before {
+  background: var(--green);
+}
+
+/* SELECTED */
+#jv-root .size-btn.selected {
+  background: var(--green);
+  border-color: var(--green) !important;
+  color: #000;
+  font-weight: 900;
+  font-size: 17px;
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 3px rgba(57,255,20,0.15),
+    0 8px 20px rgba(57,255,20,0.25);
+  animation: sizePop 0.3s cubic-bezier(0.23,1,0.32,1) both;
+}
+#jv-root .size-btn.selected::before {
+  background: rgba(0,0,0,0.2);
+}
+
+/* DISABLED / OUT OF STOCK */
+#jv-root .size-btn:disabled {
+  background: #0d0d0d !important;
+  border-color: #1a1a1a !important;
+  color: #2a2a2a !important;
   cursor: not-allowed;
+  text-decoration: line-through;
+  transform: none !important;
   box-shadow: none !important;
 }
-#jv-root .add-btn:disabled::before { display: none; }
+#jv-root .size-btn:disabled::before { display: none; }
+
+@keyframes sizePop {
+  0%   { transform: scale(0.9) translateY(-2px); }
+  60%  { transform: scale(1.08) translateY(-2px); }
+  100% { transform: scale(1) translateY(-2px); }
+}
   /* ══════════════════════════════════════
      FILTER BAR & PILLS
      — Segmented-control feel with
