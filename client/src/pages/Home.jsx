@@ -391,7 +391,7 @@ export default function JerseyStore() {
   ══════════════════════════════════════ */
   .filter-bar {
     display: flex;
-    gap: 4px;
+    gap: 10px;
     flex-wrap: wrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -403,16 +403,16 @@ export default function JerseyStore() {
   }
   .filter-bar::-webkit-scrollbar { display: none; }
 
-  #jv-root .filter-btn {
+ #jv-root .filter-btn {
   position: relative;
   background: transparent !important;
   color: #fff !important;
-  border: 1px solid #222 !important;
-  padding: 10px 20px;
+  border: 1px solid #333 !important;
+  padding: 11px 22px;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
   font-weight: 400;
-  font-size: 15px;
-  letter-spacing: 4px;
+  font-size: 17px;
+  letter-spacing: 5px;
   cursor: pointer;
   transition: all 0.15s ease;
   text-transform: uppercase;
@@ -424,6 +424,8 @@ export default function JerseyStore() {
   min-width: 56px;
   border-radius: 2px;
   text-shadow: none;
+  height: 46px;
+  box-sizing: border-box;
 }
 #jv-root .filter-btn::before { display: none; }
 #jv-root .filter-btn:hover {
@@ -436,10 +438,12 @@ export default function JerseyStore() {
   color: #000 !important;
   border-color: var(--green) !important;
   text-shadow: none !important;
-  box-shadow: 0 0 20px rgba(57,255,20,0.4);
+  box-shadow: 0 0 20px rgba(57,255,20,0.3);
   border-radius: 2px;
-  font-size: 15px;
+  font-size: 17px;
   letter-spacing: 5px;
+  height: 46px;
+  font-weight: 900;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
