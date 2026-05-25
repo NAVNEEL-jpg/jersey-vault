@@ -483,7 +483,11 @@ export default function JerseyStore() {
 #jv-root .size-btn::after { display: none; }
 
 /* HOVER */
-#jv-root .size-btn:hover:not(.selected):not(:disabled) {
+#jv-root .size-btn.selected:hover {
+  background: var(--green) !important;
+  color: #000 !important;
+  border-color: var(--green) !important;
+}
   border-color: rgba(57,255,20,0.5) !important;
   color: var(--green);
   background: rgba(57,255,20,0.05);
