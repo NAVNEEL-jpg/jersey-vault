@@ -1,5 +1,4 @@
 import jordanlogo from "../assets/brands/jordan.png";
-import adidas2logo from "../assets/brands/adidas2.png";
 import nikelogo from "../assets/brands/nike.png";
 import adidaslogo from "../assets/brands/adidas.png";
 import pumalogo from "../assets/brands/puma.png";
@@ -76,7 +75,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
 
 const Ticker = memo(function Ticker() {
   return (
-    <div style={{ background: "#39ff14", color: "#000", padding: "8px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
+    <div style={{ background: "#39ff14", color: "#000", padding: "11px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
       <div style={{ display: "inline-flex", animation: "marquee 18s linear infinite" }}>
         {[...Array(2)].map((_, i) => (
           <span key={i} style={{ display: "inline-flex" }}>
@@ -92,11 +91,11 @@ const Ticker = memo(function Ticker() {
 
 const BrandLogos = memo(function BrandLogos() {
  const brands = [
-    nikelogo, adidaslogo, adidas2logo, pumalogo, nblogo,
+    nikelogo, adidaslogo, pumalogo, nblogo,
     umbrologo, kappalogo, macronlogo, hummellogo, jordanlogo
   ];
   return (
-    <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "20px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
+    <div style={{ background: "#070707", borderTop: "1px solid #111", borderBottom: "1px solid #111", padding: "12px 0", overflow: "hidden", whiteSpace: "nowrap" }}>
       <div style={{ display: "inline-flex", alignItems: "center", animation: "marquee 26s linear infinite" }}>
         {[...Array(2)].map((_, i) => (
           <span key={i} style={{ display: "inline-flex", alignItems: "center" }}>
