@@ -379,10 +379,11 @@ export default function JerseyStore() {
   border: none !important;
   width: 100%;
   padding: 11px 16px;
-  font-family: 'Bebas Neue', sans-serif;
-  font-weight: 400 !important;
-  font-size: 17px !important;
-  letter-spacing: 4px !important;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900 !important;
+  font-style: italic !important;
+  font-size: 20px !important;
+  letter-spacing: 6px !important;
   white-space: nowrap !important;
   cursor: pointer;
   text-transform: uppercase;
