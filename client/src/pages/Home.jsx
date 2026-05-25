@@ -570,34 +570,46 @@ export default function JerseyStore() {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 14px 0;
-  font-family: 'Barlow Condensed', sans-serif !important;
-  font-weight: 900 !important;
-  font-size: 20px !important;
-  letter-spacing: 6px !important;
+  gap: 12px;
+  padding: 15px 0;
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-weight: 400 !important;
+  font-size: 19px !important;
+  letter-spacing: 8px !important;
   cursor: pointer;
   text-transform: uppercase;
   white-space: nowrap;
   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 0;
+  border-radius: 2px;
 }
 
 .checkout-btn::before { display: none; }
-.checkout-btn::after { display: none; }
+
+/* Subtle top highlight line */
+.checkout-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
 
 .checkout-btn:hover {
   background: #000 !important;
   color: var(--green) !important;
-  letter-spacing: 6px !important;
-  box-shadow: inset 0 0 0 2px var(--green);
+  letter-spacing: 8px !important;
+  box-shadow: inset 0 0 0 1px var(--green),
+              0 0 24px rgba(57,255,20,0.1);
   transform: none;
 }
 
 .checkout-btn:active {
   background: #000 !important;
   color: var(--green) !important;
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 .checkout-arrow {
@@ -605,18 +617,40 @@ export default function JerseyStore() {
   align-items: center;
   justify-content: center;
   font-style: normal;
-  font-size: 22px;
-  font-weight: 900;
-  transition: transform 0.3s ease;
+  font-size: 20px;
+  font-weight: 400;
+  opacity: 0.8;
+  transition: transform 0.3s ease, opacity 0.3s ease;
   flex-shrink: 0;
 }
 
 .checkout-btn:hover .checkout-arrow {
-  transform: translateX(6px);
+  transform: translateX(5px);
+  opacity: 1;
 }
 
 .checkout-btn:active .checkout-arrow {
   transform: translateX(3px);
+}
+
+@media(max-width:768px) {
+  .checkout-btn {
+    width: calc(100% - 24px);
+    margin: 10px 12px;
+    font-size: 17px !important;
+    letter-spacing: 6px !important;
+    padding: 13px 0;
+  }
+}
+
+@media(max-width:380px) {
+  .checkout-btn {
+    font-size: 14px !important;
+    letter-spacing: 4px !important;
+  }
+  .checkout-arrow {
+    font-size: 16px;
+  }
 }
   /* ══════════════════════════════════════
      MODAL
