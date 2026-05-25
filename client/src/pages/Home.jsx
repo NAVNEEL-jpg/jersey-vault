@@ -268,7 +268,7 @@ export default function JerseyStore() {
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
- #jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
+#jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
   #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
   #jv-root .filter-btn, #jv-root .size-btn { display: inline-flex; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
@@ -931,16 +931,14 @@ export default function JerseyStore() {
                     const sizeStock = getSizeStock(selectedJersey, s);
                     const outOfStock = sizeStock === 0;
                     return (
-                      <button
-                        key={s}
-                        className={`size-btn${selectedSize === s ? " selected" : ""}`}
-                        onClick={() => !outOfStock && setSelectedSize(s)}
-                        disabled={outOfStock}
-                        style={outOfStock ? { opacity: 0.18, cursor: "not-allowed", textDecoration: "line-through", pointerEvents: "none" } : {}}
-                      >
-                        {s}
-                        <span className="stock-dot" />
-                      </button>
+                    <button
+  key={s}
+  className={`size-btn${selectedSize === s ? " selected" : ""}`}
+  onClick={() => !outOfStock && setSelectedSize(s)}
+  disabled={outOfStock}
+>
+  {s}
+</button>
                     );
                   })}
                 </div>
