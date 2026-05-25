@@ -559,7 +559,7 @@ export default function JerseyStore() {
      — High-contrast CTA with animated
        arrow and layered gradient fill
   ══════════════════════════════════════ */
-  .checkout-btn {
+ .checkout-btn {
   position: relative;
   overflow: hidden;
   background: var(--green);
@@ -567,94 +567,64 @@ export default function JerseyStore() {
   border: none !important;
   width: calc(100% - 32px);
   margin: 12px 16px;
-  padding: 18px 0;
+  padding: 22px 0;
   font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-  font-weight: 400;
-  font-size: 17px;
-  letter-spacing: 8px;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 6px;
   cursor: pointer;
   text-transform: uppercase;
-  transition: background 0.4s cubic-bezier(0.23,1,0.32,1), 
-              color 0.4s cubic-bezier(0.23,1,0.32,1), 
-              letter-spacing 0.4s cubic-bezier(0.23,1,0.32,1),
-              box-shadow 0.4s ease;
+  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   border-radius: 0;
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
 }
 
-/* Left accent bar */
-.checkout-btn::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: rgba(0,0,0,0.25);
-  transition: width 0.3s ease;
-}
-
-/* Shine sweep */
-.checkout-btn::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -120%;
-  width: 60%;
-  height: 200%;
-  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.25) 50%, transparent 80%);
-  transform: skewX(-15deg);
-  transition: left 0.5s ease;
-  pointer-events: none;
-}
+.checkout-btn::before { display: none; }
+.checkout-btn::after { display: none; }
 
 .checkout-btn:hover {
-  background: #0a0a0a;
+  background: #000;
   color: var(--green);
-  letter-spacing: 10px;
-  box-shadow: 
-    inset 0 0 0 1px rgba(57,255,20,0.4),
-    0 0 50px rgba(57,255,20,0.12),
-    0 8px 32px rgba(0,0,0,0.6);
-}
-
-.checkout-btn:hover::before {
-  width: 6px;
-  background: var(--green);
-}
-
-.checkout-btn:hover::after {
-  animation: btnShine 0.6s ease forwards;
-}
-
-.checkout-btn:active { 
-  transform: scale(0.985);
   letter-spacing: 8px;
+  box-shadow: 0 0 40px rgba(57,255,20,0.2),
+              0 8px 24px rgba(0,0,0,0.5);
+  transform: translateY(-1px);
 }
 
-/* Arrow inside checkout */
+.checkout-btn:active {
+  background: #000;
+  color: var(--green);
+  transform: scale(0.98) translateY(0);
+}
+
 .checkout-arrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid rgba(0,0,0,0.3);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  background: rgba(0,0,0,0.15);
   font-style: normal;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  font-size: 16px;
+  font-weight: 900;
+  transition: all 0.3s cubic-bezier(0.23,1,0.32,1);
   flex-shrink: 0;
 }
 
 .checkout-btn:hover .checkout-arrow {
-  border-color: rgba(57,255,20,0.4);
-  background: rgba(57,255,20,0.08);
-  animation: arrowNudge 0.6s ease infinite;
+  background: rgba(57,255,20,0.15);
+  color: var(--green);
+  transform: translateX(5px);
+}
+
+.checkout-btn:active .checkout-arrow {
+  background: rgba(57,255,20,0.15);
+  color: var(--green);
+  transform: translateX(3px);
 }
   /* ══════════════════════════════════════
      MODAL
