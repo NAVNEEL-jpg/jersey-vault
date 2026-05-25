@@ -378,12 +378,12 @@ export default function JerseyStore() {
   box-shadow: none;
   border: none !important;
   width: 100%;
-  padding: 11px 16px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900 !important;
-  font-style: italic !important;
-  font-size: 20px !important;
-  letter-spacing: 6px !important;
+  padding: 11px 8px;
+font-family: 'Barlow Condensed', sans-serif;
+font-weight: 900 !important;
+font-style: normal !important;
+font-size: 15px !important;
+letter-spacing: 4px !important;
   white-space: nowrap !important;
   cursor: pointer;
   text-transform: uppercase;
@@ -984,7 +984,7 @@ export default function JerseyStore() {
       if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
     }}
   >
-   {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE →"}
+   {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
   </button>
 </div>
                 </div>
