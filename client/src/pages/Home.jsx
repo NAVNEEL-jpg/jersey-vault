@@ -329,6 +329,120 @@ export default function JerseyStore() {
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
  /* ══════════════════════════════════════
+   ADD-TO-CART / SELECT SIZE BUTTON
+   — Sleek split-light design with
+     diagonal shine sweep on hover
+══════════════════════════════════════ */
+#jv-root .add-btn {
+  background: var(--green);
+  color: #000;
+  border: none !important;
+  width: 100%;
+  padding: 11px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900 !important;
+  font-size: 16px !important;
+  letter-spacing: 5px !important;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
+  margin-top: 12px;
+}
+#jv-root .add-btn::before { display: none; }
+#jv-root .add-btn::after  { display: none; }
+
+#jv-root .add-btn:hover {
+  background: #000;
+  color: var(--green);
+  letter-spacing: 6px;
+  box-shadow: inset 0 0 0 2px var(--green);
+}
+#jv-root .add-btn:active { transform: scale(0.98); }
+#jv-root .add-btn:disabled,
+#jv-root .add-btn[disabled] {
+  background: #1a1a1a !important;
+  color: #333 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+#jv-root .add-btn:disabled::before { display: none; }
+
+/* ══════════════════════════════════════
+   FILTER BAR & PILLS
+   — Segmented-control feel with
+     animated active indicator
+══════════════════════════════════════ */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  align-items: center;
+  background: transparent;
+  border: none;
+}
+.filter-bar::-webkit-scrollbar { display: none; }
+
+#jv-root .filter-btn {
+  border: none !important;
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 18px !important;
+  letter-spacing: 4px !important;
+  padding: 8px 18px;
+  height: 40px;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-weight: 900 !important;
+  font-style: italic !important;
+}
+
+#jv-root .filter-btn:hover {
+  background: transparent !important;
+  border: none !important;
+  color: var(--green) !important;
+}
+
+#jv-root .filter-btn.active {
+  background: var(--green) !important;
+  color: #000 !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 18px !important;
+  letter-spacing: 4px !important;
+  font-weight: 900 !important;
+  font-family: 'Barlow Condensed', sans-serif !important;
+  font-style: italic !important;
+  padding: 6px 18px;
+  border-radius: 0 !important;
+  transform: skewX(-10deg);
+  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#jv-root .filter-btn.active:first-child {
+  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  transform: skewX(0deg);
+}
+
+#jv-root .filter-btn.active:last-child {
+  clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 0% 100%);
+  transform: skewX(0deg);
+}
+
+#jv-root .filter-btn.active::before { display: none; }
+
+/* ══════════════════════════════════════
    SIZE BUTTONS — Professional
 ══════════════════════════════════════ */
 #jv-root .size-grid {
@@ -353,8 +467,6 @@ export default function JerseyStore() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  gap: 3px;
   transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
   overflow: hidden;
 }
@@ -416,161 +528,30 @@ export default function JerseyStore() {
   60%  { transform: scale(1.08) translateY(-2px); }
   100% { transform: scale(1) translateY(-2px); }
 }
-  /* ══════════════════════════════════════
-     FILTER BAR & PILLS
-     — Segmented-control feel with
-       animated active indicator
-  ══════════════════════════════════════ */
- .filter-bar {
+
+/* SIZE LABEL */
+#jv-root .size-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
   display: flex;
-  flex-wrap: wrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  scrollbar-width: none;
   align-items: center;
-  background: transparent;
-  border: none;
+  gap: 8px;
+  margin-bottom: 14px;
 }
-.filter-bar::-webkit-scrollbar { display: none; }
-
-#jv-root .filter-btn {
-  border: none !important;
-  background: transparent !important;
-  color: #fff !important;
-  font-size: 18px !important;
-  letter-spacing: 4px !important;
-  padding: 8px 18px;
-  height: 40px;
-  font-family: 'Barlow Condensed', sans-serif !important;
-  font-weight: 900 !important;
-  font-style: italic !important;
+#jv-root .size-label::before,
+#jv-root .size-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #222);
 }
-
-#jv-root .filter-btn:hover {
-  background: transparent !important;
-  border: none !important;
-  color: var(--green) !important;
+#jv-root .size-label::after {
+  background: linear-gradient(to left, transparent, #222);
 }
-
-#jv-root .filter-btn.active {
-  background: var(--green) !important;
-  color: #000 !important;
-  border: none !important;
-  box-shadow: none !important;
-  font-size: 18px !important;
-  letter-spacing: 4px !important;
-  font-weight: 900 !important;
-  font-family: 'Barlow Condensed', sans-serif !important;
-  font-style: italic !important;
-  padding: 6px 18px;
-  border-radius: 0 !important;
-  transform: skewX(-10deg);
-  clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* First button - flat left edge */
-#jv-root .filter-btn.active:first-child {
-  clip-path: polygon(0% 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
-  transform: skewX(0deg);
-}
-
-/* Last button - flat right edge */
-#jv-root .filter-btn.active:last-child {
-  clip-path: polygon(10px 0%, 100% 0%, 100% 100%, 0% 100%);
-  transform: skewX(0deg);
-}
-
-#jv-root .filter-btn.active::before { display: none; }
-  /* ══════════════════════════════════════
-     SIZE BUTTONS
-     — Premium card-style with layered
-       depth and kinetic selection state
-  ══════════════════════════════════════ */
-  .size-grid {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .size-btn {
-    position: relative;
-    background: #0d0d0d;
-    border: 1px solid #222 !important;
-    color: #444;
-    width: 54px;
-    height: 54px;
-    font-family: 'Bebas Neue', 'Barlow Condensed', sans-serif;
-    font-size: 15px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.23,1,0.32,1), box-shadow 0.2s ease;
-    letter-spacing: 1px;
-    text-align: center;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1px;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  /* Stock indicator dot */
-  .size-btn .stock-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: #2a2a2a;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .size-btn:hover:not(.selected):not(:disabled) {
-    border-color: rgba(57,255,20,0.6) !important;
-    color: var(--green);
-    background: var(--green-soft);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 0 1px rgba(57,255,20,0.1);
-  }
-  .size-btn:hover:not(.selected):not(:disabled) .stock-dot {
-    background: var(--green);
-  }
-  .size-btn.selected {
-    background: var(--green);
-    border-color: var(--green) !important;
-    color: #000;
-    font-size: 16px;
-    font-weight: 900;
-    animation: sizePop 0.35s cubic-bezier(0.23,1,0.32,1) both;
-    box-shadow: 0 0 0 3px rgba(57,255,20,0.2), 0 8px 24px rgba(57,255,20,0.3);
-  }
-  .size-btn.selected .stock-dot { background: rgba(0,0,0,0.3); }
-
-  .size-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 5px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .size-label::before,
-  .size-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #222);
-  }
-  .size-label::after {
-    background: linear-gradient(to left, transparent, #222);
-  }
-
   /* ══════════════════════════════════════
      CHECKOUT BUTTON
      — High-contrast CTA with animated
