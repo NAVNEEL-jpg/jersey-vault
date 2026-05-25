@@ -704,6 +704,7 @@ export default function JerseyStore() {
 .card-img { height:200px; }
 .card-img-wrap { height:200px; }
 .card { height:380px; }
+.card-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 @media(max-width:380px) {
@@ -714,9 +715,8 @@ export default function JerseyStore() {
   .checkout-arrow {
     font-size: 16px;
   }
-    .card-img { height:180px; }
-    .card-img-wrap { height:180px; }
     .card { height:360px; }
+    .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
   /* ══════════════════════════════════════
      MODAL
@@ -931,7 +931,7 @@ export default function JerseyStore() {
           </div>
 
           {loadingProducts ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 6 }}>
+            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6}}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} style={{ background: "#0f0f0f", border: "1px solid #151515" }}>
                   <div className="skeleton" style={{ height: 220 }} />
@@ -948,7 +948,7 @@ export default function JerseyStore() {
               <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
-<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 6}}>
+<div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6}}>
             {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
