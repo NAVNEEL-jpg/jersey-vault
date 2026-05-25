@@ -566,18 +566,19 @@ export default function JerseyStore() {
   color: #000 !important;
   border: none !important;
   width: calc(100% - 32px);
-  margin: 16px 16px;
+  margin: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 0;
+  gap: 10px;
+  padding: 14px 0;
   font-family: 'Barlow Condensed', sans-serif !important;
   font-weight: 900 !important;
-  font-size: 26px !important;
+  font-size: 20px !important;
   letter-spacing: 6px !important;
   cursor: pointer;
   text-transform: uppercase;
+  white-space: nowrap;
   transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
   border-radius: 0;
 }
@@ -603,20 +604,14 @@ export default function JerseyStore() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.2);
   font-style: normal;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 900;
-  transition: background 0.3s ease, transform 0.3s ease;
+  transition: transform 0.3s ease;
   flex-shrink: 0;
 }
 
 .checkout-btn:hover .checkout-arrow {
-  background: rgba(57,255,20,0.15);
-  color: var(--green);
   transform: translateX(6px);
 }
 
