@@ -769,7 +769,7 @@ export default function JerseyStore() {
           </div>
 
           {loadingProducts ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 8 }}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} style={{ background: "#0f0f0f", border: "1px solid #151515" }}>
                   <div className="skeleton" style={{ height: 220 }} />
@@ -786,7 +786,7 @@ export default function JerseyStore() {
               <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 2 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 8 }}>
               {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
