@@ -715,7 +715,7 @@ export default function JerseyStore() {
   /* ── NAVBAR ── */
   .desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
   .desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
-  .hamburger { display:none; flex-direction:column; justify-content:space-between; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
+ .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
   .hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; transition: transform 0.3s ease, opacity 0.3s ease; }
   .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
   .hamburger.open span:nth-child(2) { opacity:0; }
@@ -815,8 +815,15 @@ export default function JerseyStore() {
                 <span style={{ color: "#39ff14", fontSize: 19, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
               )}
             </button>
-          <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
-  <span /><span /><span />
+            <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
+  {mobileMenuOpen ? (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ) : (
+    <><span /><span /><span /></>
+  )}
 </button>
   
           </div>
