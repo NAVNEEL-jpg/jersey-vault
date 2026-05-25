@@ -108,7 +108,7 @@ const BrandLogos = memo(function BrandLogos() {
                 <img
                   src={src}
                   alt=""
-                 style={{ height: 32, width: "auto", objectFit: "contain", filter: "invert(1)" }}
+                 style={{ height: 44, width: "100px", objectFit: "fill", filter: "invert(1)" }}
                 />
               </span>
             ))}
