@@ -268,7 +268,7 @@ export default function JerseyStore() {
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-#jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn):not(.checkout-btn) { all: unset; ... }
+#jv-root button:not(.hamburger):not(.add-btn):not(.filter-btn):not(.size-btn):not(.checkout-btn) { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; text-transform: uppercase; }
   #jv-root .add-btn, #jv-root .checkout-btn { display: block; width: 100%; text-align: center; }
   #jv-root .filter-btn, #jv-root .size-btn { display: inline-flex; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #39ff14; border-radius: 2px; }
