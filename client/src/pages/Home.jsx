@@ -440,7 +440,7 @@ export default function JerseyStore() {
 }
 
 .filter-bar {
-  gap: 15px !important;
+  gap: 10px !important;
 }
 #jv-root .filter-btn.active::before { display: none; }
   /* ══════════════════════════════════════
