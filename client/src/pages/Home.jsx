@@ -713,16 +713,14 @@ export default function JerseyStore() {
   .hero-section { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
   /* ── NAVBAR ── */
-  .desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
-  .desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
- .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
-  .hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; transition: transform 0.3s ease, opacity 0.3s ease; }
-  .hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
-  .hamburger.open span:nth-child(2) { opacity:0; }
-  .hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
-  .mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(7,7,7,0.99); border-bottom:1px solid #1a1a1a; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; backdrop-filter:blur(12px); }
-  .mobile-menu.open { display:flex; }
-  .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
+.desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
+.desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
+.hamburger { display:none; flex-direction:column; justify-content:space-between; align-items:stretch; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
+.hamburger.open { justify-content:center; align-items:center; }
+.hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
+.mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(7,7,7,0.99); border-bottom:1px solid #1a1a1a; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; backdrop-filter:blur(12px); }
+.mobile-menu.open { display:flex; }
+.mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
  @media(max-width:768px) {
   /* existing ones stay */
