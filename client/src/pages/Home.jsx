@@ -152,18 +152,26 @@ export default function JerseyStore() {
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTeamName, setActiveTeamName] = useState("");
 
 useEffect(() => {
   const teamId = searchParams.get("team");
-  let query = supabase
-    .from("products")
-    .select("*")
-    .eq("status", "active");
+  if (teamId) {
+    supabase.from("teams").select("name").eq("id", teamId).single()
+      .then(({ data }) => { if (data) setActiveTeamName(data.name); });
+  } else {
+    setActiveTeamName("");
+  }
+  let query = supabase.from("products").select("*").eq("status", "active");
   if (teamId) query = query.eq("team_id", teamId);
   query.then(async ({ data, error }) => {
     if (!error && data) {
       setJerseys(data);
+      if (teamId) {
+        setTimeout(() => {
+          document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
       if (cart.length > 0) {
         const validIds = new Set(data.map(p => p.id));
         const filteredCart = cart.filter(item => validIds.has(item.id));
@@ -177,6 +185,7 @@ useEffect(() => {
     setLoadingProducts(false);
   });
 }, [searchParams]);
+
 
   useEffect(() => {
     try { sessionStorage.setItem("jv_visited", "1"); } catch {}
@@ -244,7 +253,7 @@ useEffect(() => {
   const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
 
-  const sectionTitle = activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
+ const sectionTitle = activeTeamName ? `${activeTeamName} JERSEYS` : activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
