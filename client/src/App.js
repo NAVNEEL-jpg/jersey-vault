@@ -11,6 +11,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
+import Teams from "./pages/Teams";
 
 function App() {
   return (
