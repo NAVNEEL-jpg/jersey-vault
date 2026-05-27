@@ -8,7 +8,6 @@ import umbrologo from "../assets/brands/umbro.png";
 import kappalogo from "../assets/brands/kappa.png";
 import macronlogo from "../assets/brands/macron.png";
 import hummellogo from "../assets/brands/hummel.png";
-import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from '../supabase';
 import logo from "../assets/jerseyvault-logo.jpeg";
