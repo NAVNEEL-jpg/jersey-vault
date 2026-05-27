@@ -28,6 +28,7 @@ function App() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/teams" element={<Teams />} />
         </Routes>
       </Suspense>
     </Router>
