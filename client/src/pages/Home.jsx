@@ -1,3 +1,4 @@
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import jordanlogo from "../assets/brands/jordan.png";
 import nikelogo from "../assets/brands/nike.png";
 import adidaslogo from "../assets/brands/adidas.png";
@@ -129,6 +130,7 @@ const filterButtons = [
 
 export default function JerseyStore() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [jerseys, setJerseys] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [cart, setCart] = useState(() => {
@@ -153,27 +155,29 @@ export default function JerseyStore() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from("products")
-      .select("*")
-      .eq("status", "active")
-      .then(async ({ data, error }) => {
-        if (!error && data) {
-          setJerseys(data);
-          if (cart.length > 0) {
-            const validIds = new Set(data.map(p => p.id));
-            const filteredCart = cart.filter(item => validIds.has(item.id));
-            if (filteredCart.length !== cart.length) {
-              setCart(filteredCart);
-              sessionStorage.setItem("cart", JSON.stringify(filteredCart));
-              showToast("Some unavailable items were removed from your cart.");
-            }
-          }
+useEffect(() => {
+  const teamId = searchParams.get("team");
+  let query = supabase
+    .from("products")
+    .select("*")
+    .eq("status", "active");
+  if (teamId) query = query.eq("team_id", teamId);
+  query.then(async ({ data, error }) => {
+    if (!error && data) {
+      setJerseys(data);
+      if (cart.length > 0) {
+        const validIds = new Set(data.map(p => p.id));
+        const filteredCart = cart.filter(item => validIds.has(item.id));
+        if (filteredCart.length !== cart.length) {
+          setCart(filteredCart);
+          sessionStorage.setItem("cart", JSON.stringify(filteredCart));
+          showToast("Some unavailable items were removed from your cart.");
         }
-        setLoadingProducts(false);
-      });
-  }, []);
+      }
+    }
+    setLoadingProducts(false);
+  });
+}, [searchParams]);
 
   useEffect(() => {
     try { sessionStorage.setItem("jv_visited", "1"); } catch {}
