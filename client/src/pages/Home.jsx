@@ -142,7 +142,7 @@ export default function JerseyStore() {
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
   const [toast, setToast] = useState(null);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heroVisible, setHeroVisible] = useState(() => {
     try { return sessionStorage.getItem("jv_visited") === "1"; }
     catch { return false; }
