@@ -919,10 +919,10 @@ letter-spacing: 4px !important;
 
         {/* STATS */}
         <div className="stats-grid">
-          {[["500+", "JERSEYS"], ["50K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
+          {[["100+", "JERSEYS"], ["5K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
               <div style={{ fontSize: 30, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>{num}</div>
-              <div style={{ fontSize: 10, letterSpacing: 4, color: "#666", marginTop: 4, fontWeight: 700 }}>{label}</div>
+              <div style={{ fontSize: 10, letterSpacing: 4, color: "#777", marginTop: 4, fontWeight: 700 }}>{label}</div>
             </div>
           ))}
         </div>
