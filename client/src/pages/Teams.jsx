@@ -493,7 +493,7 @@ export default function Teams() {
                   key={team.id}
                   className="t-team-card"
                   style={{ animation:`teamCardIn 0.5s ease ${i * 0.06}s both` }}
-                onClick={() => navigate(`/teams/${team.id}`)}
+                onClick={() => navigate(`/team/${team.id}`)}
                 >
                   {/* Sport badge */}
                   {team.sport && (
