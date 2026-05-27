@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
 import logo from "../assets/jerseyvault-logo.jpeg";
-
+import heroBg from "../assets/hero-bg.jpeg"
 const LOGO_SRC = logo;
 const FLAME_ID = "jv-flame-teams";
 
