@@ -1031,11 +1031,11 @@ letter-spacing: 4px !important;
         {/* FOOTER */}
         <footer style={{ background: "#040404", borderTop: "1px solid #111", padding: "40px 24px", textAlign: "center" }}>
           <div style={{ fontWeight: 900, fontSize: 26, letterSpacing: 5, marginBottom: 8, fontFamily: "'Bebas Neue',sans-serif" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
-          <p style={{ color: "#222", fontSize: 11, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+          <p style={{ color: "#555", fontSize: 11, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
             {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["FAQ", "/faq"]].map(([l, h]) => (
-              <Link key={l} to={h} style={{ color: "#333", fontSize: 11, letterSpacing: 3, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
-                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#333"}>{l}</Link>
+              <Link key={l} to={h} style={{ color: "#555", fontSize: 11, letterSpacing: 3, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
+                onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#555"}>{l}</Link>
             ))}
           </div>
         </footer>
