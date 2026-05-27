@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { downloadInvoice } from "../utils/downloadInvoice";
+import { API_BASE } from "../config/api";
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
 const statusColors = {
@@ -64,7 +65,7 @@ export default function AdminPage() {
       const token = session?.access_token;
 
       // Fetch Stats
-      fetch(`${process.env.REACT_APP_API_URL}/api/admin/stats`, {
+      fetch(`${API_BASE}/api/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -73,7 +74,7 @@ export default function AdminPage() {
 
       // Fetch Users
       setLoadingUsers(true);
-      fetch(`${process.env.REACT_APP_API_URL}/api/admin/users`, {
+      fetch(`${API_BASE}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       .then(res => {
@@ -156,7 +157,7 @@ export default function AdminPage() {
     setDeletingId(id);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${id}`, {
+      const response = await fetch(`${API_BASE}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`
