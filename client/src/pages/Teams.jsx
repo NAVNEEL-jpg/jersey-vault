@@ -288,18 +288,17 @@ export default function Teams() {
             box-shadow:0 0 0 1px #39ff14, 0 0 30px rgba(57,255,20,0.2), 0 20px 60px rgba(0,0,0,0.6);
           }
           .t-team-logo-wrap {
-            width:96px; height:96px; border-radius:50%; background:#0d0d0d;
-            border:2px solid #1e1e1e; display:flex; align-items:center; justify-content:center;
-            overflow:hidden; transition:border-color 0.3s, box-shadow 0.3s; flex-shrink:0;
+            width:96px; height:96px; display:flex; align-items:center; justify-content:center;
+            flex-shrink:0; transition:box-shadow 0.3s;
           }
           .t-team-card:hover .t-team-logo-wrap {
-            border-color:#39ff14; box-shadow:0 0 20px rgba(57,255,20,0.25);
+            box-shadow: inset 0 0 0 2px #39ff14;
           }
-          .t-team-logo { width:72px; height:72px; object-fit:contain; }
+          .t-team-logo { width:120px; height:120px; object-fit:contain; image-rendering:crisp-edges; filter:contrast(1.15) brightness(1.05); }
           .t-team-logo-placeholder { font-size:44px; }
           .t-team-name {
-            font-family:'Barlow Condensed',sans-serif; font-weight:900; font-style:italic;
-            font-size:18px; letter-spacing:2px; text-align:center; color:#fff; line-height:1.1;
+            font-family:'Bebas Neue',sans-serif; font-weight:400; font-style:normal;
+            font-size:14px; letter-spacing:3px; text-align:center; color:#aaa; line-height:1.1; text-transform:uppercase;
           }
           .t-sport-badge {
             font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px;
