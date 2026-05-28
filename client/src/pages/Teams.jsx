@@ -275,7 +275,7 @@ export default function Teams() {
             border:1px solid var(--border); overflow:hidden; cursor:pointer;
             transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s;
             position:relative; display:flex; flex-direction:column; align-items:center;
-            padding:32px 20px 24px; gap:16px; text-decoration:none;
+            padding:32px 20px 18px; gap:10px; text-decoration:none;
           }
           .t-team-card::after {
             content:''; position:absolute; top:-50%; left:-75%; width:50%; height:200%;
@@ -291,9 +291,7 @@ export default function Teams() {
             width:96px; height:96px; display:flex; align-items:center; justify-content:center;
             flex-shrink:0; transition:box-shadow 0.3s;
           }
-          .t-team-card:hover .t-team-logo-wrap {
-            box-shadow: inset 0 0 0 2px #39ff14;
-          }
+    
           .t-team-logo { width:120px; height:120px; object-fit:contain; image-rendering:crisp-edges; filter:contrast(1.15) brightness(1.05); }
           .t-team-logo-placeholder { font-size:44px; }
           .t-team-name {
