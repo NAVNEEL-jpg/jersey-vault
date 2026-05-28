@@ -40,8 +40,8 @@ export default function CheckoutPage() {
   const { subtotal, shipping, total, freeShippingGap } = calcOrderTotals(cart);
 
   // COD Safety Deposit & Shipping calculations
-  const payNowOnline = cart.length === 0 ? 0 : (payMethod === "cod" ? 99 : total);
-  const payAtDoorstep = cart.length === 0 ? 0 : (payMethod === "cod" ? (subtotal >= 1999 ? subtotal - 99 : subtotal) : 0);
+  const payNowOnline = cart.length === 0 ? 0 : (payMethod === "cod" ? 1 : total);
+  const payAtDoorstep = cart.length === 0 ? 0 : (payMethod === "cod" ? (subtotal >= 1999 ? subtotal - 1 : subtotal) : 0);
   const payNow = payNowOnline;
 
   const validate = () => {
