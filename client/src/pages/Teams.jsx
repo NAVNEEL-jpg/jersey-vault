@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
 import logo from "../assets/jerseyvault-logo.jpeg";
-import heroBg from "../assets/hero-bg.jpeg"
+import heroBg from "../assets/hero-bg.jpeg";
 const LOGO_SRC = logo;
 const FLAME_ID = "jv-flame-teams";
 
@@ -493,7 +493,7 @@ export default function Teams() {
                   key={team.id}
                   className="t-team-card"
                   style={{ animation:`teamCardIn 0.5s ease ${i * 0.06}s both` }}
-                onClick={() => navigate(`/?team/${team.id}`)}
+                onClick={() => navigate(`/?team=${team.id}`)}
                 >
                   {/* Sport badge */}
                   {team.sport && (
