@@ -464,8 +464,33 @@ export default function Success() {
 
 useEffect(() => {
   const data = localStorage.getItem("latestOrder");
+
   if (data) {
-    setOrder(JSON.parse(data));
+    const parsed = JSON.parse(data);
+
+    // Generate Order ID
+    if (!parsed.orderId) {
+      parsed.orderId =
+        "JV-" +
+        Math.random().toString(36).substring(2, 7).toUpperCase() +
+        "-" +
+        Date.now().toString().slice(-4);
+    }
+
+    // Generate Tracking ID
+    if (!parsed.trackingId) {
+      parsed.trackingId =
+        "TRK-" +
+        Math.random().toString(36).substring(2, 8).toUpperCase();
+    }
+
+    // Save updated object locally
+    localStorage.setItem(
+      "latestOrder",
+      JSON.stringify(parsed)
+    );
+
+    setOrder(parsed);
   }
 }, []);
   return (
@@ -501,13 +526,39 @@ useEffect(() => {
             Get ready to represent.
           </p>
 
-          {/* Order ID */}
-          <div className="order-block">
-            <div className="ob-row">
-              <div>
-                <div className="ob-label">Order ID</div>
-                <div className="ob-value">{order ? order.id : "Loading..."}</div>
-              </div>
+{/* Order ID */}
+<div className="order-block">
+  <div className="ob-row">
+
+    <div>
+  <div className="ob-label">Order ID</div>
+
+  <div className="ob-value">
+    {order ? order.orderId : "Loading..."}
+  </div>
+
+  {/* TRACKING ID */}
+  <div
+    style={{
+      marginTop: 10,
+      fontSize: 13,
+      color: "var(--muted)",
+      letterSpacing: 1,
+    }}
+  >
+    Tracking ID:
+
+    <span
+      style={{
+        color: "var(--green)",
+        fontWeight: 700,
+        marginLeft: 8,
+      }}
+    >
+      {order?.trackingId}
+    </span>
+  </div>
+</div>
               <div className="status-pill">
                 <div className="dot" />
                 <div className="pill-text">{order?.payMethod?.includes('COD') ? "COD Advance Paid" : "Paid"}</div>
