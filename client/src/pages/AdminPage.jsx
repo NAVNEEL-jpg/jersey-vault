@@ -986,25 +986,75 @@ export default function AdminPage() {
 }
 
 // ── StockRow ──────────────────────────────────────────────
+// ── StockRow ──────────────────────────────────────────────
+// Drop-in replacement for the StockRow at the bottom of AdminPage.jsx
+
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const sportIcon = { FOOTBALL: "⚽", CRICKET: "🏏", BASKETBALL: "🏀" };
+
 function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
-  const [sizeInputs, setSizeInputs] = useState({});
-  const [saving, setSaving] = useState(false);
+  const [sizeInputs, setSizeInputs]   = useState({});
+  // FIX 1: per-size saving state instead of one shared boolean
+  const [savingSize, setSavingSize]   = useState(null);
+  const [saveError,  setSaveError]    = useState(null);
+  // FIX 2: local copy of size_stock so re-clicks within the same row
+  //        always use the latest value, not a stale prop
+  const [localSizeStock, setLocalSizeStock] = useState(
+    () => ({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) })
+  );
+
+  // Keep local copy in sync when parent refreshes the product
+  useEffect(() => {
+    setLocalSizeStock({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) });
+  }, [p.size_stock]);
 
   const handleSizeRestock = async (size) => {
     const qty = parseInt(sizeInputs[size] || 0);
     if (!qty || qty <= 0) return;
-    setSaving(true);
-    const newSizeStock = { ...(p.size_stock || {}), [size]: (p.size_stock?.[size] || 0) + qty };
-    await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", p.id);
+
+    setSavingSize(size);
+    setSaveError(null);
+
+    // FIX 3: use localSizeStock (not p.size_stock) so sequential
+    //        updates within the same row don't lose previous changes
+    const newSizeStock = {
+      ...localSizeStock,
+      [size]: (localSizeStock[size] || 0) + qty,
+    };
+
+    // FIX 4: guard every value with || 0 so totalStock is never NaN
+    const totalStock = SIZES.reduce((s, sz) => s + (newSizeStock[sz] || 0), 0);
+
+    // FIX 5: check Supabase error and surface it to the admin
+    const { error } = await supabase
+      .from("products")
+      .update({ size_stock: newSizeStock, stock: totalStock })
+      .eq("id", p.id);
+
+    if (error) {
+      setSaveError(`Failed to update ${size}: ${error.message}`);
+      setSavingSize(null);
+      return;
+    }
+
+    // Update local state immediately so the next click is correct
+    setLocalSizeStock(newSizeStock);
     onUpdate(p.id, newSizeStock);
     setSizeInputs(prev => ({ ...prev, [size]: "" }));
-    setSaving(false);
+    setSavingSize(null);
   };
 
   const isConfirming = confirmDeleteId === p.id;
-  const isDeleting = deletingId === p.id;
-  const typeClass = p.type === "PLAYER VERSION" ? "player" : p.type === "FAN VERSION" ? "fan" : p.type === "RETRO" ? "retro" : "";
-  const totalStock = SIZES.reduce((s, sz) => s + (p.size_stock?.[sz] || 0), 0);
+  const isDeleting   = deletingId      === p.id;
+
+  const typeClass =
+    p.type === "PLAYER VERSION" ? "player" :
+    p.type === "FAN VERSION"    ? "fan"    :
+    p.type === "RETRO"          ? "retro"  : "";
+
+  // FIX 6: use localSizeStock for display so the number updates
+  //        immediately after save without waiting for a parent re-render
+  const totalStock = SIZES.reduce((s, sz) => s + (localSizeStock[sz] || 0), 0);
 
   return (
     <div className="stock-row-item">
@@ -1019,7 +1069,9 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
               <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
               {p.type && <span className={`type-badge ${typeClass}`}>{p.type}</span>}
-              <span style={{ fontSize: 12, fontWeight: 900, color: totalStock === 0 ? "#ff4444" : totalStock <= 10 ? "#ff9900" : "#39ff14" }}>TOTAL: {totalStock}</span>
+              <span style={{ fontSize: 12, fontWeight: 900, color: totalStock === 0 ? "#ff4444" : totalStock <= 10 ? "#ff9900" : "#39ff14" }}>
+                TOTAL: {totalStock}
+              </span>
               {p.teams && (
                 <span className="product-team-badge">
                   {p.teams.logo_url
@@ -1032,29 +1084,64 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             </div>
           </div>
         </div>
+
         <div style={{ flexShrink: 0, marginLeft: 12 }}>
           {!isConfirming ? (
-            <button className="btn-danger" onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>🗑 REMOVE</button>
+            <button className="btn-danger" style={{ fontSize: 10, padding: "4px 10px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
+              🗑 REMOVE
+            </button>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
               <div style={{ fontSize: 10, letterSpacing: 1, color: "#ff4444", marginBottom: 2 }}>CONFIRM DELETE?</div>
               <div style={{ display: "flex", gap: 6 }}>
                 <button className="btn-cancel-sm" onClick={() => setConfirmDeleteId(null)}>NO</button>
-                <button className="btn-danger-confirm" onClick={() => onDelete(p.id)} disabled={isDeleting}>{isDeleting ? "..." : "YES, DELETE"}</button>
+                <button className="btn-danger-confirm" onClick={() => onDelete(p.id)} disabled={isDeleting}>
+                  {isDeleting ? "..." : "YES, DELETE"}
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* FIX 7: show error banner if save failed */}
+      {saveError && (
+        <div style={{ background: "#ff444415", border: "1px solid #ff444440", color: "#ff4444", fontSize: 11, letterSpacing: 1, padding: "8px 12px", marginBottom: 10 }}>
+          ⚠ {saveError}
+        </div>
+      )}
+
       <div className="size-grid-stock">
         {SIZES.map(size => {
-          const stock = p.size_stock?.[size] || 0;
+          const stock      = localSizeStock[size] || 0;
+          const isSaving   = savingSize === size;
+          const anyBusy    = savingSize !== null;       // FIX 1: only THIS size button spins
+
           return (
             <div key={size} style={{ background: "#0d0d0d", border: `1px solid ${stock === 0 ? "#ff444440" : "#1a1a1a"}`, padding: "8px", textAlign: "center" }}>
               <div style={{ fontSize: 10, letterSpacing: 2, color: "#555", marginBottom: 4, fontWeight: 700 }}>{size}</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: stock === 0 ? "#ff4444" : stock <= 2 ? "#ff9900" : "#39ff14", marginBottom: 6 }}>{stock}</div>
-              <input type="number" min="1" placeholder="+" value={sizeInputs[size] || ""} onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))} className="size-stock-input" inputMode="numeric" />
-              <button className="size-add-btn" onClick={() => handleSizeRestock(size)} disabled={saving}>{saving ? "..." : "+ADD"}</button>
+              <div style={{ fontSize: 22, fontWeight: 900, color: stock === 0 ? "#ff4444" : stock <= 2 ? "#ff9900" : "#39ff14", marginBottom: 6 }}>
+                {stock}
+              </div>
+              <input
+                type="number"
+                min="1"
+                placeholder="+"
+                value={sizeInputs[size] || ""}
+                onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))}
+                className="size-stock-input"
+                inputMode="numeric"
+                // FIX 1: only disable THIS size's input while it saves
+                disabled={isSaving}
+              />
+              <button
+                className="size-add-btn"
+                onClick={() => handleSizeRestock(size)}
+                // FIX 1: only THIS size button shows "..." — others stay clickable
+                disabled={isSaving}
+              >
+                {isSaving ? "..." : "+ADD"}
+              </button>
             </div>
           );
         })}
