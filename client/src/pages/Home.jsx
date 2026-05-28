@@ -262,11 +262,15 @@ export default function JerseyStore() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const filtered = useMemo(() => jerseys.filter(j => {
-    const matchesSearch = j.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === "ALL" || j.type === activeFilter;
-    return matchesSearch && matchesFilter;
-  }), [jerseys, searchQuery, activeFilter]);
+const filtered = useMemo(() => jerseys.filter(j => {
+const matchesSearch =
+  (j.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase());
+
+  const matchesFilter =
+    activeFilter === "ALL" || j.type === activeFilter;
+
+  return matchesSearch && matchesFilter;
+}), [jerseys, searchQuery, activeFilter]);
 
   const addToCart = useCallback((jersey, size) => {
     setCart(prev => {
