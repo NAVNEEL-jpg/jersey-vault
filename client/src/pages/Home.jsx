@@ -265,8 +265,9 @@ export default function JerseyStore() {
   const filtered = useMemo(() => jerseys.filter(j => {
     const matchesSearch = j.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = activeFilter === "ALL" || j.type === activeFilter;
-    return matchesSearch && matchesFilter;
-  }), [jerseys, searchQuery, activeFilter]);
+    const isExcludedType = activeTeamName && ["FAN VERSION", "PLAYER VERSION", "RETRO"].includes(j.type);
+    return matchesSearch && matchesFilter && !isExcludedType;
+  }), [jerseys, searchQuery, activeFilter, activeTeamName]);
 
   const addToCart = useCallback((jersey, size) => {
     setCart(prev => {
