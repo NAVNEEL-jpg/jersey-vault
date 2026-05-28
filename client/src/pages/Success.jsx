@@ -492,24 +492,39 @@ useEffect(() => {
     );
 
     setOrder(parsed);
-    const saveOrder = async () => {
-  await supabase.from("orders").insert({
-    order_id: parsed.orderId,
-    tracking_id: parsed.trackingId,
+const saveOrder = async () => {
 
-    customer_name: parsed.customer?.name,
-    email: parsed.customer?.email,
-    phone: parsed.customer?.phone,
-    address: parsed.customer?.address,
+  // Prevent duplicate save
+  if (parsed.savedToDB) return;
 
-    items: parsed.items,
-    total: parsed.total,
+  const { error } = await supabase
+    .from("orders")
+    .insert({
+      order_id: parsed.orderId,
+      tracking_id: parsed.trackingId,
 
-    payment_method: parsed.payMethod,
-    amount_paid: parsed.amountPaid || parsed.total,
+      customer_name: parsed.customer?.name,
+      email: parsed.customer?.email,
+      phone: parsed.customer?.phone,
+      address: parsed.customer?.address,
 
-    status: "Confirmed"
-  });
+      items: parsed.items,
+      total: parsed.total,
+
+      payment_method: parsed.payMethod,
+      amount_paid: parsed.amountPaid || parsed.total,
+
+      status: "Confirmed"
+    });
+
+  if (!error) {
+    parsed.savedToDB = true;
+
+    localStorage.setItem(
+      "latestOrder",
+      JSON.stringify(parsed)
+    );
+  }
 };
 
 saveOrder();
