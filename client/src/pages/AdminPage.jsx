@@ -989,8 +989,6 @@ export default function AdminPage() {
 // ── StockRow ──────────────────────────────────────────────
 // Drop-in replacement for the StockRow at the bottom of AdminPage.jsx
 
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
-const sportIcon = { FOOTBALL: "⚽", CRICKET: "🏏", BASKETBALL: "🏀" };
 
 function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
   const [sizeInputs, setSizeInputs]   = useState({});
