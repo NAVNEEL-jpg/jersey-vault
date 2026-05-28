@@ -1,46 +1,145 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std/http/server.ts"
+import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib"
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "@supabase/server";
+serve(async (req) => {
 
-console.log("Hello from Functions!");
+  const body = await req.json()
 
-// This endpoint uses 'publishable' | 'secret' access, apiKey is required.
-// Use publishable for Client-facing, key-validated endpoints
-// Use secret for Server-to-server, internal calls
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req, ctx) => {
-    // Called by another service with a secret key
-    // ctx.supabaseAdmin bypasses RLS — use for privileged operations
-    /*
-    if (ctx.authMode === "secret") {
-      const { user_id } = await req.json();
-      const { data } = await ctx.supabaseAdmin.auth.admin.getUserById(user_id);
+  const order = body.order
 
-      return Response.json({
-        email: data?.user?.email,
-      });
+  const pdfDoc = await PDFDocument.create()
+
+  const page = pdfDoc.addPage([600, 800])
+
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+  page.drawText("JERSEYVAULT", {
+    x: 50,
+    y: 760,
+    size: 26,
+    font: bold,
+    color: rgb(0.22, 1, 0.08)
+  })
+
+  page.drawText(`Order ID: ${order.orderId}`, {
+    x: 50,
+    y: 710,
+    size: 14,
+    font
+  })
+
+  page.drawText(`Tracking ID: ${order.trackingId}`, {
+    x: 50,
+    y: 690,
+    size: 14,
+    font
+  })
+
+  page.drawText(`Customer: ${order.customer?.name}`, {
+    x: 50,
+    y: 650,
+    size: 13,
+    font
+  })
+
+  let y = 580
+
+  order.items.forEach((item: any) => {
+
+    page.drawText(
+      `${item.name} | ${item.size} | Qty:${item.qty}`,
+      {
+        x: 50,
+        y,
+        size: 12,
+        font
+      }
+    )
+
+    y -= 24
+  })
+
+  page.drawText(`TOTAL: ₹${order.total}`, {
+    x: 50,
+    y: y - 20,
+    size: 18,
+    font: bold
+  })
+
+  const pdfBytes = await pdfDoc.save()
+
+  const pdfBase64 = btoa(
+    String.fromCharCode(...pdfBytes)
+  )
+
+  const RESEND_API_KEY =
+    Deno.env.get("RESEND_API_KEY")
+
+  await fetch(
+    "https://api.resend.com/emails",
+    {
+      method: "POST",
+
+      headers: {
+        "Authorization":
+          `Bearer ${RESEND_API_KEY}`,
+
+        "Content-Type":
+          "application/json"
+      },
+
+      body: JSON.stringify({
+
+        from:
+          "JerseyVault <onboarding@resend.dev>",
+
+        to:
+          order.customer.email,
+
+        subject:
+          `Your JerseyVault Invoice ${order.orderId}`,
+
+        html: `
+          <h2>Order Confirmed ✅</h2>
+
+          <p>
+            Order ID:
+            <strong>${order.orderId}</strong>
+          </p>
+
+          <p>
+            Tracking ID:
+            <strong>${order.trackingId}</strong>
+          </p>
+
+          <p>
+            Your invoice PDF is attached.
+          </p>
+        `,
+
+        attachments: [
+          {
+            filename:
+              `${order.orderId}.pdf`,
+
+            content:
+              pdfBase64
+          }
+        ]
+      })
     }
-    */
+  )
 
-    const { name } = await req.json();
-
-    return Response.json({
-      message: `Hello ${name}!`,
-    });
-  }),
-};
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-invoice' \
-    --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"name":"Functions"}'
-
-*/
+  return new Response(
+    JSON.stringify({
+      success: true
+    }),
+    {
+      headers: {
+        "Content-Type":
+          "application/json"
+      }
+    }
+  )
+})

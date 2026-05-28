@@ -528,6 +528,20 @@ const saveOrder = async () => {
 };
 
 saveOrder();
+fetch(
+  "https://clytujskrmcnstzuvuaf.supabase.co/functions/v1/send-invoice",
+  {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      order: parsed
+    })
+  }
+);
   }
 }, []);
   return (
@@ -659,8 +673,8 @@ saveOrder();
             type="button"
             className="btn-secondary"
             style={{ color: "var(--green)", borderColor: "var(--green-border)", width: "100%" }}
-            disabled={!order?.id}
-            onClick={() => downloadInvoice(order.id)}
+          disabled={!order}
+            onClick={() => downloadInvoice(order)}
           >
             📄 DOWNLOAD INVOICE
           </button>
