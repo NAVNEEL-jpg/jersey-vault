@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { downloadInvoice } from "../utils/downloadInvoice";
+import { supabase } from "../supabase";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500;600&display=swap');
@@ -491,6 +492,27 @@ useEffect(() => {
     );
 
     setOrder(parsed);
+    const saveOrder = async () => {
+  await supabase.from("orders").insert({
+    order_id: parsed.orderId,
+    tracking_id: parsed.trackingId,
+
+    customer_name: parsed.customer?.name,
+    email: parsed.customer?.email,
+    phone: parsed.customer?.phone,
+    address: parsed.customer?.address,
+
+    items: parsed.items,
+    total: parsed.total,
+
+    payment_method: parsed.payMethod,
+    amount_paid: parsed.amountPaid || parsed.total,
+
+    status: "Confirmed"
+  });
+};
+
+saveOrder();
   }
 }, []);
   return (
