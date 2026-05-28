@@ -90,7 +90,7 @@ const Ticker = memo(function Ticker() {
 });
 
 const BrandLogos = memo(function BrandLogos() {
- const brands = [
+  const brands = [
     nikelogo, adidaslogo, pumalogo, nblogo,
     umbrologo, kappalogo, macronlogo, hummellogo, jordanlogo
   ];
@@ -107,7 +107,7 @@ const BrandLogos = memo(function BrandLogos() {
                 <img
                   src={src}
                   alt=""
-                 style={{ height: 44, width: "auto", objectFit: "contain", filter: "invert(1)" }}
+                  style={{ height: 44, width: "auto", objectFit: "contain", filter: "invert(1)" }}
                 />
               </span>
             ))}
@@ -117,6 +117,28 @@ const BrandLogos = memo(function BrandLogos() {
     </div>
   );
 });
+
+// FIX: Extracted NavLinks as a proper component instead of memoized JSX
+function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobileMenuOpen, setCartOpen }) {
+  return (
+    <>
+      <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
+      <span className="nav-link" onClick={scrollToShop}>SHOP</span>
+      <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
+      <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
+      <span className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</span>
+      <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
+      {user ? (
+        <span className="nav-link" onClick={handleLogout}>LOGOUT</span>
+      ) : (
+        <Link to="/auth" className="nav-link" onClick={() => setMobileMenuOpen(false)}>LOGIN</Link>
+      )}
+      {isAdmin && (
+        <span className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
+      )}
+    </>
+  );
+}
 
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -154,49 +176,64 @@ export default function JerseyStore() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTeamName, setActiveTeamName] = useState("");
 
-useEffect(() => {
-  const teamId = searchParams.get("team");
-  if (teamId) {
-    supabase.from("teams").select("name").eq("id", teamId).single()
-      .then(({ data }) => { if (data) setActiveTeamName(data.name); });
-  } else {
-    setActiveTeamName("");
-  }
-  let query = supabase.from("products").select("*").eq("status", "active");
-  if (teamId) query = query.eq("team_id", teamId);
-  query.then(async ({ data, error }) => {
-    if (!error && data) {
-      setJerseys(data);
-      if (teamId) {
-        setTimeout(() => {
-          document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      }
-      if (cart.length > 0) {
-        const validIds = new Set(data.map(p => p.id));
-        const filteredCart = cart.filter(item => validIds.has(item.id));
-        if (filteredCart.length !== cart.length) {
-          setCart(filteredCart);
-          sessionStorage.setItem("cart", JSON.stringify(filteredCart));
-          showToast("Some unavailable items were removed from your cart.");
-        }
-      }
-    }
-    setLoadingProducts(false);
-  });
-}, [searchParams]);
+  // FIX: showToast wrapped in useCallback so it's stable across renders
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  }, []);
 
+  // FIX: cart removed from the dependency array to avoid infinite loops.
+  // Cart validation runs only when searchParams changes (i.e. when products load).
+  // We read the latest cart via a functional setState pattern instead.
+  useEffect(() => {
+    const teamId = searchParams.get("team");
+    if (teamId) {
+      supabase.from("teams").select("name").eq("id", teamId).single()
+        .then(({ data }) => { if (data) setActiveTeamName(data.name); });
+    } else {
+      setActiveTeamName("");
+    }
+
+    let query = supabase.from("products").select("*").eq("status", "active");
+    if (teamId) query = query.eq("team_id", teamId);
+
+    query.then(({ data, error }) => {
+      if (!error && data) {
+        setJerseys(data);
+        if (teamId) {
+          setTimeout(() => {
+            document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+          }, 100);
+        }
+        // FIX: Read latest cart state functionally to avoid stale closure
+        const validIds = new Set(data.map(p => p.id));
+        setCart(prevCart => {
+          const filteredCart = prevCart.filter(item => validIds.has(item.id));
+          if (filteredCart.length !== prevCart.length) {
+            sessionStorage.setItem("cart", JSON.stringify(filteredCart));
+            showToast("Some unavailable items were removed from your cart.");
+            return filteredCart;
+          }
+          return prevCart;
+        });
+      }
+      setLoadingProducts(false);
+    });
+  }, [searchParams, showToast]);
 
   useEffect(() => {
     try { sessionStorage.setItem("jv_visited", "1"); } catch {}
   }, []);
 
+  // This effect is intentionally run once on mount to trigger the hero fade-in.
+  // heroVisible is read only to skip the timer if already visited (set in useState initializer).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!heroVisible) {
       const t = setTimeout(() => setHeroVisible(true), 100);
       return () => clearTimeout(t);
     }
-  }, []); // eslint-disable-line
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -239,21 +276,22 @@ useEffect(() => {
     });
     showToast(`${jersey.name} added to cart!`);
     setSelectedJersey(null);
-  }, []);
+  }, [showToast]);
 
   const removeFromCart = useCallback((id, size) => {
     setCart(prev => prev.filter(i => !(i.id === id && i.size === size)));
   }, []);
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  };
+  // FIX: getSizeStock wrapped in useCallback for stability
+  const getSizeStock = useCallback((jersey, size) => {
+    if (!jersey?.size_stock || typeof jersey.size_stock !== "object") return 0;
+    return jersey.size_stock[size] ?? 0;
+  }, []);
 
   const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
 
- const sectionTitle = activeTeamName ? `${activeTeamName} JERSEYS` : activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
+  const sectionTitle = activeTeamName ? `${activeTeamName} JERSEYS` : activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -273,30 +311,6 @@ useEffect(() => {
     sessionStorage.setItem("cart", JSON.stringify(cart));
     navigate("/checkout");
   }, [cart, navigate]);
-
-  const getSizeStock = (jersey, size) => {
-    if (!jersey?.size_stock || typeof jersey.size_stock !== "object") return 0;
-    return jersey.size_stock[size] ?? 0;
-  };
-
-  const navLinks = useMemo(() => (
-    <>
-      <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
-      <span className="nav-link" onClick={scrollToShop}>SHOP</span>
-      <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
-      <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
-      <span className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</span>
-      <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
-      {user ? (
-        <span className="nav-link" onClick={handleLogout}>LOGOUT</span>
-      ) : (
-        <Link to="/auth" className="nav-link" onClick={() => setMobileMenuOpen(false)}>LOGIN</Link>
-      )}
-      {isAdmin && (
-        <span className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
-      )}
-    </>
-  ), [user, isAdmin, handleLogout, scrollToShop, navigate]);
 
   return (
     <>
@@ -381,8 +395,6 @@ useEffect(() => {
 
  /* ══════════════════════════════════════
    ADD-TO-CART / SELECT SIZE BUTTON
-   — Sleek split-light design with
-     diagonal shine sweep on hover
 ══════════════════════════════════════ */
 #jv-root .add-btn {
   background: var(--green);
@@ -432,8 +444,6 @@ letter-spacing: 4px !important;
 
 /* ══════════════════════════════════════
    FILTER BAR & PILLS
-   — Segmented-control feel with
-     animated active indicator
 ══════════════════════════════════════ */
 .filter-bar {
   display: flex;
@@ -508,7 +518,7 @@ letter-spacing: 4px !important;
 #jv-root .filter-btn.active::before { display: none; }
 
 /* ══════════════════════════════════════
-   SIZE BUTTONS — Professional
+   SIZE BUTTONS
 ══════════════════════════════════════ */
 #jv-root .size-grid {
   display: flex;
@@ -536,7 +546,6 @@ letter-spacing: 4px !important;
   overflow: hidden;
 }
 
-/* Top accent line */
 #jv-root .size-btn::before {
   content: '';
   position: absolute;
@@ -547,7 +556,6 @@ letter-spacing: 4px !important;
 }
 #jv-root .size-btn::after { display: none; }
 
-/* HOVER */
 #jv-root .size-btn:hover:not(.selected):not(:disabled) {
   border-color: rgba(57,255,20,0.5) !important;
   color: var(--green);
@@ -559,7 +567,6 @@ letter-spacing: 4px !important;
   background: var(--green);
 }
 
-/* SELECTED */
 #jv-root .size-btn.selected,
 #jv-root .size-btn.selected:hover,
 #jv-root .size-btn.selected:focus {
@@ -578,7 +585,6 @@ letter-spacing: 4px !important;
   background: rgba(0,0,0,0.2);
 }
 
-/* DISABLED / OUT OF STOCK */
 #jv-root .size-btn:disabled {
   background: #0d0d0d !important;
   border-color: #1a1a1a !important;
@@ -596,7 +602,6 @@ letter-spacing: 4px !important;
   100% { transform: scale(1) translateY(-2px); }
 }
 
-/* SIZE LABEL */
 #jv-root .size-label {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px;
@@ -621,8 +626,6 @@ letter-spacing: 4px !important;
 }
   /* ══════════════════════════════════════
      CHECKOUT BUTTON
-     — High-contrast CTA with animated
-       arrow and layered gradient fill
   ══════════════════════════════════════ */
 .checkout-btn {
   position: relative;
@@ -650,7 +653,6 @@ letter-spacing: 4px !important;
 
 .checkout-btn::before { display: none; }
 
-/* Subtle top highlight line */
 .checkout-btn::after {
   content: '';
   position: absolute;
@@ -785,7 +787,6 @@ letter-spacing: 4px !important;
 .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
  @media(max-width:768px) {
-  /* existing ones stay */
   .hamburger { display:flex; }
   .desktop-nav-links { display:none; }
   .desktop-search { display:none; }
@@ -794,7 +795,6 @@ letter-spacing: 4px !important;
   .modal-img { height:180px; }
   .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
 
-  /* ADD THESE NEW ONES */
   .cart-total-row { padding:12px 16px 8px; }
   .cart-total-amount { font-size:26px; }
   .cart-total-label { font-size:11px; }
@@ -859,7 +859,18 @@ letter-spacing: 4px !important;
           <div className="desktop-search">
             <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
-          <div className="desktop-nav-links">{navLinks}</div>
+          {/* FIX: NavLinks is now a proper component */}
+          <div className="desktop-nav-links">
+            <NavLinks
+              user={user}
+              isAdmin={isAdmin}
+              handleLogout={handleLogout}
+              scrollToShop={scrollToShop}
+              navigate={navigate}
+              setMobileMenuOpen={setMobileMenuOpen}
+              setCartOpen={setCartOpen}
+            />
+          </div>
           <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: "auto" }}>
             <button
               onClick={() => setCartOpen(true)}
@@ -876,20 +887,28 @@ letter-spacing: 4px !important;
               )}
             </button>
             <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
-  {mobileMenuOpen ? (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  ) : (
-    <><span /><span /><span /></>
-  )}
-</button>
-  
+              {mobileMenuOpen ? (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <><span /><span /><span /></>
+              )}
+            </button>
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
             <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
-            {navLinks}
+            {/* FIX: NavLinks component used in mobile menu too */}
+            <NavLinks
+              user={user}
+              isAdmin={isAdmin}
+              handleLogout={handleLogout}
+              scrollToShop={scrollToShop}
+              navigate={navigate}
+              setMobileMenuOpen={setMobileMenuOpen}
+              setCartOpen={setCartOpen}
+            />
           </div>
         </nav>
 
@@ -934,20 +953,19 @@ letter-spacing: 4px !important;
             <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
               <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
-            {/* ── UPGRADED FILTER BAR ── */}
             <div className="filter-bar">
               {filterButtons.map(({ key, label }) => (
-  <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
-    <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
-      {label}
-    </span>
-  </button>
-))}
+                <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
+                  <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
+                    {label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
           {loadingProducts ? (
-            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6}}>
+            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6 }}>
               {[...Array(4)].map((_, i) => (
                 <div key={i} style={{ background: "#0f0f0f", border: "1px solid #151515" }}>
                   <div className="skeleton" style={{ height: 220 }} />
@@ -964,8 +982,8 @@ letter-spacing: 4px !important;
               <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
-<div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6}}>
-            {filtered.map((jersey, i) => (
+            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
+              {filtered.map((jersey, i) => (
                 <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
                   {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
@@ -975,30 +993,29 @@ letter-spacing: 4px !important;
                     ) : (
                       <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }}>👕</div>
                     )}
-                  <div className="card-overlay" />
-
-</div>
+                    <div className="card-overlay" />
+                  </div>
                   <div style={{ padding: "16px 16px 0", flex: 1 }}>
-                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-<div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "54px" }}>{jersey.name}</div>
-  <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{jersey.price}</div>
-  {jersey.stock > 0 && jersey.stock <= 5 && (
-    <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
-  )}
-</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "54px" }}>{jersey.name}</div>
+                      <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{jersey.price}</div>
+                      {jersey.stock > 0 && jersey.stock <= 5 && (
+                        <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
+                      )}
+                    </div>
                   </div>
                   <div style={{ marginTop: "auto" }}>
-  <button
-    className="add-btn"
-    disabled={jersey.stock === 0}
-    onClick={e => {
-      e.stopPropagation();
-      if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
-    }}
-  >
-   {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
-  </button>
-</div>
+                    <button
+                      className="add-btn"
+                      disabled={jersey.stock === 0}
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
+                      }}
+                    >
+                      {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1040,7 +1057,7 @@ letter-spacing: 4px !important;
           </div>
         </footer>
 
-        {/* ── SIZE PICKER MODAL ── */}
+        {/* SIZE PICKER MODAL */}
         {selectedJersey && (
           <div className="modal-bg" onClick={() => setSelectedJersey(null)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
@@ -1056,7 +1073,6 @@ letter-spacing: 4px !important;
                 <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
                   <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, rgba(57,255,20,0.3), transparent)", animation: "scanline 2.5s linear infinite" }} />
                 </div>
-                {/* Gradient overlay on image */}
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, #0a0a0a, transparent)", pointerEvents: "none" }} />
               </div>
 
@@ -1074,28 +1090,23 @@ letter-spacing: 4px !important;
               </div>
 
               <div style={{ padding: "10px 24px 32px" }}>
-                {/* ── UPGRADED SIZE LABEL ── */}
                 <div className="size-label">SELECT SIZE</div>
-
-                {/* ── UPGRADED SIZE GRID ── */}
                 <div className="size-grid">
                   {sizes.map(s => {
                     const sizeStock = getSizeStock(selectedJersey, s);
                     const outOfStock = sizeStock === 0;
                     return (
-                    <button
-  key={s}
-  className={`size-btn${selectedSize === s ? " selected" : ""}`}
-  onClick={() => !outOfStock && setSelectedSize(s)}
-  disabled={outOfStock}
->
-  {s}
-</button>
+                      <button
+                        key={s}
+                        className={`size-btn${selectedSize === s ? " selected" : ""}`}
+                        onClick={() => !outOfStock && setSelectedSize(s)}
+                        disabled={outOfStock}
+                      >
+                        {s}
+                      </button>
                     );
                   })}
                 </div>
-
-                {/* ── UPGRADED ADD TO CART BUTTON ── */}
                 <button
                   className="add-btn filled-variant"
                   style={{ marginTop: 24, fontSize: 16, padding: "16px" }}
@@ -1110,7 +1121,7 @@ letter-spacing: 4px !important;
           </div>
         )}
 
-        {/* ── CART PANEL ── */}
+        {/* CART PANEL */}
         {cartOpen && (
           <div style={{ position: "fixed", inset: 0, zIndex: 150 }}>
             <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)" }} onClick={() => setCartOpen(false)} />
@@ -1165,34 +1176,20 @@ letter-spacing: 4px !important;
               {cart.length > 0 && (
                 <div style={{ borderTop: "1px solid #0f0f0f", paddingTop: 16, background: "#050505" }}>
                   <div className="cart-total-row">
-  <div>
-    <span className="cart-total-label" style={{ 
-      color: "#aaa", 
-      fontSize: 13, 
-      letterSpacing: 4, 
-      fontWeight: 900 
-    }}>ORDER TOTAL</span>
-    <div style={{ 
-      fontSize: 11, 
-      color: "#888", 
-      marginTop: 4, 
-      fontFamily: "'Barlow Condensed',sans-serif", 
-      fontWeight: 700,
-      letterSpacing: 2
-    }}>
-      {total >= 1999 
-        ? "✓ FREE SHIPPING APPLIED" 
-        : `ADD ₹${(1999 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
-    </div>
-  </div>
-  <span className="cart-total-amount">₹{total.toLocaleString()}</span>
-</div>
-
-                  {/* ── UPGRADED CHECKOUT BUTTON ── */}
+                    <div>
+                      <span className="cart-total-label" style={{ color: "#aaa", fontSize: 13, letterSpacing: 4, fontWeight: 900 }}>ORDER TOTAL</span>
+                      <div style={{ fontSize: 11, color: "#888", marginTop: 4, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: 2 }}>
+                        {total >= 1999
+                          ? "✓ FREE SHIPPING APPLIED"
+                          : `ADD ₹${(1999 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
+                      </div>
+                    </div>
+                    <span className="cart-total-amount">₹{total.toLocaleString()}</span>
+                  </div>
                   <button className="checkout-btn" onClick={handleCheckout}>
-  <span>PROCEED TO CHECKOUT</span>
-  <span className="checkout-arrow">→</span>
-</button>
+                    <span>PROCEED TO CHECKOUT</span>
+                    <span className="checkout-arrow">→</span>
+                  </button>
                   <p style={{ textAlign: "center", color: "#1a1a1a", fontSize: 9, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ SECURED BY RAZORPAY ✦</p>
                 </div>
               )}
