@@ -319,7 +319,7 @@ export default function Teams() {
           .t-section-divider { height:1px; background:linear-gradient(90deg,transparent,#39ff14,transparent); opacity:0.3; border:none; }
 
           /* ── HERO ── */
-          .t-hero { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background:#070707; }
+          .t-hero { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
 
           /* ── SHOP BTN ── */
           .t-shop-btn {
@@ -405,7 +405,7 @@ export default function Teams() {
         <hr className="t-section-divider" />
 
         {/* ════════════════════ HERO ════════════════════ */}
-        <section className="t-hero">
+        <section className="t-hero" style={{ backgroundImage: `url(${heroBg})` }}>
           {/* Diagonal grid lines overlay */}
           <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(45deg,rgba(57,255,20,0.02) 0px,rgba(57,255,20,0.02) 1px,transparent 1px,transparent 40px)", pointerEvents:"none" }} />
           <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom,rgba(7,7,7,0.6) 0%,rgba(7,7,7,0.1) 40%,rgba(7,7,7,0.8) 100%)", pointerEvents:"none" }} />
