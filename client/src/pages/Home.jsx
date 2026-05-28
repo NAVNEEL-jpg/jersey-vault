@@ -876,6 +876,40 @@ letter-spacing: 4px !important;
             />
           </div>
           <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: "auto" }}>
+             {/* SEARCH ICON */}
+             <button
+  onClick={() => {
+    const el = document.querySelector(".h-search-input");
+    el?.focus();
+  }}
+  style={{
+    background:"transparent",
+    border:"none",
+    color:"#fff",
+    cursor:"pointer",
+    display:"flex",
+    alignItems:"center",
+    justifyContent:"center",
+    padding:0
+  }}
+  onMouseEnter={e => e.currentTarget.style.color="#39ff14"}
+  onMouseLeave={e => e.currentTarget.style.color="#fff"}
+>
+  <svg
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="7"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+</button>
+             {/* CART BUTTON */}
             <button
               onClick={() => setCartOpen(true)}
               style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 1, padding: 0, transition: "color 0.2s" }}
@@ -902,7 +936,7 @@ letter-spacing: 4px !important;
             </button>
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-            <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
+            <input className="search-input h-search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
             {/* FIX: NavLinks component used in mobile menu too */}
             <NavLinks
               user={user}
