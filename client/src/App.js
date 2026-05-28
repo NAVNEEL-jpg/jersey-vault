@@ -3,15 +3,16 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Success from "./pages/Success";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
-const Checkout = lazy(() => import("./pages/Checkout"));
 import Tracking from "./pages/Tracking";
-const Admin = lazy(() => import("./pages/AdminPage"));
 import MyOrders from "./pages/MyOrders";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Teams from "./pages/Teams";
+
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Admin = lazy(() => import("./pages/AdminPage"));
 
 function App() {
   return (
