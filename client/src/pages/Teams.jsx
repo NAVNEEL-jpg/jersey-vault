@@ -299,7 +299,7 @@ export default function Teams() {
             font-size:14px; letter-spacing:3px; text-align:center; color:#aaa; line-height:1.1; text-transform:uppercase;
           }
           .t-sport-badge {
-            font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px;
+            font-size:14px; font-weight:900; letter-spacing:3px; padding:4px 6px;
             background:rgba(0,0,0,0.75); border:1px solid rgba(57,255,20,0.3);
             color:var(--green); border-radius:2px; backdrop-filter:blur(4px);
           }
@@ -493,11 +493,11 @@ export default function Teams() {
                 onClick={() => navigate(`/?team=${team.id}`)}
                 >
                   {/* Sport badge */}
-                  {team.sport && (
-                    <div className="t-sport-badge" style={{ position:"absolute", top:12, right:12 }}>
-                      {sportIcon[team.sport?.toUpperCase()] || "🏅"} {team.sport.toUpperCase()}
-                    </div>
-                  )}
+{team.sport && (
+  <div className="t-sport-badge" style={{ position:"absolute", top:12, right:12 }}>
+    {sportIcon[team.sport?.toUpperCase()] || "🏅"}
+  </div>
+)}
 
                   {/* Logo */}
                   <div className="t-team-logo-wrap">
