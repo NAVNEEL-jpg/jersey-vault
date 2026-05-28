@@ -322,6 +322,16 @@ const matchesSearch =
         <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
 .section-divider { height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); opacity:0.3; border:none; }
+.mobile-search-btn {
+  display: none;
+}
+
+@media(max-width:768px) {
+  .mobile-search-btn {
+    display: flex;
+    align-items: center;
+  }
+}
   :root {
     --green: #39ff14;
     --green-dim: rgba(57,255,20,0.12);
@@ -877,11 +887,16 @@ letter-spacing: 4px !important;
           </div>
           <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: "auto" }}>
              {/* SEARCH ICON */}
+             <div className="mobile-search-btn">
              <button
-  onClick={() => {
+ onClick={() => {
+  setMobileMenuOpen(true);
+
+  setTimeout(() => {
     const el = document.querySelector(".h-search-input");
     el?.focus();
-  }}
+  }, 100);
+}}
   style={{
     background:"transparent",
     border:"none",
@@ -909,6 +924,7 @@ letter-spacing: 4px !important;
     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
 </button>
+</div>
              {/* CART BUTTON */}
             <button
               onClick={() => setCartOpen(true)}
