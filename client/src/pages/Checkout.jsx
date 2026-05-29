@@ -40,8 +40,8 @@ export default function CheckoutPage() {
   const { subtotal, shipping, total, freeShippingGap } = calcOrderTotals(cart);
 
   // COD Safety Deposit & Shipping calculations
-  const payNowOnline = cart.length === 0 ? 0 : (payMethod === "cod" ? 1 : total);
-  const payAtDoorstep = cart.length === 0 ? 0 : (payMethod === "cod" ? (subtotal >= 1999 ? subtotal - 1 : subtotal) : 0);
+  const payNowOnline = cart.length === 0 ? 0 : (payMethod === "cod" ? 99 : total);
+  const payAtDoorstep = cart.length === 0 ? 0 : (payMethod === "cod" ? (subtotal >= 1999 ? subtotal - 99 : subtotal) : 0);
   const payNow = payNowOnline;
 
   const validate = () => {
@@ -117,22 +117,25 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = async () => {
-    setLoading(true);
-    try {
-      if (payMethod === "cod") {
-        initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true);
-      } else {
-        const razorpayReady = await loadRazorpayScript();
-        if (!razorpayReady) {
-          alert("Unable to load Razorpay checkout. Please refresh and try again.");
-          return;
-        }
-        initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false);
-      }
-    } finally {
+  setLoading(true);
+  try {
+    // FIX: always load Razorpay script first
+    const razorpayReady = await loadRazorpayScript();
+    if (!razorpayReady) {
+      alert("Unable to load Razorpay. Please refresh and try again.");
       setLoading(false);
+      return;
     }
-  };
+
+    if (payMethod === "cod") {
+      initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true);
+    } else {
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
