@@ -6,7 +6,7 @@ import { protect, adminOnly } from '../middlewares/authMiddleware.js';
 const router = express.Router();
 
 router.post('/', createOrder);
-router.get('/user/:id', getUserOrders);
+router.get('/user/:id', protect, getUserOrders);
 router.get('/', protect, adminOnly, getOrders);
 router.put('/:id/status', protect, adminOnly, updateOrderStatus);
 router.get('/:id/invoice', generateInvoice);

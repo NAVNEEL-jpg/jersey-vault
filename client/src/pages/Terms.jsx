@@ -101,10 +101,14 @@ export default function Terms() {
         .section-card:hover { border-left-color:#39ff14; }
         .point { display:flex; gap:12px; margin-bottom:10px; font-family:'Barlow',sans-serif; font-size:14px; color:#aaa; line-height:1.7; }
         .point::before { content:"—"; color:#39ff14; font-weight:900; flex-shrink:0; margin-top:1px; }
+        .legal-nav { background:rgba(10,10,10,0.95); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .legal-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:8px; }
+        .legal-footer-copy { color:#333; font-size:12px; letter-spacing:2px; }
+        .legal-footer-link { color:#666; font-size:12px; letter-spacing:2px; text-decoration:none; transition:color 0.2s; }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background:"rgba(10,10,10,0.95)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
+      <nav className="legal-nav">
         <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
          <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
@@ -120,7 +124,7 @@ export default function Terms() {
       <div style={{ maxWidth:800, margin:"0 auto", padding:"48px 24px" }}>
         {/* HEADER */}
         <div style={{ marginBottom:40, animation:"fadeUp 0.4s ease" }}>
-          <p style={{ color:"#39ff14", letterSpacing:6, fontSize:11, fontWeight:700, marginBottom:8 }}>LEGAL</p>
+          <p className="legal-eyebrow">LEGAL</p>
           <h1 style={{ fontSize:"clamp(36px,8vw,64px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9 }}>
             TERMS & <span style={{ color:"#39ff14" }}>CONDITIONS</span>
           </h1>
@@ -153,10 +157,10 @@ export default function Terms() {
 
       <footer style={{ borderTop:"1px solid #1a1a1a", padding:"32px 24px", textAlign:"center", marginTop:48 }}>
         <div style={{ fontWeight:900, fontSize:22, letterSpacing:4, marginBottom:8 }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></div>
-        <p style={{ color:"#333", fontSize:11, letterSpacing:2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+        <p className="legal-footer-copy">© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
         <div style={{ display:"flex", justifyContent:"center", gap:24, marginTop:16 }}>
           {[["PRIVACY","/privacy"],["TERMS","/terms"],["CONTACT","/contact"],["FAQ","/faq"]].map(([l,h]) => (
-            <Link key={l} to={h} style={{ color:"#666", fontSize:11, letterSpacing:2, textDecoration:"none", transition:"color 0.2s" }}
+            <Link key={l} to={h} className="legal-footer-link"
               onMouseEnter={e=>e.target.style.color="#39ff14"} onMouseLeave={e=>e.target.style.color="#666"}>{l}</Link>
           ))}
         </div>

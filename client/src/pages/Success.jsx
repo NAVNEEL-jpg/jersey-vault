@@ -415,19 +415,21 @@ const css = `
   }
 `;
 
+function createConfettiParticles() {
+  return Array.from({ length: 30 }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    delay: `${Math.random() * 1.5}s`,
+    dur: `${2.5 + Math.random() * 2.5}s`,
+    color: Math.random() > 0.45 ? "#39ff14" : "#ffffff",
+    size: `${3 + Math.random() * 5}px`,
+  }));
+}
+
 function Confetti() {
-  const [particles, setParticles] = useState([]);
+  const [particles, setParticles] = useState(createConfettiParticles);
 
   useEffect(() => {
-    const p = Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 1.5}s`,
-      dur: `${2.5 + Math.random() * 2.5}s`,
-      color: Math.random() > 0.45 ? "#39ff14" : "#ffffff",
-      size: `${3 + Math.random() * 5}px`,
-    }));
-    setParticles(p);
     const t = setTimeout(() => setParticles([]), 7000);
     return () => clearTimeout(t);
   }, []);
@@ -460,16 +462,13 @@ const STEPS = [
   { label: "Delivered", icon: "4", on: false },
 ];
 
-export default function Success() {
-  const [order, setOrder] = useState(null);
+function loadLatestOrder() {
+  try {
+    const data = localStorage.getItem("latestOrder");
+    if (!data) return null;
 
-useEffect(() => {
-  const data = localStorage.getItem("latestOrder");
-
-  if (data) {
     const parsed = JSON.parse(data);
 
-    // Generate Order ID
     if (!parsed.orderId) {
       parsed.orderId =
         "JV-" +
@@ -478,72 +477,57 @@ useEffect(() => {
         Date.now().toString().slice(-4);
     }
 
-    // Generate Tracking ID
     if (!parsed.trackingId) {
       parsed.trackingId =
         "TRK-" +
         Math.random().toString(36).substring(2, 8).toUpperCase();
     }
 
-    // Save updated object locally
-    localStorage.setItem(
-      "latestOrder",
-      JSON.stringify(parsed)
-    );
+    localStorage.setItem("latestOrder", JSON.stringify(parsed));
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
-    setOrder(parsed);
-const saveOrder = async () => {
+export default function Success() {
+  const [order] = useState(loadLatestOrder);
 
-  // Prevent duplicate save
-  if (parsed.savedToDB) return;
+  useEffect(() => {
+    if (!order) return;
 
-  const { error } = await supabase
-    .from("orders")
-    .insert({
-      order_id: parsed.orderId,
-      tracking_id: parsed.trackingId,
+    const saveOrder = async () => {
+      if (order.savedToDB) return;
 
-      customer_name: parsed.customer?.name,
-      email: parsed.customer?.email,
-      phone: parsed.customer?.phone,
-      address: parsed.customer?.address,
+      const { error } = await supabase
+        .from("orders")
+        .insert({
+          order_id: order.orderId,
+          tracking_id: order.trackingId,
+          customer_name: order.customer?.name,
+          email: order.customer?.email,
+          phone: order.customer?.phone,
+          address: order.customer?.address,
+          items: order.items,
+          total: order.total,
+          payment_method: order.payMethod,
+          amount_paid: order.amountPaid || order.total,
+          status: "Confirmed",
+        });
 
-      items: parsed.items,
-      total: parsed.total,
+      if (!error) {
+        const updated = { ...order, savedToDB: true };
+        localStorage.setItem("latestOrder", JSON.stringify(updated));
+      }
+    };
 
-      payment_method: parsed.payMethod,
-      amount_paid: parsed.amountPaid || parsed.total,
-
-      status: "Confirmed"
+    saveOrder();
+    fetch("https://clytujskrmcnstzuvuaf.supabase.co/functions/v1/send-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order }),
     });
-
-  if (!error) {
-    parsed.savedToDB = true;
-
-    localStorage.setItem(
-      "latestOrder",
-      JSON.stringify(parsed)
-    );
-  }
-};
-
-saveOrder();
-fetch(
-  "https://clytujskrmcnstzuvuaf.supabase.co/functions/v1/send-invoice",
-  {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json"
-    },
-
-    body: JSON.stringify({
-      order: parsed
-    })
-  }
-);
-  }
-}, []);
+  }, [order]);
   return (
     <>
       <style>{css}</style>
@@ -624,8 +608,8 @@ fetch(
           </div>
 
           {/* Item */}
-          {order?.items?.map((item, index) => (
-  <div className="item-block" key={index}>
+          {order?.items?.map((item) => (
+  <div className="item-block" key={`${item.name}-${item.size}-${item.number ?? item.qty}`}>
     <div className="item-icon">👕</div>
 
     <div className="item-info">

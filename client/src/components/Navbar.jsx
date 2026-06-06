@@ -5,20 +5,9 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "14px 16px",
-      background: "#0a0a0a",
-      borderBottom: "1px solid #1a1a1a",
-      color: "#fff",
-      fontFamily: "'Barlow', sans-serif",
-      position: "sticky",
-      top: 0,
-      zIndex: 50,
-    }}>
+    <nav className="nb-nav">
       <style>{`
+        .nb-nav { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#0a0a0a; border-bottom:1px solid #1a1a1a; color:#fff; font-family:'Barlow',sans-serif; position:sticky; top:0; z-index:50; }
         .nb-brand { font-weight: 900; letter-spacing: 2px; font-size: 18px; white-space: nowrap; }
         .nb-links { display: flex; gap: 20px; align-items: center; }
         .nb-link { color: #bbb; text-decoration: none; font-weight: 600; font-size: 13px; letter-spacing: 1px; transition: color 0.2s; }
@@ -50,7 +39,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile hamburger */}
-      <button className="nb-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+      <button type="button" className="nb-hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
         <span style={{ transform: menuOpen ? "rotate(45deg) translate(5px, 5px)" : "none" }} />
         <span style={{ opacity: menuOpen ? 0 : 1 }} />
         <span style={{ transform: menuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none" }} />

@@ -97,6 +97,10 @@ export const createOrder = async (req, res) => {
 // @route   GET /api/orders/user/:id
 export const getUserOrders = async (req, res) => {
   try {
+    if (req.user?.id !== req.params.id && req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to view these orders' });
+    }
+
     const { data, error } = await supabase
       .from('orders')
       .select('*')

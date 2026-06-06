@@ -3,18 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { initiatePayment, placeCodOrderFree, checkAndRecoverPayment } from '../razorpay';
 import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
+import { API_BASE } from "../config/api";
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
+const cartLineKey = (item) => `${item.id}-${item.size}`;
+
+function loadCartFromSession() {
+  try {
+    const data = sessionStorage.getItem("cart");
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function CheckoutPage() {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(loadCartFromSession);
   const [user, setUser] = useState(null);
   const [password, setPassword] = useState("");
-
-  useEffect(() => {
-    const data = sessionStorage.getItem("cart");
-    if (data) setCart(JSON.parse(data));
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -50,7 +57,8 @@ export default function CheckoutPage() {
     const e = {};
     if (!form.name.trim()) e.name = "Required";
     if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
-    if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter valid email";
+    if (!/\S+@\S+\.\S+/.test(form.email.trim())) e.email = "Enter valid email";
+    if (!user && password.length > 0 && password.length < 6) e.password = "Minimum 6 characters";
     if (!form.address.trim()) e.address = "Required";
     if (!form.city.trim()) e.city = "Required";
     if (!form.state.trim()) e.state = "Required";
@@ -83,19 +91,38 @@ export default function CheckoutPage() {
     if (step === 0) {
       if (!validate()) return;
       if (!user && password.length >= 6) {
+        const normalizedEmail = form.email.trim().toLowerCase();
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: form.email,
+          email: normalizedEmail,
           password,
-          options: { data: { full_name: form.name, phone: form.phone } }
+          options: { data: { full_name: form.name.trim(), phone: form.phone } }
         });
 
-        if (!signUpError && signUpData?.user) {
-          await supabase.from("profiles").upsert({
-            id: signUpData.user.id,
-            full_name: form.name,
-            email: form.email,
-            phone: form.phone,
+        if (signUpError) {
+          setErrors({ email: signUpError.message });
+          return;
+        }
+
+        const token = signUpData?.session?.access_token;
+        if (token) {
+          const response = await fetch(`${API_BASE}/api/users/save`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name: form.name.trim(),
+              full_name: form.name.trim(),
+              phone: form.phone,
+            }),
           });
+
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            setErrors({ email: result.message || "Account profile could not be saved" });
+            return;
+          }
         }
       }
     }
@@ -152,8 +179,25 @@ export default function CheckoutPage() {
         .field:focus { border-color: #00ff44; box-shadow: 0 0 0 1px #00ff44, 0 0 10px rgba(0, 255, 68, 0.15); }
         .field.err { border-color: #ff4444; }
         .field::placeholder { color: #52525b; }
-        .label { font-family: 'Barlow', sans-serif; font-size: 11px; letter-spacing: 3px; color: #a1a1aa; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
-        .pay-card { border: 1px solid #222; padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s; background: #111; margin-bottom: 10px; }
+        .label { font-family: 'Barlow', sans-serif; font-size: 12px; letter-spacing: 3px; color: #a1a1aa; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; }
+        .checkout-nav { background:rgba(10,10,10,0.95); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .checkout-logo-badge { width:28px; height:28px; background:#00ff44; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#000; }
+        .checkout-field-error { color:#ff4444; font-size:12px; margin-top:4px; letter-spacing:1px; }
+        .checkout-step-label { font-size:12px; letter-spacing:2px; font-weight:700; }
+        .checkout-section-label { font-size:12px; letter-spacing:3px; color:#a1a1aa; margin-bottom:12px; font-weight:600; font-family:'Barlow',sans-serif; text-transform:uppercase; }
+        .checkout-pay-info { background:rgba(0,255,68,0.03); border:1px solid rgba(0,255,68,0.15); padding:12px 16px; margin-top:4px; margin-bottom:4px; display:flex; align-items:center; gap:10px; }
+        .checkout-status-box { padding:16px 20px; margin-top:12px; display:flex; align-items:center; gap:12px; }
+        .checkout-status-processing { background:rgba(0,0,0,0.85); border:1px solid #27272a; }
+        .checkout-status-verifying { background:rgba(0,255,68,0.04); border:1px solid rgba(0,255,68,0.2); }
+        .checkout-status-failed { background:rgba(255,68,68,0.06); border:1px solid rgba(255,68,68,0.25); padding:20px; }
+        .checkout-recover-btn { background:#00ff44; color:#000; border:none; padding:12px 20px; font-weight:700; font-size:13px; letter-spacing:2px; cursor:pointer; width:100%; margin-bottom:8px; }
+        .checkout-summary-thumb { width:48px; height:48px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; overflow:hidden; }
+        .checkout-qty-badge { position:absolute; top:-6px; right:-6px; background:#00ff44; color:#000; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; }
+        .checkout-item-size { color:#a1a1aa; font-size:12px; letter-spacing:2px; font-family:'Barlow',sans-serif; font-weight:600; text-transform:uppercase; }
+        .checkout-trust-badge { font-size:12px; letter-spacing:1px; color:#888; border:1px solid #1a1a1a; padding:4px 8px; }
+        .checkout-order-id { color:#555; font-size:12px; letter-spacing:1px; text-align:center; }
+        .checkout-cod-note { font-size:12px; color:#a1a1aa; margin-top:8px; letter-spacing:1px; font-family:'Barlow',sans-serif; }
+        .pay-card { border: 1px solid #222; padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s; background: #111; margin-bottom: 10px; width: 100%; text-align: left; font: inherit; color: inherit; }
         .pay-card.active { border-color: #00ff44; background: rgba(0, 255, 68, 0.03); }
         .pay-card:hover:not(.active) { border-color: #333; }
         .next-btn {
@@ -301,9 +345,9 @@ export default function CheckoutPage() {
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background: "rgba(10,10,10,0.95)", borderBottom: "1px solid #1a1a1a", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+      <nav className="checkout-nav">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: "#00ff44", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#000" }}>J</div>
+          <div className="checkout-logo-badge">J</div>
           <span className="checkout-nav-title" style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>JERSEY<span style={{ color: "#00E65B", fontWeight: 900 }}>VAULT</span></span>
         </div>
         <span className="checkout-nav-secure" style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>SECURE CHECKOUT 🔒</span>
@@ -322,7 +366,7 @@ export default function CheckoutPage() {
                   <div className={`step-dot${i <= step ? " step-dot-active" : ""}`} style={{ background: i <= step ? "#00ff44" : "#111", color: i <= step ? "#000" : "#333", border: i <= step ? "1px solid #00ff44" : "1px solid #222" }}>
                     {i < step ? "✓" : i + 1}
                   </div>
-                  <span className="step-label" style={{ fontSize: 10, letterSpacing: 2, color: i <= step ? "#00ff44" : "#333", fontWeight: 700 }}>{s}</span>
+                  <span className="step-label checkout-step-label" style={{ color: i <= step ? "#00ff44" : "#333" }}>{s}</span>
                 </div>
                 {i < steps.length - 1 && <div className="step-line" style={{ background: i < step ? "#00ff44" : "#222", margin: "0 8px", marginBottom: 20 }} />}
               </div>
@@ -353,6 +397,7 @@ export default function CheckoutPage() {
                     <label htmlFor={`field-${f.key}`} className="label">{f.label}</label>
                     <input
                       id={`field-${f.key}`}
+                      aria-label={f.label}
                       className={`field ${errors[f.key] ? "err" : ""}`}
                       placeholder={f.placeholder}
                       value={form[f.key]}
@@ -369,7 +414,7 @@ export default function CheckoutPage() {
                                     f.key === "pincode" ? "postal-code" : "off"
                       }
                     />
-                    {errors[f.key] && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors[f.key]}</div>}
+                    {errors[f.key] && <div className="checkout-field-error">{errors[f.key]}</div>}
                   </div>
                 ))}
               </div>
@@ -381,7 +426,10 @@ export default function CheckoutPage() {
                     <label htmlFor="field-password" className="label">PASSWORD (OPTIONAL)</label>
                     <input id="field-password" className="field" type="password" placeholder="Create a password (min. 6 chars)"
                       aria-label="Create an account password (optional, minimum 6 characters)"
-                      value={password} onChange={e => setPassword(e.target.value)} autoComplete="new-password" />
+                      value={password}
+                      onChange={e => { setPassword(e.target.value); setErrors(p => ({ ...p, password: "" })); }}
+                      autoComplete="new-password" />
+                    {errors.password && <div className="checkout-field-error">{errors.password}</div>}
                   </div>
                   <p style={{ color: "#a1a1aa", fontSize: 12, fontFamily: "'Barlow', sans-serif", letterSpacing: 1, marginTop: 10, lineHeight: 1.6, borderLeft: "2px solid rgba(0, 255, 68, 0.25)", paddingLeft: 10 }}>
                     💡 Your email & password will be saved for future logins — no need to re-enter next time.
@@ -389,7 +437,7 @@ export default function CheckoutPage() {
                 </>
               )}
 
-              <button className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
+              <button type="button" className="next-btn" onClick={handleNext}>CONTINUE TO PAYMENT →</button>
             </div>
           )}
 
@@ -414,7 +462,7 @@ export default function CheckoutPage() {
                     : `Pay ₹99 shipping now · ₹${subtotal.toLocaleString()} on delivery`,
                 },
               ].map(p => (
-                <div key={p.id} className={`pay-card ${payMethod === p.id ? "active" : ""}`} onClick={() => setPayMethod(p.id)}>
+                <button type="button" key={p.id} className={`pay-card ${payMethod === p.id ? "active" : ""}`} onClick={() => setPayMethod(p.id)}>
                   <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${payMethod === p.id ? "#00ff44" : "#555"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     {payMethod === p.id && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#00ff44" }} />}
                   </div>
@@ -424,11 +472,11 @@ export default function CheckoutPage() {
                     <div style={{ color: "#a1a1aa", fontSize: 12, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginTop: 3, lineHeight: 1.5 }}>{p.sub}</div>
                   </div>
                   {payMethod === p.id && <div style={{ marginLeft: "auto", color: "#00ff44", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>}
-                </div>
+                </button>
               ))}
 
               {payMethod === "razorpay" && (
-                <div style={{ background: "rgba(0, 255, 68, 0.03)", border: "1px solid rgba(0, 255, 68, 0.15)", padding: "12px 16px", marginTop: 4, marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>ℹ️</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
                     Pay full amount now (₹{subtotal.toLocaleString()} + {shipping === 0 ? "free shipping" : `₹${shipping} shipping`} = ₹{total.toLocaleString()}). UPI, Card, or Net Banking on the next screen.
@@ -436,7 +484,7 @@ export default function CheckoutPage() {
                 </div>
               )}
               {payMethod === "cod" && (
-                <div style={{ background: "rgba(0, 255, 68, 0.03)", border: "1px solid rgba(0, 255, 68, 0.15)", padding: "12px 16px", marginTop: 4, marginBottom: 4, display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>ℹ️</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
                     {subtotal >= 1999
@@ -446,8 +494,8 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              <button className="next-btn" onClick={handleNext}>REVIEW ORDER →</button>
-              <button className="back-btn" onClick={() => setStep(0)}>← BACK</button>
+              <button type="button" className="next-btn" onClick={handleNext}>REVIEW ORDER →</button>
+              <button type="button" className="back-btn" onClick={() => setStep(0)}>← BACK</button>
             </div>
           )}
 
@@ -456,36 +504,36 @@ export default function CheckoutPage() {
             <div style={{ animation: "fadeUp 0.4s ease" }}>
               <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 24, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}><span style={{ color: "#00ff44" }}>/ </span>CONFIRM ORDER</h2>
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, letterSpacing: 3, color: "#a1a1aa", marginBottom: 12, fontWeight: 600, fontFamily: "'Barlow', sans-serif", textTransform: "uppercase" }}>DELIVERING TO</div>
+                <div className="checkout-section-label">DELIVERING TO</div>
                 <div style={{ fontWeight: 600, fontSize: 16, fontFamily: "'Barlow', sans-serif" }}>{form.name}</div>
                 <div className="confirm-address" style={{ color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", fontSize: 14, fontWeight: 400, marginTop: 4, lineHeight: 1.6 }}>
                   {form.address}, {form.city}, {form.state} — {form.pincode}<br />{form.phone} · {form.email}
                 </div>
               </div>
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, letterSpacing: 3, color: "#a1a1aa", marginBottom: 12, fontWeight: 600, fontFamily: "'Barlow', sans-serif", textTransform: "uppercase" }}>PAYMENT VIA</div>
+                <div className="checkout-section-label">PAYMENT VIA</div>
                 <div style={{ fontWeight: 900, fontSize: 16, color: "#00ff44" }}>
                   {{ razorpay: "💳 ONLINE PAYMENT (Razorpay)", cod: "💵 CASH ON DELIVERY" }[payMethod]}
                 </div>
               </div>
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20 }}>
-                <div style={{ fontSize: 10, letterSpacing: 3, color: "#a1a1aa", marginBottom: 12, fontWeight: 600, fontFamily: "'Barlow', sans-serif", textTransform: "uppercase" }}>YOUR ITEMS</div>
-                {cart.map((item, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
+                <div className="checkout-section-label">YOUR ITEMS</div>
+                {cart.map((item) => (
+                  <div key={cartLineKey(item)} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
                     {item.image_url
                       ? <img src={item.image_url} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", flexShrink: 0 }} />
                       : <span style={{ fontSize: 32 }}>👕</span>
                     }
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'Barlow', sans-serif" }}>{item.name}</div>
-                      <div style={{ color: "#a1a1aa", fontSize: 11, letterSpacing: 2, fontFamily: "'Barlow', sans-serif", fontWeight: 600, textTransform: "uppercase" }}>SIZE {item.size} · QTY {item.qty}</div>
+                      <div className="checkout-item-size">SIZE {item.size} · QTY {item.qty}</div>
                     </div>
                     <div style={{ fontWeight: 600, flexShrink: 0, fontFamily: "'Barlow', sans-serif" }}>₹{item.price * item.qty}</div>
                   </div>
                 ))}
               </div>
 
-              <button className="next-btn" onClick={handlePlace} disabled={loading}>
+              <button type="button" className="next-btn" onClick={handlePlace} disabled={loading}>
                 {loading ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
                     <span style={{ width: 18, height: 18, border: '2px solid #000', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
@@ -500,21 +548,21 @@ export default function CheckoutPage() {
 
               {/* ── Payment Status Overlay ── */}
               {paymentStatus === 'processing' && (
-                <div style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid #27272a', padding: '16px 20px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="checkout-status-box checkout-status-processing">
                   <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
                   <span style={{ color: '#a1a1aa', fontSize: 13, letterSpacing: 1 }}>Processing Payment...</span>
                 </div>
               )}
 
               {paymentStatus === 'verifying' && (
-                <div style={{ background: 'rgba(0,255,68,0.04)', border: '1px solid rgba(0,255,68,0.2)', padding: '16px 20px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="checkout-status-box checkout-status-verifying">
                   <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
                   <span style={{ color: '#00ff44', fontSize: 13, letterSpacing: 1 }}>Verifying Payment... Please wait.</span>
                 </div>
               )}
 
               {(paymentStatus === 'failed' || paymentStatus === 'dismissed' || paymentStatus === 'error') && (
-                <div style={{ background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.25)', padding: '20px', marginTop: 12 }}>
+                <div className="checkout-status-failed">
                   <div style={{ color: '#ff6666', fontSize: 14, fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>
                     {paymentStatus === 'dismissed' ? '⚠️ Payment window closed' : '❌ Payment Failed'}
                   </div>
@@ -523,8 +571,7 @@ export default function CheckoutPage() {
                       ? 'Did you complete payment inside your UPI app? Click below to check.'
                       : 'Something went wrong. If money was debited from your account, click below to verify.'}
                   </div>
-                  <button
-                    style={{ background: '#00ff44', color: '#000', border: 'none', padding: '12px 20px', fontWeight: 700, fontSize: 13, letterSpacing: 2, cursor: 'pointer', width: '100%', marginBottom: 8 }}
+                  <button type="button" className="checkout-recover-btn"
                     onClick={async () => {
                       const orderId = localStorage.getItem('pendingRazorpayOrderId');
                       if (!orderId) { alert('No pending order found. Please contact support.'); return; }
@@ -544,20 +591,20 @@ export default function CheckoutPage() {
                   >
                     🔍 CHECK PAYMENT STATUS
                   </button>
-                  <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>
+                  <div className="checkout-order-id">
                     Order ID: <span style={{ color: '#888' }}>{localStorage.getItem('pendingRazorpayOrderId') || '—'}</span>
                   </div>
                 </div>
               )}
 
               {paymentStatus === 'recovering' && (
-                <div style={{ background: 'rgba(0,255,68,0.04)', border: '1px solid rgba(0,255,68,0.2)', padding: '16px 20px', marginTop: 4, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="checkout-status-box checkout-status-verifying" style={{ marginTop: 4 }}>
                   <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
                   <span style={{ color: '#00ff44', fontSize: 13, letterSpacing: 1 }}>Checking payment with Razorpay...</span>
                 </div>
               )}
 
-              <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>
+              <button type="button" className="back-btn" onClick={() => setStep(1)}>← BACK</button>
             </div>
           )}
         </div>
@@ -566,18 +613,18 @@ export default function CheckoutPage() {
         {step > 0 && (
           <div className="order-summary-panel">
             <h3 style={{ fontSize: 14, fontWeight: 700, letterSpacing: 4, marginBottom: 20, paddingBottom: 16, borderBottom: "1px solid #1a1a1a", fontFamily: "'Barlow', sans-serif", fontStyle: "normal", textTransform: "uppercase", color: "#fff" }}>ORDER SUMMARY</h3>
-            {cart.map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
-                <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+            {cart.map((item) => (
+              <div key={cartLineKey(item)} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
+                <div className="checkout-summary-thumb">
                   {item.image_url
                     ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <span style={{ fontSize: 24 }}>👕</span>
                   }
-                  <div style={{ position: "absolute", top: -6, right: -6, background: "#00ff44", color: "#000", borderRadius: "50%", width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 900 }}>{item.qty}</div>
+                  <div className="checkout-qty-badge">{item.qty}</div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "'Barlow', sans-serif" }}>{item.name}</div>
-                  <div style={{ color: "#a1a1aa", fontSize: 10, letterSpacing: 2, fontFamily: "'Barlow', sans-serif", fontWeight: 600, textTransform: "uppercase" }}>SIZE {item.size}</div>
+                  <div className="checkout-item-size">SIZE {item.size}</div>
                 </div>
                 <div style={{ fontWeight: 600, fontSize: 14, flexShrink: 0, fontFamily: "'Barlow', sans-serif" }}>₹{item.price * item.qty}</div>
               </div>
@@ -599,9 +646,7 @@ export default function CheckoutPage() {
                 <span style={{ color: "#00ff44" }}>₹{(payMethod === "cod" ? total : payNow).toLocaleString()}</span>
               </div>
               {payMethod === "cod" && (
-                <div style={{ fontSize: 11, color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontFamily: "'Barlow', sans-serif" }}>
-                  Razorpay charge today: ₹{payNowOnline} only
-                </div>
+                <div className="checkout-cod-note">Razorpay charge today: ₹{payNowOnline} only</div>
               )}
             </div>
             {freeShippingGap > 0 && (
@@ -611,7 +656,7 @@ export default function CheckoutPage() {
             )}
             <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
               {["🔒 SECURE", "↩️ 30-DAY RETURN", "✓ AUTHENTIC"].map(t => (
-                <span key={t} style={{ fontSize: 10, letterSpacing: 1, color: "#888", border: "1px solid #1a1a1a", padding: "4px 8px" }}>{t}</span>
+                <span key={t} className="checkout-trust-badge">{t}</span>
               ))}
             </div>
           </div>

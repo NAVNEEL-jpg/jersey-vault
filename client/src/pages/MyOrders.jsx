@@ -55,6 +55,7 @@ export default function MyOrders() {
         .nav-link::after { content:''; position:absolute; left:0; bottom:-3px; width:0; height:2px; background:#39ff14; transition:width 0.25s cubic-bezier(0.25,1,0.5,1); border-radius:2px; }
         .nav-link:hover { color:#39ff14; }
         .nav-link:hover::after { width:100%; }
+        button.nav-link { background:none; border:none; padding:0; font:inherit; cursor:pointer; }
         .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
         .order-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; margin-bottom: 12px; animation: fadeUp 0.4s ease; border-left: 3px solid #1a1a1a; transition: border-color 0.25s, transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s; }
         .order-card:hover { border-left-color: #39ff14; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
@@ -62,10 +63,21 @@ export default function MyOrders() {
         .track-btn:hover { background:#39ff14; color:#000; }
         .login-btn { background:#39ff14; color:#000; padding:14px 36px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; text-decoration:none; display:inline-block; transition:transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease; animation:glow 2s infinite; }
         .login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(57,255,20,0.4); }
+        .legal-nav { background:rgba(10,10,10,0.95); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .legal-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:8px; }
+        .orders-lock-icon { width:90px; height:90px; border-radius:50%; background:#39ff1410; border:2px solid #39ff1440; display:flex; align-items:center; justify-content:center; font-size:40px; margin:0 auto 24px; }
+        .orders-back-link { background:transparent; color:#555; border:1px solid #222; padding:14px 36px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:3px; text-decoration:none; display:inline-block; }
+        .orders-item-placeholder { width:44px; height:44px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+        .orders-stat-label { font-size:12px; letter-spacing:3px; color:#555; margin-top:4px; }
+        .orders-status-badge { font-size:12px; font-weight:900; letter-spacing:2px; padding:3px 8px; }
+        .orders-shipping-label { font-size:12px; letter-spacing:2px; color:#555; margin-top:2px; }
+        .orders-items-label { font-size:12px; letter-spacing:3px; color:#555; margin-bottom:10px; }
+        .orders-item-meta { color:#555; font-size:12px; letter-spacing:1px; margin-top:2px; }
+        .orders-login-desc { color:#555; font-size:13px; font-family:'Barlow',sans-serif; letter-spacing:1px; line-height:1.8; max-width:360px; margin:0 auto 32px; }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background: "rgba(10,10,10,0.95)", borderBottom: "1px solid #1a1a1a", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
+      <nav className="legal-nav">
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
          <img src={logo} alt="JerseyVault logo" style={{ width: 44, height: 44, objectFit: "contain", mixBlendMode: "screen", filter: "brightness(1.1) contrast(1.05)", display: "block" }} />
          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
@@ -75,7 +87,7 @@ export default function MyOrders() {
           <Link to="/tracking" className="nav-link">TRACK</Link>
           <Link to="/checkout" className="nav-link">CART</Link>
           {user ? (
-            <span className="nav-link" onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}>LOGOUT</span>
+            <button type="button" className="nav-link" onClick={async () => { await supabase.auth.signOut(); navigate("/"); }}>LOGOUT</button>
           ) : (
             <Link to="/auth" className="nav-link">LOGIN</Link>
           )}
@@ -105,18 +117,16 @@ export default function MyOrders() {
         {/* NOT LOGGED IN */}
         {!loading && !user && (
           <div style={{ textAlign: "center", padding: "80px 0", animation: "fadeUp 0.4s ease" }}>
-            <div style={{ width: 90, height: 90, borderRadius: "50%", background: "#39ff1410", border: "2px solid #39ff1440", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, margin: "0 auto 24px" }}>🔒</div>
+            <div className="orders-lock-icon">🔒</div>
             <h2 style={{ fontSize: "clamp(28px,6vw,48px)", fontWeight: 900, fontStyle: "italic", marginBottom: 12 }}>
               LOGIN TO VIEW <span style={{ color: "#39ff14" }}>YOUR ORDERS</span>
             </h2>
-            <p style={{ color: "#555", fontSize: 13, fontFamily: "'Barlow', sans-serif", letterSpacing: 1, marginBottom: 32, lineHeight: 1.8, maxWidth: 360, margin: "0 auto 32px" }}>
+            <p className="orders-login-desc">
               You need to be logged in to see your order history and track your deliveries.
             </p>
             <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
               <Link to="/auth" className="login-btn">LOGIN / SIGN UP →</Link>
-              <Link to="/" style={{ background: "transparent", color: "#555", border: "1px solid #222", padding: "14px 36px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: 3, textDecoration: "none", display: "inline-block" }}>
-                BACK TO STORE
-              </Link>
+              <Link to="/" className="orders-back-link">BACK TO STORE</Link>
             </div>
           </div>
         )}
@@ -126,7 +136,7 @@ export default function MyOrders() {
           <>
             {/* HEADER */}
             <div style={{ marginBottom: 32, animation: "fadeUp 0.4s ease" }}>
-              <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>YOUR ACCOUNT</p>
+              <p className="legal-eyebrow">YOUR ACCOUNT</p>
               <h1 style={{ fontSize: "clamp(36px,8vw,64px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9 }}>
                 MY <span style={{ color: "#39ff14" }}>ORDERS</span>
               </h1>
@@ -144,7 +154,7 @@ export default function MyOrders() {
               ].map(([label, val, color]) => (
                 <div key={label} style={{ background: "#111", border: "1px solid #1a1a1a", padding: "20px 16px", textAlign: "center" }}>
                   <div style={{ fontSize: 28, fontWeight: 900, color }}>{val}</div>
-                  <div style={{ fontSize: 10, letterSpacing: 3, color: "#555", marginTop: 4 }}>{label}</div>
+                  <div className="orders-stat-label">{label}</div>
                 </div>
               ))}
             </div>
@@ -171,11 +181,10 @@ export default function MyOrders() {
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
                         <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: 2 }}>{order.id}</span>
-                        <span style={{
+                        <span className="orders-status-badge" style={{
                           background: (statusColors[order.status] || "#555") + "22",
                           border: `1px solid ${(statusColors[order.status] || "#555")}44`,
                           color: statusColors[order.status] || "#555",
-                          fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px"
                         }}>
                           {order.status?.toUpperCase()}
                         </span>
@@ -190,7 +199,7 @@ export default function MyOrders() {
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 26, fontWeight: 900, color: "#39ff14" }}>₹{order.total?.toLocaleString()}</div>
-                      <div style={{ fontSize: 10, letterSpacing: 2, color: "#555", marginTop: 2 }}>
+                      <div className="orders-shipping-label">
                         {order.shipping === 0 ? "FREE SHIPPING" : `+ ₹${order.shipping} SHIPPING`}
                       </div>
                     </div>
@@ -198,17 +207,17 @@ export default function MyOrders() {
 
                   {/* Items */}
                   <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 14 }}>
-                    <div style={{ fontSize: 10, letterSpacing: 3, color: "#555", marginBottom: 10 }}>ITEMS</div>
+                    <div className="orders-items-label">ITEMS</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {order.items?.map((item, j) => (
                         <div key={j} style={{ display: "flex", alignItems: "center", gap: 12 }}>
                           {item.image_url
                             ? <img src={item.image_url} alt={item.name} style={{ width: 44, height: 44, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
-                            : <div style={{ width: 44, height: 44, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>👕</div>
+                            : <div className="orders-item-placeholder">👕</div>
                           }
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 900, fontSize: 14, letterSpacing: 1 }}>{item.name}</div>
-                            <div style={{ color: "#555", fontSize: 11, letterSpacing: 1, marginTop: 2 }}>Size {item.size} · Qty {item.qty}</div>
+                            <div className="orders-item-meta">Size {item.size} · Qty {item.qty}</div>
                           </div>
                           <div style={{ fontWeight: 900, color: "#fff" }}>₹{item.price * item.qty}</div>
                         </div>

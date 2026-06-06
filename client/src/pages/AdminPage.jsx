@@ -71,6 +71,9 @@ export default function AdminPage() {
   const [usersList, setUsersList] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [usersMeta, setUsersMeta] = useState({ page: 1, limit: 50, total: 0 });
+  const [deletingUserId, setDeletingUserId] = useState(null);
 
   // Teams tab
   const [teams, setTeams] = useState([]);
@@ -112,11 +115,7 @@ export default function AdminPage() {
         .then(r => r.json()).then(d => { if (d && !d.message) setStats(d); setLoadingStats(false); })
         .catch(() => setLoadingStats(false));
 
-      setLoadingUsers(true);
-      fetch(`${API_BASE}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-        .then(d => { setUsersList(Array.isArray(d) ? d : []); setLoadingUsers(false); })
-        .catch(() => { setUsersList([]); setLoadingUsers(false); });
+      fetchUsers(token, 1, userSearch);
 
       supabase.from("orders").select("*").order("created_at", { ascending: false })
         .then(({ data }) => { if (data) setOrders(data); });
@@ -129,6 +128,59 @@ export default function AdminPage() {
     };
     fetchAdminData();
   }, [authed]);
+
+  const fetchUsers = async (tokenOverride, page = usersMeta.page, search = userSearch) => {
+    setLoadingUsers(true);
+    try {
+      const token = tokenOverride || (await supabase.auth.getSession()).data?.session?.access_token;
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(usersMeta.limit || 50),
+      });
+      if (search.trim()) params.set("search", search.trim());
+
+      const response = await fetch(`${API_BASE}/api/admin/users?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to load users");
+      const data = await response.json();
+      const users = Array.isArray(data) ? data : data.users;
+      setUsersList(Array.isArray(users) ? users : []);
+      setUsersMeta(Array.isArray(data) ? { page: 1, limit: users.length, total: users.length } : {
+        page: data.page || page,
+        limit: data.limit || usersMeta.limit,
+        total: data.total || 0,
+      });
+    } catch {
+      setUsersList([]);
+      setUsersMeta(meta => ({ ...meta, total: 0 }));
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleDeleteUser = async (id) => {
+    if (!window.confirm("Delete this user account? This removes the auth user and profile.")) return;
+    setDeletingUserId(id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${API_BASE}/api/admin/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.message || "Failed to delete user");
+      }
+      setUsersList(prev => prev.filter(user => user.id !== id));
+      setUsersMeta(meta => ({ ...meta, total: Math.max(0, meta.total - 1) }));
+      setStats(prev => ({ ...prev, totalUsers: Math.max(0, prev.totalUsers - 1) }));
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
   // ── Fetch teams when Teams tab opens ──
   useEffect(() => {
@@ -334,17 +386,18 @@ export default function AdminPage() {
   };
 
   if (checking) return (
-    <div style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontSize: 20, letterSpacing: 4 }}>
+    <div className="admin-loading">
       CHECKING ACCESS...
     </div>
   );
   if (!authed) return null;
 
   return (
-    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
+    <div className="admin-root">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #39ff14; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
         @keyframes slideDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
@@ -358,7 +411,7 @@ export default function AdminPage() {
         .add-product-form { background:#0d0d0d; border:1px solid #39ff1430; padding:28px; margin-bottom:20px; animation:slideDown 0.3s ease; }
         .inline-team-form { background:#0a1a0a; border:1px solid #39ff1430; border-top: 2px solid #39ff14; padding:20px; margin-top:12px; animation:slideDown 0.25s ease; }
         .form-field { display:flex; flex-direction:column; gap:6px; }
-        .form-label { font-size:10px; letter-spacing:3px; color:#555; font-weight:700; }
+        .form-label { font-size:12px; letter-spacing:3px; color:#555; font-weight:700; }
         .form-input { background:#111; border:1px solid #1e1e1e; color:#fff; padding:10px 14px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; transition:border-color 0.2s; width:100%; }
         .form-input:focus { border-color:#39ff14; }
         .form-input::placeholder { color:#333; }
@@ -375,16 +428,16 @@ export default function AdminPage() {
         .btn-primary.sm { padding:9px 18px; font-size:12px; letter-spacing:2px; }
         .btn-ghost { background:transparent; color:#555; border:1px solid #222; padding:12px 24px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
         .btn-ghost:hover { border-color:#555; color:#aaa; }
-        .btn-ghost.sm { padding:9px 16px; font-size:11px; letter-spacing:1px; }
+        .btn-ghost.sm { padding:9px 16px; font-size:12px; letter-spacing:1px; }
         .btn-ghost.green { border-color:#39ff1440; color:#39ff14; }
         .btn-ghost.green:hover { border-color:#39ff14; background:#39ff1410; }
-        .btn-danger { background:transparent; color:#ff4444; border:1px solid #ff444430; padding:6px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
+        .btn-danger { background:transparent; color:#ff4444; border:1px solid #ff444430; padding:6px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; cursor:pointer; transition:all 0.2s; }
         .btn-danger:hover { background:#ff444415; border-color:#ff4444; }
         .btn-danger:disabled { opacity:0.3; cursor:not-allowed; }
-        .btn-danger-confirm { background:#ff4444; color:#fff; border:none; padding:6px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:2px; cursor:pointer; }
-        .btn-cancel-sm { background:transparent; color:#555; border:1px solid #222; padding:6px 10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; cursor:pointer; }
+        .btn-danger-confirm { background:#ff4444; color:#fff; border:none; padding:6px 14px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; cursor:pointer; }
+        .btn-cancel-sm { background:transparent; color:#555; border:1px solid #222; padding:6px 10px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; cursor:pointer; }
         .btn-cancel-sm:hover { color:#aaa; }
-        .btn-add-team-inline { background:transparent; border:1px dashed #39ff1440; color:#39ff1499; padding:8px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; width:100%; margin-top:8px; }
+        .btn-add-team-inline { background:transparent; border:1px dashed #39ff1440; color:#39ff1499; padding:8px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; width:100%; margin-top:8px; }
         .btn-add-team-inline:hover { border-color:#39ff14; color:#39ff14; background:#39ff1408; }
         .stock-row-item { padding:16px 20px; border-bottom:1px solid #1a1a1a; transition:background 0.15s; }
         .stock-row-item:last-child { border-bottom:none; }
@@ -394,24 +447,24 @@ export default function AdminPage() {
         .form-error { color:#ff4444; font-size:12px; letter-spacing:1px; background:#ff444410; border:1px solid #ff444430; padding:10px 14px; margin-top:4px; }
         .form-success { color:#39ff14; font-size:12px; letter-spacing:1px; background:#39ff1410; border:1px solid #39ff1430; padding:10px 14px; margin-top:4px; }
         .image-preview { width:48px; height:48px; object-fit:cover; background:#0d0d0d; border:1px solid #1a1a1a; }
-        .type-badge { display:inline-block; font-size:9px; font-weight:900; letter-spacing:2px; padding:2px 7px; }
+        .type-badge { display:inline-block; font-size:12px; font-weight:900; letter-spacing:2px; padding:2px 7px; }
         .type-badge.player { background:#00aaff22; border:1px solid #00aaff44; color:#00aaff; }
         .type-badge.fan { background:#39ff1422; border:1px solid #39ff1444; color:#39ff14; }
         .type-badge.retro { background:#ff990022; border:1px solid #ff990044; color:#ff9900; }
         .size-stock-input { width:100%; background:#111; border:1px solid #333; color:#fff; padding:4px; font-family:'Barlow Condensed',sans-serif; font-size:13px; text-align:center; outline:none; }
         .size-stock-input:focus { border-color:#39ff14; }
-        .size-add-btn { width:100%; background:#39ff14; color:#000; border:none; padding:4px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; cursor:pointer; margin-top:3px; letter-spacing:1px; }
+        .size-add-btn { width:100%; background:#39ff14; color:#000; border:none; padding:4px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; cursor:pointer; margin-top:3px; letter-spacing:1px; }
         .size-add-btn:hover { background:#fff; }
         .size-add-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
         /* TEAM SEARCH DROPDOWN */
         .team-search-wrap { position:relative; }
         .team-dropdown { position:absolute; top:calc(100% + 4px); left:0; right:0; background:#111; border:1px solid #39ff1440; z-index:100; max-height:220px; overflow-y:auto; animation:slideDown 0.15s ease; }
-        .team-dropdown-item { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background 0.15s; border-bottom:1px solid #1a1a1a; }
+        .team-dropdown-item { display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; transition:background 0.15s; border-bottom:1px solid #1a1a1a; width:100%; text-align:left; background:none; border-left:none; border-right:none; border-top:none; font:inherit; color:inherit; }
         .team-dropdown-item:last-child { border-bottom:none; }
         .team-dropdown-item:hover { background:#39ff1410; }
         .team-dropdown-logo { width:32px; height:32px; border-radius:50%; object-fit:contain; background:#0d0d0d; border:1px solid #222; }
-        .team-dropdown-empty { padding:12px 14px; font-size:11px; color:#555; letter-spacing:2px; }
+        .team-dropdown-empty { padding:12px 14px; font-size:12px; color:#555; letter-spacing:2px; }
         .team-selected-chip { display:flex; align-items:center; gap:10px; background:#39ff1410; border:1px solid #39ff1440; padding:8px 14px; }
         .team-selected-logo { width:36px; height:36px; border-radius:50%; object-fit:contain; background:#0d0d0d; border:1px solid #39ff1440; }
 
@@ -419,11 +472,11 @@ export default function AdminPage() {
         .team-card { background:#111; border:1px solid #1a1a1a; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; position:relative; transition:border-color 0.2s; animation:fadeUp 0.4s ease; }
         .team-card:hover { border-color:#2a2a2a; }
         .team-logo-circle { width:80px; height:80px; border-radius:50%; background:#0d0d0d; border:2px solid #1e1e1e; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-        .team-sport-pill { font-size:9px; font-weight:900; letter-spacing:3px; padding:3px 10px; border-radius:2px; }
+        .team-sport-pill { font-size:12px; font-weight:900; letter-spacing:3px; padding:3px 10px; border-radius:2px; }
         .sport-filter-btn { background:transparent; border:1px solid #222; color:#555; padding:6px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; }
         .sport-filter-btn.active { background:#39ff14; color:#000; border-color:#39ff14; }
         .sport-filter-btn:hover:not(.active) { border-color:#555; color:#aaa; }
-        .logo-upload-area { border:1px dashed #333; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.2s; }
+        .logo-upload-area { border:1px dashed #333; padding:20px; text-align:center; cursor:pointer; transition:border-color 0.2s; width:100%; background:none; font:inherit; color:inherit; display:block; }
         .logo-upload-area:hover { border-color:#39ff14; }
         .logo-upload-area.inline { background:#0d1a0d; border-color:#39ff1430; }
         .logo-upload-area.inline:hover { border-color:#39ff14; }
@@ -475,18 +528,29 @@ export default function AdminPage() {
 
         /* Product toolbar */
         .product-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+        .admin-loading { background:#0a0a0a; min-height:100vh; display:flex; align-items:center; justify-content:center; color:#39ff14; font-family:'Barlow Condensed',sans-serif; font-size:20px; letter-spacing:4px; }
+        .admin-root { font-family:'Barlow Condensed',sans-serif; background:#0a0a0a; min-height:100vh; color:#fff; }
+        .admin-nav { background:rgba(10,10,10,0.98); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .admin-nav-left { display:flex; align-items:center; gap:8px; }
+        .admin-logo-badge { width:28px; height:28px; background:#39ff14; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#000; }
+        .admin-logo-text { font-weight:900; font-size:20px; letter-spacing:3px; }
+        .admin-badge { background:#39ff1420; border:1px solid #39ff1440; color:#39ff14; font-size:12px; font-weight:900; letter-spacing:2px; padding:3px 8px; margin-left:8px; }
+        .admin-nav-right { display:flex; gap:16px; align-items:center; }
+        .admin-nav-label { color:#555; font-size:12px; letter-spacing:2px; }
+        .admin-store-btn { background:transparent; border:1px solid #222; color:#555; padding:6px 16px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:2px; cursor:pointer; }
+        .btn-invoice-download { width:100%; padding:8px; border-color:#39ff1444; color:#39ff14; }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background: "rgba(10,10,10,0.98)", borderBottom: "1px solid #1a1a1a", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: "#39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#000" }}>J</div>
-          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
-          <span className="admin-badge" style={{ background: "#39ff1420", border: "1px solid #39ff1440", color: "#39ff14", fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", marginLeft: 8 }}>ADMIN</span>
+      <nav className="admin-nav">
+        <div className="admin-nav-left">
+          <div className="admin-logo-badge">J</div>
+          <span className="admin-logo-text">JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
+          <span className="admin-badge">ADMIN</span>
         </div>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <span className="admin-nav-label" style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>ADMIN PANEL</span>
-          <button onClick={() => navigate("/")} style={{ background: "transparent", border: "1px solid #222", color: "#555", padding: "6px 16px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 2, cursor: "pointer" }}>
+        <div className="admin-nav-right">
+          <span className="admin-nav-label">ADMIN PANEL</span>
+          <button type="button" className="admin-store-btn" onClick={() => navigate("/")}>
             ← STORE
           </button>
         </div>
@@ -503,7 +567,7 @@ export default function AdminPage() {
             ["USERS", stats.totalUsers, "#00aaff", "#00aaff"],
           ].map(([label, val, valColor, borderColor]) => (
             <div key={label} className="stat-card" style={{ borderLeftColor: borderColor }}>
-              <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 8 }}>{label}</div>
+              <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 8 }}>{label}</div>
               <div style={{ fontSize: 36, fontWeight: 900, color: valColor }}>{val}</div>
             </div>
           ))}
@@ -511,10 +575,10 @@ export default function AdminPage() {
 
         {/* TABS */}
         <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28, overflowX: "auto" }}>
-          <button className={`tab-btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📦 ORDERS</button>
-          <button className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📊 PRODUCTS</button>
-          <button className={`tab-btn ${activeTab === "teams" ? "active" : ""}`} onClick={() => setActiveTab("teams")}>🛡️ TEAMS</button>
-          <button className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 USERS</button>
+          <button type="button" className={`tab-btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📦 ORDERS</button>
+          <button type="button" className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📊 PRODUCTS</button>
+          <button type="button" className={`tab-btn ${activeTab === "teams" ? "active" : ""}`} onClick={() => setActiveTab("teams")}>🛡️ TEAMS</button>
+          <button type="button" className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 USERS</button>
         </div>
 
         {/* ══════════ ORDERS TAB ══════════ */}
@@ -531,7 +595,7 @@ export default function AdminPage() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: 2 }}>{order.id}</span>
-                      <span style={{ background: statusColors[order.status] + "22", border: `1px solid ${statusColors[order.status]}44`, color: statusColors[order.status], fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px" }}>
+                      <span style={{ background: statusColors[order.status] + "22", border: `1px solid ${statusColors[order.status]}44`, color: statusColors[order.status], fontSize: 12, fontWeight: 900, letterSpacing: 2, padding: "3px 8px" }}>
                         {order.status?.toUpperCase()}
                       </span>
                     </div>
@@ -546,23 +610,23 @@ export default function AdminPage() {
                   </div>
                   <div className="order-status-block">
                     <div style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", marginBottom: 12 }}>₹{order.total?.toLocaleString()}</div>
-                    <div className="status-label" style={{ fontSize: 11, letterSpacing: 2, color: "#555", marginBottom: 6 }}>UPDATE STATUS</div>
+                    <div className="status-label" style={{ fontSize: 12, letterSpacing: 2, color: "#555", marginBottom: 6 }}>UPDATE STATUS</div>
                     <select className="status-select" value={order.status} disabled={updatingId === order.id} onChange={e => updateStatus(order.id, e.target.value)}>
                       {statusOptions.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
                     </select>
-                    {updatingId === order.id && <div style={{ color: "#39ff14", fontSize: 11, marginTop: 6, letterSpacing: 2 }}>UPDATING...</div>}
+                    {updatingId === order.id && <div style={{ color: "#39ff14", fontSize: 12, marginTop: 6, letterSpacing: 2 }}>UPDATING...</div>}
                     <div style={{ marginTop: 12 }}>
-                      <button type="button" className="btn-ghost" style={{ width: "100%", padding: "8px", fontSize: "11px", borderColor: "#39ff1444", color: "#39ff14" }} onClick={() => downloadInvoice(order.id, { admin: true })}>
+                      <button type="button" className="btn-ghost btn-invoice-download" onClick={() => downloadInvoice(order.id, { admin: true })}>
                         📄 DOWNLOAD INVOICE
                       </button>
                     </div>
                   </div>
                 </div>
                 <div style={{ marginTop: 16, borderTop: "1px solid #1a1a1a", paddingTop: 12 }}>
-                  <div style={{ fontSize: 10, letterSpacing: 3, color: "#555", marginBottom: 8 }}>ITEMS</div>
+                  <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 8 }}>ITEMS</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {order.items?.map((item, i) => (
-                      <div key={i} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", padding: "6px 12px", fontSize: 12, letterSpacing: 1 }}>
+                    {order.items?.map((item) => (
+                      <div key={`${item.name}-${item.size}-${item.qty}`} style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", padding: "6px 12px", fontSize: 12, letterSpacing: 1 }}>
                         {item.name} · Size {item.size} · Qty {item.qty} · <span style={{ color: "#39ff14" }}>₹{item.price * item.qty}</span>
                       </div>
                     ))}
@@ -578,11 +642,11 @@ export default function AdminPage() {
           <div>
             {/* Toolbar: Add Product + Add Team (shortcut) */}
             <div className="product-toolbar">
-              <button className="add-product-toggle" onClick={() => { setShowAddForm(f => !f); if (showAddForm) resetProductForm(); }}>
+              <button type="button" className="add-product-toggle" onClick={() => { setShowAddForm(f => !f); if (showAddForm) resetProductForm(); }}>
                 {showAddForm ? "✕ CANCEL" : "+ ADD NEW PRODUCT"}
               </button>
               {/* Quick link to Teams tab */}
-              <button className="btn-ghost green" style={{ padding: "12px 20px", fontSize: 12, letterSpacing: 2, display: "flex", alignItems: "center", gap: 6 }}
+              <button type="button" className="btn-ghost green" style={{ padding: "12px 20px", fontSize: 12, letterSpacing: 2, display: "flex", alignItems: "center", gap: 6 }}
                 onClick={() => setActiveTab("teams")}>
                 🛡️ MANAGE TEAMS
               </button>
@@ -590,17 +654,17 @@ export default function AdminPage() {
 
             {showAddForm && (
               <div className="add-product-form">
-                <div style={{ fontSize: 11, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW PRODUCT</div>
+                <div style={{ fontSize: 12, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW PRODUCT</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
                   <div className="form-grid">
                     <div className="form-field">
-                      <label className="form-label">PRODUCT NAME *</label>
-                      <input className="form-input" type="text" placeholder="e.g. Argentina 2024 Home" value={formData.name} onChange={e => handleFormChange("name", e.target.value)} />
+                      <label className="form-label" htmlFor="admin-product-name">PRODUCT NAME *</label>
+                      <input id="admin-product-name" className="form-input" type="text" placeholder="e.g. Argentina 2024 Home" value={formData.name} onChange={e => handleFormChange("name", e.target.value)} />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">TYPE OF JERSEY *</label>
-                      <select className="form-select" value={formData.type} onChange={e => handleFormChange("type", e.target.value)}>
+                      <label className="form-label" htmlFor="admin-product-type">TYPE OF JERSEY *</label>
+                      <select id="admin-product-type" className="form-select" value={formData.type} onChange={e => handleFormChange("type", e.target.value)}>
                         {JERSEY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
@@ -608,12 +672,12 @@ export default function AdminPage() {
 
                   <div className="form-grid">
                     <div className="form-field">
-                      <label className="form-label">PRICE (₹) *</label>
-                      <input className="form-input" type="number" min="0" placeholder="799" value={formData.price} onChange={e => handleFormChange("price", e.target.value)} inputMode="numeric" />
+                      <label className="form-label" htmlFor="admin-product-price">PRICE (₹) *</label>
+                      <input id="admin-product-price" className="form-input" type="number" min="0" placeholder="799" value={formData.price} onChange={e => handleFormChange("price", e.target.value)} inputMode="numeric" />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">STATUS</label>
-                      <select className="form-select" value={formData.status} onChange={e => handleFormChange("status", e.target.value)}>
+                      <label className="form-label" htmlFor="admin-product-status">STATUS</label>
+                      <select id="admin-product-status" className="form-select" value={formData.status} onChange={e => handleFormChange("status", e.target.value)}>
                         <option value="active">ACTIVE</option>
                         <option value="inactive">INACTIVE</option>
                         <option value="draft">DRAFT</option>
@@ -623,7 +687,7 @@ export default function AdminPage() {
 
                   {/* ── TEAM SEARCH FIELD ── */}
                   <div className="form-field">
-                    <label className="form-label">
+                    <label className="form-label" htmlFor="admin-team-search">
                       LINK TO TEAM — type to search existing teams
                     </label>
 
@@ -636,11 +700,11 @@ export default function AdminPage() {
                         }
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 900, fontSize: 15, color: "#fff", letterSpacing: 1 }}>{selectedTeamForProduct.name}</div>
-                          <div style={{ fontSize: 10, color: sportColor[selectedTeamForProduct.sport] || "#39ff14", letterSpacing: 3, marginTop: 2 }}>
+                          <div style={{ fontSize: 12, color: sportColor[selectedTeamForProduct.sport] || "#39ff14", letterSpacing: 3, marginTop: 2 }}>
                             {sportIcon[selectedTeamForProduct.sport]} {selectedTeamForProduct.sport}
                           </div>
                         </div>
-                        <button onClick={handleClearTeam} style={{ background: "none", border: "1px solid #333", color: "#555", cursor: "pointer", padding: "4px 10px", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 11, letterSpacing: 1, fontWeight: 700 }}
+                        <button type="button" onClick={handleClearTeam} style={{ background: "none", border: "1px solid #333", color: "#555", cursor: "pointer", padding: "4px 10px", fontFamily: "'Barlow Condensed',sans-serif", fontSize: 12, letterSpacing: 1, fontWeight: 700 }}
                           onMouseEnter={e => e.currentTarget.style.color = "#ff4444"}
                           onMouseLeave={e => e.currentTarget.style.color = "#555"}>
                           ✕ CLEAR
@@ -651,6 +715,7 @@ export default function AdminPage() {
                       <div ref={teamSearchRef}>
                         <div className="team-search-wrap">
                           <input
+                            id="admin-team-search"
                             className="form-input"
                             type="text"
                             placeholder="Type team name e.g. Real Madrid, India..."
@@ -663,18 +728,18 @@ export default function AdminPage() {
                             <div className="team-dropdown">
                               {teamSearchResults.length > 0
                                 ? teamSearchResults.map(team => (
-                                    <div key={team.id} className="team-dropdown-item" onClick={() => handleSelectTeamForProduct(team)}>
+                                    <button type="button" key={team.id} className="team-dropdown-item" onClick={() => handleSelectTeamForProduct(team)}>
                                       {team.logo_url
                                         ? <img src={team.logo_url} alt="" className="team-dropdown-logo" />
                                         : <span style={{ fontSize: 24, width: 32, textAlign: "center" }}>{sportIcon[team.sport] || "🛡️"}</span>
                                       }
                                       <div>
                                         <div style={{ fontWeight: 900, fontSize: 14, color: "#fff", letterSpacing: 1 }}>{team.name}</div>
-                                        <div style={{ fontSize: 10, color: sportColor[team.sport] || "#39ff14", letterSpacing: 2, marginTop: 2 }}>
+                                        <div style={{ fontSize: 12, color: sportColor[team.sport] || "#39ff14", letterSpacing: 2, marginTop: 2 }}>
                                           {sportIcon[team.sport]} {team.sport}
                                         </div>
                                       </div>
-                                    </div>
+                                    </button>
                                   ))
                                 : (
                                   <div className="team-dropdown-empty">
@@ -689,6 +754,7 @@ export default function AdminPage() {
                         {/* ── "Add new team" toggle button ── */}
                         {!showInlineTeamForm && (
                           <button
+                            type="button"
                             className="btn-add-team-inline"
                             onClick={() => {
                               setShowInlineTeamForm(true);
@@ -703,14 +769,15 @@ export default function AdminPage() {
                         {/* ── Inline team creation form ── */}
                         {showInlineTeamForm && (
                           <div className="inline-team-form">
-                            <div style={{ fontSize: 10, letterSpacing: 4, color: "#39ff14", marginBottom: 14, fontWeight: 900 }}>
+                            <div style={{ fontSize: 12, letterSpacing: 4, color: "#39ff14", marginBottom: 14, fontWeight: 900 }}>
                               🛡️ NEW TEAM
                             </div>
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                               <div className="form-grid">
                                 <div className="form-field">
-                                  <label className="form-label">TEAM NAME *</label>
+                                  <label className="form-label" htmlFor="admin-inline-team-name">TEAM NAME *</label>
                                   <input
+                                    id="admin-inline-team-name"
                                     className="form-input inline"
                                     type="text"
                                     placeholder="e.g. Real Madrid"
@@ -719,8 +786,8 @@ export default function AdminPage() {
                                   />
                                 </div>
                                 <div className="form-field">
-                                  <label className="form-label">SPORT *</label>
-                                  <select className="form-select inline" value={inlineTeamForm.sport} onChange={e => setInlineTeamForm(f => ({ ...f, sport: e.target.value }))}>
+                                  <label className="form-label" htmlFor="admin-inline-team-sport">SPORT *</label>
+                                  <select id="admin-inline-team-sport" className="form-select inline" value={inlineTeamForm.sport} onChange={e => setInlineTeamForm(f => ({ ...f, sport: e.target.value }))}>
                                     {SPORTS.map(s => <option key={s} value={s}>{sportIcon[s]} {s}</option>)}
                                   </select>
                                 </div>
@@ -728,31 +795,32 @@ export default function AdminPage() {
 
                               {/* Logo upload */}
                               <div className="form-field">
-                                <label className="form-label">TEAM LOGO *</label>
-                                <div className="logo-upload-area inline" onClick={() => inlineLogoInputRef.current?.click()}>
-                                  <input ref={inlineLogoInputRef} type="file" accept="image/*" onChange={handleInlineTeamLogoChange} style={{ display: "none" }} />
+                                <label className="form-label" htmlFor="admin-inline-team-logo">TEAM LOGO *</label>
+                                <button type="button" className="logo-upload-area inline" onClick={() => inlineLogoInputRef.current?.click()}>
+                                  <input id="admin-inline-team-logo" ref={inlineLogoInputRef} type="file" accept="image/*" onChange={handleInlineTeamLogoChange} style={{ display: "none" }} />
                                   {inlineTeamLogoPreview ? (
                                     <div style={{ display: "flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
                                       <img src={inlineTeamLogoPreview} alt="preview" style={{ width: 52, height: 52, objectFit: "contain", background: "#0d0d0d", borderRadius: "50%", border: "2px solid #39ff14" }} />
                                       <div>
                                         <div style={{ color: "#39ff14", fontWeight: 900, fontSize: 12, letterSpacing: 2 }}>LOGO SELECTED</div>
-                                        <div style={{ color: "#555", fontSize: 10, marginTop: 2 }}>{inlineTeamLogoFile?.name}</div>
-                                        <div style={{ color: "#333", fontSize: 10, marginTop: 1 }}>Click to change</div>
+                                        <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>{inlineTeamLogoFile?.name}</div>
+                                        <div style={{ color: "#333", fontSize: 12, marginTop: 1 }}>Click to change</div>
                                       </div>
                                     </div>
                                   ) : (
                                     <div>
                                       <div style={{ fontSize: 24, marginBottom: 6 }}>🛡️</div>
                                       <div style={{ color: "#555", fontSize: 12, letterSpacing: 2, fontWeight: 700 }}>CLICK TO UPLOAD LOGO</div>
-                                      <div style={{ color: "#333", fontSize: 10, marginTop: 3 }}>PNG, JPG, SVG — 200×200px recommended</div>
+                                      <div style={{ color: "#333", fontSize: 12, marginTop: 3 }}>PNG, JPG, SVG — 200×200px recommended</div>
                                     </div>
                                   )}
-                                </div>
+                                </button>
                               </div>
 
                               <div className="form-field">
-                                <label className="form-label">OR PASTE LOGO URL</label>
+                                <label className="form-label" htmlFor="admin-inline-logo-url">OR PASTE LOGO URL</label>
                                 <input
+                                  id="admin-inline-logo-url"
                                   className="form-input inline"
                                   type="url"
                                   placeholder="https://..."
@@ -764,10 +832,10 @@ export default function AdminPage() {
                               {inlineTeamError && <div className="form-error">{inlineTeamError}</div>}
 
                               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-                                <button className="btn-primary sm" onClick={handleSaveInlineTeam} disabled={inlineTeamSaving}>
+                                <button type="button" className="btn-primary sm" onClick={handleSaveInlineTeam} disabled={inlineTeamSaving}>
                                   {inlineTeamSaving ? "SAVING..." : "✓ SAVE & SELECT TEAM"}
                                 </button>
-                                <button className="btn-ghost sm" onClick={() => { setShowInlineTeamForm(false); setInlineTeamError(""); }}>CANCEL</button>
+                                <button type="button" className="btn-ghost sm" onClick={() => { setShowInlineTeamForm(false); setInlineTeamError(""); }}>CANCEL</button>
                               </div>
                             </div>
                           </div>
@@ -778,21 +846,21 @@ export default function AdminPage() {
 
                   {/* SIZE STOCK */}
                   <div>
-                    <label className="form-label" style={{ marginBottom: 10, display: "block" }}>STOCK PER SIZE *</label>
+                    <div className="form-label" style={{ marginBottom: 10, display: "block" }}>STOCK PER SIZE *</div>
                     <div className="size-grid-add">
                       {SIZES.map(size => (
                         <div key={size} style={{ background: "#111", border: "1px solid #1e1e1e", padding: 10, textAlign: "center" }}>
-                          <div style={{ fontSize: 11, letterSpacing: 2, color: "#39ff14", fontWeight: 900, marginBottom: 6 }}>{size}</div>
-                          <input className="form-input" type="number" min="0" placeholder="0" value={formData.size_stock[size]} onChange={e => handleSizeStockChange(size, e.target.value)} style={{ padding: "6px", textAlign: "center" }} inputMode="numeric" />
+                          <label htmlFor={`admin-size-stock-${size}`} style={{ fontSize: 12, letterSpacing: 2, color: "#39ff14", fontWeight: 900, marginBottom: 6, display: "block" }}>{size}</label>
+                          <input id={`admin-size-stock-${size}`} aria-label={`Stock for size ${size}`} className="form-input" type="number" min="0" placeholder="0" value={formData.size_stock[size]} onChange={e => handleSizeStockChange(size, e.target.value)} style={{ padding: "6px", textAlign: "center" }} inputMode="numeric" />
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div className="form-field">
-                    <label className="form-label">IMAGE URL</label>
+                    <label className="form-label" htmlFor="admin-product-image-url">IMAGE URL</label>
                     <div className="image-url-row">
-                      <input className="form-input" type="url" placeholder="https://..." value={formData.image_url} onChange={e => handleFormChange("image_url", e.target.value)} />
+                      <input id="admin-product-image-url" className="form-input" type="url" placeholder="https://..." value={formData.image_url} onChange={e => handleFormChange("image_url", e.target.value)} />
                       {formData.image_url && <img src={formData.image_url} alt="preview" className="image-preview" onError={e => { e.target.style.display = "none"; }} />}
                     </div>
                   </div>
@@ -800,8 +868,8 @@ export default function AdminPage() {
                   {formError && <div className="form-error">{formError}</div>}
 
                   <div className="form-actions" style={{ display: "flex", gap: 12, paddingTop: 4 }}>
-                    <button className="btn-primary" onClick={handleAddProduct} disabled={formSaving}>{formSaving ? "ADDING..." : "✓ ADD PRODUCT"}</button>
-                    <button className="btn-ghost" onClick={resetProductForm}>CANCEL</button>
+                    <button type="button" className="btn-primary" onClick={handleAddProduct} disabled={formSaving}>{formSaving ? "ADDING..." : "✓ ADD PRODUCT"}</button>
+                    <button type="button" className="btn-ghost" onClick={resetProductForm}>CANCEL</button>
                   </div>
                 </div>
               </div>
@@ -826,12 +894,12 @@ export default function AdminPage() {
         {activeTab === "teams" && (
           <div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
-              <button className="add-product-toggle" onClick={() => { setShowTeamForm(f => !f); setTeamForm(EMPTY_TEAM_FORM); setTeamFormError(""); setTeamLogoFile(null); setTeamLogoPreview(""); }}>
+              <button type="button" className="add-product-toggle" onClick={() => { setShowTeamForm(f => !f); setTeamForm(EMPTY_TEAM_FORM); setTeamFormError(""); setTeamLogoFile(null); setTeamLogoPreview(""); }}>
                 {showTeamForm ? "✕ CANCEL" : "+ ADD NEW TEAM"}
               </button>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {["ALL", ...SPORTS].map(s => (
-                  <button key={s} className={`sport-filter-btn ${activeSportFilter === s ? "active" : ""}`} onClick={() => setActiveSportFilter(s)}>
+                  <button type="button" key={s} className={`sport-filter-btn ${activeSportFilter === s ? "active" : ""}`} onClick={() => setActiveSportFilter(s)}>
                     {s === "ALL" ? "ALL" : `${sportIcon[s]} ${s}`}
                   </button>
                 ))}
@@ -840,56 +908,56 @@ export default function AdminPage() {
 
             {showTeamForm && (
               <div className="add-product-form" style={{ marginBottom: 24 }}>
-                <div style={{ fontSize: 11, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW TEAM</div>
+                <div style={{ fontSize: 12, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>NEW TEAM</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   <div className="form-grid">
                     <div className="form-field">
-                      <label className="form-label">TEAM NAME *</label>
-                      <input className="form-input" type="text" placeholder="e.g. Real Madrid" value={teamForm.name}
+                      <label className="form-label" htmlFor="admin-team-name">TEAM NAME *</label>
+                      <input id="admin-team-name" className="form-input" type="text" placeholder="e.g. Real Madrid" value={teamForm.name}
                         onChange={e => { setTeamForm(f => ({ ...f, name: e.target.value })); setTeamFormError(""); }} />
                     </div>
                     <div className="form-field">
-                      <label className="form-label">SPORT *</label>
-                      <select className="form-select" value={teamForm.sport} onChange={e => setTeamForm(f => ({ ...f, sport: e.target.value }))}>
+                      <label className="form-label" htmlFor="admin-team-sport">SPORT *</label>
+                      <select id="admin-team-sport" className="form-select" value={teamForm.sport} onChange={e => setTeamForm(f => ({ ...f, sport: e.target.value }))}>
                         {SPORTS.map(s => <option key={s} value={s}>{sportIcon[s]} {s}</option>)}
                       </select>
                     </div>
                   </div>
 
                   <div className="form-field">
-                    <label className="form-label">TEAM LOGO *</label>
-                    <div className="logo-upload-area" onClick={() => logoInputRef.current?.click()}>
-                      <input ref={logoInputRef} type="file" accept="image/*" onChange={handleTeamLogoChange} style={{ display: "none" }} />
+                    <label className="form-label" htmlFor="admin-team-logo">TEAM LOGO *</label>
+                    <button type="button" className="logo-upload-area" onClick={() => logoInputRef.current?.click()}>
+                      <input id="admin-team-logo" ref={logoInputRef} type="file" accept="image/*" onChange={handleTeamLogoChange} style={{ display: "none" }} />
                       {teamLogoPreview ? (
                         <div style={{ display: "flex", alignItems: "center", gap: 16, justifyContent: "center" }}>
                           <img src={teamLogoPreview} alt="preview" style={{ width: 72, height: 72, objectFit: "contain", background: "#0d0d0d", borderRadius: "50%", border: "2px solid #39ff14" }} />
                           <div>
                             <div style={{ color: "#39ff14", fontWeight: 900, fontSize: 13, letterSpacing: 2 }}>LOGO SELECTED</div>
-                            <div style={{ color: "#555", fontSize: 11, marginTop: 4 }}>{teamLogoFile?.name}</div>
-                            <div style={{ color: "#444", fontSize: 10, marginTop: 2 }}>Click to change</div>
+                            <div style={{ color: "#555", fontSize: 12, marginTop: 4 }}>{teamLogoFile?.name}</div>
+                            <div style={{ color: "#444", fontSize: 12, marginTop: 2 }}>Click to change</div>
                           </div>
                         </div>
                       ) : (
                         <div>
                           <div style={{ fontSize: 32, marginBottom: 8 }}>🛡️</div>
                           <div style={{ color: "#555", fontSize: 13, letterSpacing: 2, fontWeight: 700 }}>CLICK TO UPLOAD LOGO</div>
-                          <div style={{ color: "#333", fontSize: 11, marginTop: 4 }}>PNG, JPG, SVG — recommended 200×200px</div>
+                          <div style={{ color: "#333", fontSize: 12, marginTop: 4 }}>PNG, JPG, SVG — recommended 200×200px</div>
                         </div>
                       )}
-                    </div>
+                    </button>
                   </div>
 
                   <div className="form-field">
-                    <label className="form-label">OR LOGO URL (if not uploading)</label>
-                    <input className="form-input" type="url" placeholder="https://..." value={teamForm.logo_url}
+                    <label className="form-label" htmlFor="admin-team-logo-url">OR LOGO URL (if not uploading)</label>
+                    <input id="admin-team-logo-url" className="form-input" type="url" placeholder="https://..." value={teamForm.logo_url}
                       onChange={e => { setTeamForm(f => ({ ...f, logo_url: e.target.value })); setTeamFormError(""); }} />
                   </div>
 
                   {teamFormError && <div className="form-error">{teamFormError}</div>}
 
                   <div className="form-actions" style={{ display: "flex", gap: 12, paddingTop: 4 }}>
-                    <button className="btn-primary" onClick={handleAddTeam} disabled={teamSaving}>{teamSaving ? "SAVING..." : "✓ ADD TEAM"}</button>
-                    <button className="btn-ghost" onClick={() => { setShowTeamForm(false); setTeamForm(EMPTY_TEAM_FORM); setTeamFormError(""); setTeamLogoFile(null); setTeamLogoPreview(""); }}>CANCEL</button>
+                    <button type="button" className="btn-primary" onClick={handleAddTeam} disabled={teamSaving}>{teamSaving ? "SAVING..." : "✓ ADD TEAM"}</button>
+                    <button type="button" className="btn-ghost" onClick={() => { setShowTeamForm(false); setTeamForm(EMPTY_TEAM_FORM); setTeamFormError(""); setTeamLogoFile(null); setTeamLogoPreview(""); }}>CANCEL</button>
                   </div>
                 </div>
               </div>
@@ -921,18 +989,18 @@ export default function AdminPage() {
                         }
                       </div>
                       <div style={{ fontWeight: 900, fontSize: 14, letterSpacing: 1, textAlign: "center", lineHeight: 1.2 }}>{team.name}</div>
-                      <div style={{ fontSize: 10, letterSpacing: 3, color: productCount > 0 ? "#39ff14" : "#333", fontWeight: 900 }}>
+                      <div style={{ fontSize: 12, letterSpacing: 3, color: productCount > 0 ? "#39ff14" : "#333", fontWeight: 900 }}>
                         {productCount} JERSEY{productCount !== 1 ? "S" : ""}
                       </div>
                       <div style={{ marginTop: 4 }}>
                         {!isConfirming ? (
-                          <button className="btn-danger" style={{ fontSize: 10, padding: "4px 10px" }} onClick={() => setConfirmDeleteTeamId(team.id)} disabled={isDeleting}>🗑 REMOVE</button>
+                          <button type="button" className="btn-danger" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setConfirmDeleteTeamId(team.id)} disabled={isDeleting}>🗑 REMOVE</button>
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-                            <div style={{ fontSize: 9, color: "#ff4444", letterSpacing: 1 }}>CONFIRM?</div>
+                            <div style={{ fontSize: 12, color: "#ff4444", letterSpacing: 1 }}>CONFIRM?</div>
                             <div style={{ display: "flex", gap: 4 }}>
-                              <button className="btn-cancel-sm" onClick={() => setConfirmDeleteTeamId(null)}>NO</button>
-                              <button className="btn-danger-confirm" onClick={() => handleDeleteTeam(team.id)} disabled={isDeleting}>{isDeleting ? "..." : "DELETE"}</button>
+                              <button type="button" className="btn-cancel-sm" onClick={() => setConfirmDeleteTeamId(null)}>NO</button>
+                              <button type="button" className="btn-danger-confirm" onClick={() => handleDeleteTeam(team.id)} disabled={isDeleting}>{isDeleting ? "..." : "DELETE"}</button>
                             </div>
                           </div>
                         )}
@@ -948,12 +1016,36 @@ export default function AdminPage() {
         {/* ══════════ USERS TAB ══════════ */}
         {activeTab === "users" && (
           <div style={{ background: "#111", border: "1px solid #1a1a1a", animation: "fadeUp 0.4s ease" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: 16, borderBottom: "1px solid #1a1a1a", flexWrap: "wrap" }}>
+              <div style={{ color: "#555", fontSize: 12, letterSpacing: 2 }}>
+                {usersMeta.total} USER{usersMeta.total === 1 ? "" : "S"}
+              </div>
+              <form
+                onSubmit={(e) => { e.preventDefault(); fetchUsers(null, 1, userSearch); }}
+                style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+              >
+                <input
+                  className="form-input"
+                  type="search"
+                  placeholder="Search users"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  style={{ width: 220 }}
+                />
+                <button type="submit" className="btn-ghost sm">SEARCH</button>
+                {userSearch && (
+                  <button type="button" className="btn-cancel-sm" onClick={() => { setUserSearch(""); fetchUsers(null, 1, ""); }}>
+                    CLEAR
+                  </button>
+                )}
+              </form>
+            </div>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
                 <thead>
                   <tr style={{ background: "#0d0d0d", borderBottom: "1px solid #1a1a1a" }}>
-                    {["USER / EMAIL", "PHONE", "ROLE", "JOINED"].map(h => (
-                      <th key={h} style={{ padding: "16px 20px", textAlign: "left", fontSize: 11, letterSpacing: 2, color: "#555" }}>{h}</th>
+                    {["USER / EMAIL", "PHONE", "ROLE", "JOINED", "ACTIONS"].map(h => (
+                      <th key={h} style={{ padding: "16px 20px", textAlign: "left", fontSize: 12, letterSpacing: 2, color: "#555" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -966,16 +1058,33 @@ export default function AdminPage() {
                       </td>
                       <td style={{ padding: "16px 20px", fontSize: 14, color: "#aaa" }}>{u.phone || "N/A"}</td>
                       <td style={{ padding: "16px 20px" }}>
-                        <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", background: u.role === "admin" ? "#39ff1415" : "#222", color: u.role === "admin" ? "#39ff14" : "#555", border: `1px solid ${u.role === "admin" ? "#39ff1444" : "#333"}` }}>
+                        <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 2, padding: "3px 8px", background: u.role === "admin" ? "#39ff1415" : "#222", color: u.role === "admin" ? "#39ff14" : "#555", border: `1px solid ${u.role === "admin" ? "#39ff1444" : "#333"}` }}>
                           {u.role?.toUpperCase() || "USER"}
                         </span>
                       </td>
                       <td style={{ padding: "16px 20px", fontSize: 12, color: "#555" }}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : "N/A"}</td>
+                      <td style={{ padding: "16px 20px" }}>
+                        <button
+                          type="button"
+                          className="btn-danger"
+                          onClick={() => handleDeleteUser(u.id)}
+                          disabled={deletingUserId === u.id}
+                        >
+                          {deletingUserId === u.id ? "DELETING..." : "DELETE"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            {usersMeta.total > usersMeta.limit && (
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 16, borderTop: "1px solid #1a1a1a" }}>
+                <button type="button" className="btn-cancel-sm" disabled={usersMeta.page <= 1 || loadingUsers} onClick={() => fetchUsers(null, usersMeta.page - 1, userSearch)}>PREV</button>
+                <span style={{ color: "#555", fontSize: 12, letterSpacing: 2, alignSelf: "center" }}>PAGE {usersMeta.page}</span>
+                <button type="button" className="btn-cancel-sm" disabled={(usersMeta.page * usersMeta.limit) >= usersMeta.total || loadingUsers} onClick={() => fetchUsers(null, usersMeta.page + 1, userSearch)}>NEXT</button>
+              </div>
+            )}
             {usersList.length === 0 && !loadingUsers && <div style={{ textAlign: "center", padding: "40px", color: "#333" }}>NO USERS FOUND</div>}
             {loadingUsers && <div style={{ textAlign: "center", padding: "40px", color: "#39ff14" }}>LOADING...</div>}
           </div>
@@ -1076,7 +1185,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
                     ? <img src={p.teams.logo_url} alt="" className="product-team-logo-tiny" />
                     : <span style={{ fontSize: 12 }}>{sportIcon[p.teams.sport] || "🛡️"}</span>
                   }
-                  <span style={{ fontSize: 10, letterSpacing: 1, color: "#aaa", fontWeight: 700 }}>{p.teams.name}</span>
+                  <span style={{ fontSize: 12, letterSpacing: 1, color: "#aaa", fontWeight: 700 }}>{p.teams.name}</span>
                 </span>
               )}
             </div>
@@ -1085,15 +1194,15 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
         <div style={{ flexShrink: 0, marginLeft: 12 }}>
           {!isConfirming ? (
-            <button className="btn-danger" style={{ fontSize: 10, padding: "4px 10px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
+            <button type="button" className="btn-danger" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
               🗑 REMOVE
             </button>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-              <div style={{ fontSize: 10, letterSpacing: 1, color: "#ff4444", marginBottom: 2 }}>CONFIRM DELETE?</div>
+              <div style={{ fontSize: 12, letterSpacing: 1, color: "#ff4444", marginBottom: 2 }}>CONFIRM DELETE?</div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button className="btn-cancel-sm" onClick={() => setConfirmDeleteId(null)}>NO</button>
-                <button className="btn-danger-confirm" onClick={() => onDelete(p.id)} disabled={isDeleting}>
+                <button type="button" className="btn-cancel-sm" onClick={() => setConfirmDeleteId(null)}>NO</button>
+                <button type="button" className="btn-danger-confirm" onClick={() => onDelete(p.id)} disabled={isDeleting}>
                   {isDeleting ? "..." : "YES, DELETE"}
                 </button>
               </div>
@@ -1104,7 +1213,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
       {/* FIX 7: show error banner if save failed */}
       {saveError && (
-        <div style={{ background: "#ff444415", border: "1px solid #ff444440", color: "#ff4444", fontSize: 11, letterSpacing: 1, padding: "8px 12px", marginBottom: 10 }}>
+        <div style={{ background: "#ff444415", border: "1px solid #ff444440", color: "#ff4444", fontSize: 12, letterSpacing: 1, padding: "8px 12px", marginBottom: 10 }}>
           ⚠ {saveError}
         </div>
       )}
@@ -1117,11 +1226,13 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
           return (
             <div key={size} style={{ background: "#0d0d0d", border: `1px solid ${stock === 0 ? "#ff444440" : "#1a1a1a"}`, padding: "8px", textAlign: "center" }}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: "#555", marginBottom: 4, fontWeight: 700 }}>{size}</div>
+              <div style={{ fontSize: 12, letterSpacing: 2, color: "#555", marginBottom: 4, fontWeight: 700 }}>{size}</div>
               <div style={{ fontSize: 22, fontWeight: 900, color: stock === 0 ? "#ff4444" : stock <= 2 ? "#ff9900" : "#39ff14", marginBottom: 6 }}>
                 {stock}
               </div>
+              <label htmlFor={`stock-restock-${size}`} className="sr-only">Add stock for size {size}</label>
               <input
+                id={`stock-restock-${size}`}
                 type="number"
                 min="1"
                 placeholder="+"
@@ -1129,10 +1240,11 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
                 onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))}
                 className="size-stock-input"
                 inputMode="numeric"
-                // FIX 1: only disable THIS size's input while it saves
+                aria-label={`Add stock for size ${size}`}
                 disabled={isSaving}
               />
               <button
+                type="button"
                 className="size-add-btn"
                 onClick={() => handleSizeRestock(size)}
                 // FIX 1: only THIS size button shows "..." — others stay clickable

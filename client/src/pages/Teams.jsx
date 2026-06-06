@@ -11,19 +11,8 @@ const FLAME_ID = "jv-flame-teams";
 ───────────────────────────────────────── */
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   return (
-    <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
-      <span style={{
-        fontSize: "clamp(40px,8vw,100px)",
-        fontWeight: 900,
-        fontStyle: "italic",
-        letterSpacing: "-2px",
-        color: "#ffffff",
-        display: "block",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        userSelect: "none",
-      }}>
-        {text}
-      </span>
+    <div className="t-flame-wrap">
+      <span className="t-flame-text">{text}</span>
       <svg
         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}
         aria-hidden="true"
@@ -108,7 +97,13 @@ export default function Teams() {
   const [user,           setUser]           = useState(null);
   const [isAdmin,        setIsAdmin]        = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cartCount,      setCartCount]      = useState(0);
+  const [cartCount,      setCartCount]      = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("cart");
+      if (saved) return JSON.parse(saved).reduce((s, i) => s + i.qty, 0);
+    } catch {}
+    return 0;
+  });
   const [activeTab,      setActiveTab]      = useState("ALL");
   const [searchQuery,    setSearchQuery]    = useState("");
   const [teams,          setTeams]          = useState([]);
@@ -125,17 +120,6 @@ export default function Teams() {
         if (profile?.role === "admin") setIsAdmin(true);
       }
     });
-  }, []);
-
-  /* ── Cart count from sessionStorage ── */
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("cart");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setCartCount(parsed.reduce((s, i) => s + i.qty, 0));
-      }
-    } catch {}
   }, []);
 
   /* ── Fetch teams from Supabase ── */
@@ -176,16 +160,16 @@ export default function Teams() {
       <Link to="/#shop"   className="t-nav-link" onClick={() => setMobileMenuOpen(false)}>SHOP</Link>
       <Link to="/teams"   className="t-nav-link active-nav" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
       <Link to="/tracking" className="t-nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
-      <span className="t-nav-link" onClick={() => { navigate("/"); setTimeout(() => {}, 100); setMobileMenuOpen(false); }}>CART</span>
+      <button type="button" className="t-nav-link" onClick={() => { navigate("/"); setTimeout(() => {}, 100); setMobileMenuOpen(false); }}>CART</button>
       <Link to="/myorders" className="t-nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
       {user ? (
-        <span className="t-nav-link" onClick={handleLogout}>LOGOUT</span>
+        <button type="button" className="t-nav-link" onClick={handleLogout}>LOGOUT</button>
       ) : (
         <Link to="/auth" className="t-nav-link" onClick={() => setMobileMenuOpen(false)}>LOGIN</Link>
       )}
       {isAdmin && (
-        <span className="t-nav-link" style={{ color: "#39ff14" }}
-          onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
+        <button type="button" className="t-nav-link" style={{ color: "#39ff14" }}
+          onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</button>
       )}
     </>
   ), [user, isAdmin, handleLogout, navigate]);
@@ -229,6 +213,7 @@ export default function Teams() {
 
           /* ── NAV LINKS ── */
           .t-nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+          button.t-nav-link { background:none; border:none; padding:0; font:inherit; }
           .t-nav-link:hover { color:#39ff14; }
           .t-nav-link.active-nav { color:#39ff14; }
 
@@ -320,6 +305,17 @@ export default function Teams() {
 
           /* ── HERO ── */
           .t-hero { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
+          .t-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
+          .t-nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
+          .t-flame-wrap { position:relative; display:inline-block; line-height:0.9; }
+          .t-flame-text { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#ffffff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
+          .t-hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
+          .t-hero-subtitle { color:#aaa; margin-top:20px; font-size:14px; letter-spacing:3px; font-family:'Barlow',sans-serif; font-weight:400; position:relative; z-index:1; }
+          .t-hero-actions { margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
+          .t-browse-btn { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#fff; border:1px solid #2a2a2a; padding:14px 40px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:4px; cursor:pointer; border-radius:2px; transition:border-color 0.2s; }
+          .t-card-cta { margin-top:4px; font-size:12px; letter-spacing:4px; color:#39ff14; font-weight:900; opacity:0; transition:opacity 0.25s; }
+          .t-footer-copy { color:#222; font-size:12px; letter-spacing:3px; }
+          .t-footer-link { color:#333; font-size:12px; letter-spacing:3px; cursor:pointer; transition:color 0.2s; text-decoration:none; }
 
           /* ── SHOP BTN ── */
           .t-shop-btn {
@@ -350,7 +346,7 @@ export default function Teams() {
         `}</style>
 
         {/* ════════════════════ NAVBAR ════════════════════ */}
-        <nav style={{ position:"sticky", top:0, zIndex:50, background:"rgba(7,7,7,0.97)", backdropFilter:"blur(12px)", borderBottom:"1px solid #151515", padding:"0 20px 0 4px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, height:64, animation:"slideDown 0.5s ease" }}>
+        <nav className="t-nav">
           <Link to="/" className="t-logo-wrap" style={{ textDecoration:"none", flexShrink:0 }}>
             <img src={LOGO_SRC} alt="JerseyVault logo" className="t-logo-img" />
             <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>
@@ -359,14 +355,15 @@ export default function Teams() {
           </Link>
 
           <div className="t-desktop-search">
-            <input className="t-search-input" placeholder="SEARCH TEAMS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <input className="t-search-input" placeholder="SEARCH TEAMS..." aria-label="Search teams" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
 
           <div className="t-desktop-nav-links">{navLinks}</div>
 
           {/* Right: cart + hamburger */}
-          <div style={{ display:"flex", alignItems:"center", gap:12, flexShrink:0, marginLeft:"auto" }}>
-            <button
+          <div className="t-nav-right">
+            <button type="button"
+              aria-label="View cart"
               onClick={() => navigate("/")}
               style={{ background:"transparent", border:"none", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:8, fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:15, letterSpacing:1, padding:0, transition:"color 0.2s" }}
               onMouseEnter={e => e.currentTarget.style.color="#39ff14"}
@@ -379,7 +376,7 @@ export default function Teams() {
               {cartCount > 0 && <span style={{ color:"#39ff14", fontSize:19, fontWeight:900, lineHeight:1 }}>{cartCount}</span>}
             </button>
 
-            <button
+            <button type="button"
               className={`t-hamburger${mobileMenuOpen ? " open" : ""}`}
               onClick={() => setMobileMenuOpen(o => !o)}
               aria-label="Toggle menu"
@@ -396,7 +393,7 @@ export default function Teams() {
           </div>
 
           <div className={`t-mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-            <input className="t-search-input" placeholder="SEARCH TEAMS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom:8 }} />
+            <input className="t-search-input" placeholder="SEARCH TEAMS..." aria-label="Search teams" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom:8 }} />
             {navLinks}
           </div>
         </nav>
@@ -410,9 +407,7 @@ export default function Teams() {
           <div style={{ position:"absolute", inset:0, backgroundImage:"repeating-linear-gradient(45deg,rgba(57,255,20,0.02) 0px,rgba(57,255,20,0.02) 1px,transparent 1px,transparent 40px)", pointerEvents:"none" }} />
           <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom,rgba(7,7,7,0.6) 0%,rgba(7,7,7,0.1) 40%,rgba(7,7,7,0.8) 100%)", pointerEvents:"none" }} />
 
-          <p style={{ color:"#39ff14", letterSpacing:6, fontSize:11, fontWeight:700, marginBottom:16, position:"relative", zIndex:1, opacity:0.8 }}>
-            BROWSE BY CLUB &amp; COUNTRY
-          </p>
+          <p className="t-hero-eyebrow">BROWSE BY CLUB &amp; COUNTRY</p>
 
           {/* ── "WEAR YOUR" in flame + "TEAMS" in green — exact copy of Home hero ── */}
           <h1 style={{ lineHeight:0.9, animation:"breathe 3s ease-in-out 1s infinite", position:"relative", display:"inline-block", zIndex:1 }}>
@@ -424,15 +419,12 @@ export default function Teams() {
             </span>
           </h1>
 
-          <p style={{ color:"#aaa", marginTop:20, fontSize:14, letterSpacing:3, fontFamily:"'Barlow',sans-serif", fontWeight:400, position:"relative", zIndex:1 }}>
-            Football · Cricket · Basketball — find your club &amp; shop its jerseys
-          </p>
+          <p className="t-hero-subtitle">Football · Cricket · Basketball — find your club &amp; shop its jerseys</p>
 
-          <div style={{ marginTop:32, display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap", position:"relative", zIndex:1 }}>
+          <div className="t-hero-actions">
             <Link to="/#shop" className="t-shop-btn">SHOP JERSEYS</Link>
-            <button
+            <button type="button" className="t-browse-btn"
               onClick={() => document.getElementById("teams-grid")?.scrollIntoView({ behavior:"smooth" })}
-              style={{ all:"unset", boxSizing:"border-box", display:"inline-flex", alignItems:"center", justifyContent:"center", background:"transparent", color:"#fff", border:"1px solid #2a2a2a", padding:"14px 40px", fontFamily:"'Barlow Condensed',sans-serif", fontWeight:700, fontSize:14, letterSpacing:4, cursor:"pointer", borderRadius:2, transition:"border-color 0.2s" }}
               onMouseEnter={e => e.currentTarget.style.borderColor="#39ff14"}
               onMouseLeave={e => e.currentTarget.style.borderColor="#2a2a2a"}
             >
@@ -456,7 +448,7 @@ export default function Teams() {
             </h2>
             <div className="t-filter-bar">
               {sportTabs.map(({ key, label }) => (
-                <button
+                <button type="button"
                   key={key}
                   className={`t-filter-btn${activeTab === key ? " active" : ""}`}
                   onClick={() => setActiveTab(key)}
@@ -489,11 +481,11 @@ export default function Teams() {
           ) : (
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:6 }}>
               {filtered.map((team, i) => (
-                <div
+                <Link
                   key={team.id}
+                  to={`/?team=${team.id}`}
                   className="t-team-card"
                   style={{ animation:`teamCardIn 0.5s ease ${i * 0.06}s both` }}
-                onClick={() => navigate(`/?team=${team.id}`)}
                 >
                   {/* Sport badge */}
 {team.sport && (
@@ -522,9 +514,8 @@ export default function Teams() {
                   )}
 
                   {/* CTA */}
-                  <div style={{ marginTop:4, fontSize:10, letterSpacing:4, color:"#39ff14", fontWeight:900, opacity:0, transition:"opacity 0.25s" }}
-                    className="t-card-cta">VIEW JERSEYS →</div>
-                </div>
+                  <div className="t-card-cta">VIEW JERSEYS →</div>
+                </Link>
               ))}
             </div>
           )}
@@ -537,10 +528,10 @@ export default function Teams() {
           <div style={{ fontWeight:900, fontSize:26, letterSpacing:5, marginBottom:8, fontFamily:"'Bebas Neue',sans-serif" }}>
             JERSEY<span style={{ color:"#39ff14" }}>VAULT</span>
           </div>
-          <p style={{ color:"#222", fontSize:11, letterSpacing:3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+          <p className="t-footer-copy">© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display:"flex", justifyContent:"center", gap:24, marginTop:16, flexWrap:"wrap" }}>
             {[["PRIVACY","/privacy"],["TERMS","/terms"],["CONTACT","/contact"],["FAQ","/faq"]].map(([l, h]) => (
-              <Link key={l} to={h} style={{ color:"#333", fontSize:11, letterSpacing:3, cursor:"pointer", transition:"color 0.2s", textDecoration:"none" }}
+              <Link key={l} to={h} className="t-footer-link"
                 onMouseEnter={e => e.target.style.color="#39ff14"}
                 onMouseLeave={e => e.target.style.color="#333"}>{l}</Link>
             ))}

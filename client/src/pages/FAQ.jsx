@@ -105,8 +105,8 @@ const faqs = [
 export default function FAQ() {
   const [open, setOpen] = useState({});
 
-  const toggle = (cat, i) => {
-    const key = `${cat}-${i}`;
+  const toggle = (cat, question) => {
+    const key = `${cat}-${question}`;
     setOpen(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -124,17 +124,23 @@ export default function FAQ() {
         .nav-link:hover::after { width:100%; }
         .faq-item { background:#111; border:1px solid #1a1a1a; margin-bottom:6px; transition:border-color 0.2s; }
         .faq-item.open { border-color:#39ff1440; }
-        .faq-q { display:flex; justify-content:space-between; align-items:center; padding:18px 20px; cursor:pointer; gap:16px; }
+        .faq-q { display:flex; justify-content:space-between; align-items:center; padding:18px 20px; cursor:pointer; gap:16px; width:100%; background:transparent; border:none; color:inherit; font:inherit; text-align:left; }
         .faq-q:hover { background:#151515; }
         .faq-a { padding:0 20px 18px; font-family:'Barlow',sans-serif; font-size:14px; color:#888; line-height:1.8; border-top:1px solid #1a1a1a; padding-top:14px; overflow:hidden; }
         .faq-a.open { animation: expandIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .cat-label { font-size:11px; letterSpacing:4px; color:#39ff14; fontWeight:700; margin:28px 0 10px; }
+        .cat-label { font-size:12px; letter-spacing:4px; color:#39ff14; font-weight:700; margin:28px 0 10px; }
         .plus { width:24px; height:24px; border:1px solid #333; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; transition:all 0.2s; color:#555; }
         .plus.open { background:#39ff14; color:#000; border-color:#39ff14; }
+        .legal-nav { background:rgba(10,10,10,0.95); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .legal-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:8px; }
+        .faq-cta-whatsapp { background:#25D366; color:#000; padding:12px 28px; font-weight:900; font-size:14px; letter-spacing:3px; text-decoration:none; display:inline-block; }
+        .faq-cta-instagram { background:transparent; color:#fff; border:1px solid #333; padding:12px 28px; font-weight:900; font-size:14px; letter-spacing:3px; text-decoration:none; display:inline-block; }
+        .legal-footer-copy { color:#333; font-size:12px; letter-spacing:2px; }
+        .legal-footer-link { color:#666; font-size:12px; letter-spacing:2px; text-decoration:none; transition:color 0.2s; }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background:"rgba(10,10,10,0.95)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
+      <nav className="legal-nav">
         <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
           <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
@@ -151,7 +157,7 @@ export default function FAQ() {
 
         {/* HEADER */}
         <div style={{ marginBottom:40, animation:"fadeUp 0.4s ease" }}>
-          <p style={{ color:"#39ff14", letterSpacing:6, fontSize:11, fontWeight:700, marginBottom:8 }}>HELP CENTER</p>
+          <p className="legal-eyebrow">HELP CENTER</p>
           <h1 style={{ fontSize:"clamp(36px,8vw,64px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9 }}>
             FREQUENTLY ASKED <span style={{ color:"#39ff14" }}>QUESTIONS</span>
           </h1>
@@ -163,22 +169,20 @@ export default function FAQ() {
         {/* FAQ ACCORDION */}
         {faqs.map((cat) => (
           <div key={cat.category}>
-            <div className="cat-label" style={{ fontSize:11, letterSpacing:4, color:"#39ff14", fontWeight:700, margin:"28px 0 10px" }}>
-              — {cat.category}
-            </div>
-            {cat.items.map((item, i) => {
-              const key = `${cat.category}-${i}`;
+            <div className="cat-label">— {cat.category}</div>
+            {cat.items.map((item) => {
+              const key = `${cat.category}-${item.q}`;
               const isOpen = !!open[key];
               return (
-                <div key={i} className={`faq-item ${isOpen ? "open" : ""}`}>
-                  <div className="faq-q" onClick={() => toggle(cat.category, i)}>
+                <div key={key} className={`faq-item ${isOpen ? "open" : ""}`}>
+                  <button type="button" className="faq-q" onClick={() => toggle(cat.category, item.q)} aria-expanded={isOpen}>
                     <span style={{ fontWeight:700, fontSize:16, letterSpacing:1, lineHeight:1.4, color: isOpen ? "#fff" : "#ccc" }}>
                       {item.q}
                     </span>
                     <div className={`plus ${isOpen ? "open" : ""}`}>
                       {isOpen ? "−" : "+"}
                     </div>
-                  </div>
+                  </button>
                   {isOpen && (
                     <div className="faq-a open">{item.a}</div>
                   )}
@@ -197,12 +201,10 @@ export default function FAQ() {
             We typically respond within a few hours.
           </p>
           <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
-            <a href="https://wa.me/917029786817" target="_blank" rel="noopener noreferrer"
-              style={{ background:"#25D366", color:"#000", padding:"12px 28px", fontWeight:900, fontSize:14, letterSpacing:3, textDecoration:"none", display:"inline-block" }}>
+            <a href="https://wa.me/917029786817" target="_blank" rel="noopener noreferrer" className="faq-cta-whatsapp">
               WHATSAPP US →
             </a>
-            <a href="https://instagram.com/the_jerseyvault" target="_blank" rel="noopener noreferrer"
-              style={{ background:"transparent", color:"#fff", border:"1px solid #333", padding:"12px 28px", fontWeight:900, fontSize:14, letterSpacing:3, textDecoration:"none", display:"inline-block" }}>
+            <a href="https://instagram.com/the_jerseyvault" target="_blank" rel="noopener noreferrer" className="faq-cta-instagram">
               DM ON INSTAGRAM
             </a>
           </div>
@@ -211,10 +213,10 @@ export default function FAQ() {
 
       <footer style={{ borderTop:"1px solid #1a1a1a", padding:"32px 24px", textAlign:"center", marginTop:48 }}>
         <div style={{ fontWeight:900, fontSize:22, letterSpacing:4, marginBottom:8 }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></div>
-        <p style={{ color:"#333", fontSize:11, letterSpacing:2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+        <p className="legal-footer-copy">© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
         <div style={{ display:"flex", justifyContent:"center", gap:24, marginTop:16 }}>
           {[["PRIVACY","/privacy"],["TERMS","/terms"],["CONTACT","/contact"],["FAQ","/faq"]].map(([l,h]) => (
-            <Link key={l} to={h} style={{ color:"#666", fontSize:11, letterSpacing:2, textDecoration:"none", transition:"color 0.2s" }}
+            <Link key={l} to={h} className="legal-footer-link"
               onMouseEnter={e=>e.target.style.color="#39ff14"} onMouseLeave={e=>e.target.style.color="#666"}>{l}</Link>
           ))}
         </div>

@@ -50,6 +50,7 @@ export default function TrackingPage() {
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
         .track-input { flex:1; padding:14px 16px; background:#111; border:1px solid #555; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
         .track-input:focus { border-color:#39ff14; box-shadow:0 0 10px rgba(57,255,20,0.15); }
         .track-btn { padding:14px 24px; background:#39ff14; color:#000; font-weight:900; letter-spacing:3px; border:none; cursor:pointer; font-family:'Barlow Condensed',sans-serif; transition:transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease; }
@@ -58,7 +59,12 @@ export default function TrackingPage() {
         .timeline-line { position:absolute; left:11px; top:8px; bottom:8px; width:2px; background:linear-gradient(to bottom, #39ff14 0%, #222 100%); }
         .timeline-step { position:relative; padding:0 0 28px 24px; }
         .timeline-step:last-child { padding-bottom:0; }
-        .timeline-dot { position:absolute; left:-28px; top:2px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; transition:all 0.3s; }
+        .timeline-dot { position:absolute; left:-28px; top:2px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; transition:all 0.3s; }
+        .track-nav { background:rgba(10,10,10,0.75); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,0.06); padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; }
+        .track-logo-badge { width:28px; height:28px; background:#39ff14; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; color:#000; }
+        .track-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:8px; text-align:center; }
+        .track-status-label { color:#555; font-size:12px; letter-spacing:3px; margin-bottom:6px; }
+        .track-timeline-label { font-size:12px; letter-spacing:3px; color:#555; margin-bottom:16px; font-weight:700; }
         .timeline-dot.done { background:#39ff14; color:#000; box-shadow:0 0 12px rgba(57,255,20,0.5); }
         .timeline-dot.pending { background:#111; color:#444; border:1px solid #333; }
         .status-card { background:#111; border:1px solid #1a1a1a; padding:24px; margin-bottom:16px; border-left:3px solid #39ff14; }
@@ -68,9 +74,9 @@ export default function TrackingPage() {
         .nav-link:hover::after { width:100%; }
       `}</style>
 
-      <nav style={{ background: "rgba(10,10,10,0.75)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <nav className="track-nav">
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <div style={{ width: 28, height: 28, background: "#39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 14, color: "#000" }}>J</div>
+          <div className="track-logo-badge">J</div>
           <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>
             JERSEY<span style={{ color: "#39ff14" }}>VAULT</span>
           </span>
@@ -83,20 +89,23 @@ export default function TrackingPage() {
       </nav>
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "48px 24px" }}>
-        <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 11, fontWeight: 700, marginBottom: 8, textAlign: "center" }}>SHIPMENT STATUS</p>
+        <p className="track-eyebrow">SHIPMENT STATUS</p>
         <h1 style={{ fontSize: "clamp(36px,8vw,56px)", fontWeight: 900, textAlign: "center", lineHeight: 0.95 }}>
           TRACK YOUR <span style={{ color: "#39ff14" }}>ORDER</span>
         </h1>
 
         <div style={{ display: "flex", marginTop: 32, gap: 0 }}>
+          <label htmlFor="track-order-id" className="sr-only">Order ID</label>
           <input
+            id="track-order-id"
             className="track-input"
+            aria-label="Order ID"
             value={inputId}
             onChange={(e) => setInputId(e.target.value.toUpperCase())}
             onKeyDown={(e) => e.key === "Enter" && handleTrack()}
             placeholder="ENTER ORDER ID"
           />
-          <button className="track-btn" onClick={handleTrack}>
+          <button type="button" className="track-btn" onClick={handleTrack}>
             {loading ? "..." : "TRACK →"}
           </button>
         </div>
@@ -106,7 +115,7 @@ export default function TrackingPage() {
         {order && (
           <div style={{ marginTop: 32, animation: "fadeUp 0.4s ease" }}>
             <div className="status-card">
-              <div style={{ color: "#555", fontSize: 11, letterSpacing: 3, marginBottom: 6 }}>CURRENT STATUS</div>
+              <div className="track-status-label">CURRENT STATUS</div>
               <div style={{ fontSize: 28, fontWeight: 900, color: statusColors[currentStatus + 1] || "#39ff14" }}>
                 {statusLabels[currentStatus + 1] || "PROCESSING"}
               </div>
@@ -114,13 +123,13 @@ export default function TrackingPage() {
             </div>
 
             <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 24 }}>
-              <div style={{ fontSize: 11, letterSpacing: 3, color: "#555", marginBottom: 16, fontWeight: 700 }}>DELIVERY TIMELINE</div>
+              <div className="track-timeline-label">DELIVERY TIMELINE</div>
               <div className="timeline-wrap">
                 <div className="timeline-line" />
                 {timeline.map((step, i) => {
                   const done = step.done ?? i <= currentStatus;
                   return (
-                    <div key={i} className="timeline-step">
+                    <div key={step.label} className="timeline-step">
                       <div className={`timeline-dot ${done ? "done" : "pending"}`}>{done ? (step.icon || "✓") : "·"}</div>
                       <div style={{ fontWeight: 900, fontSize: 14, letterSpacing: 2, color: done ? "#fff" : "#444" }}>{step.label}</div>
                       {step.sub && <div style={{ color: "#555", fontSize: 12, marginTop: 4, fontFamily: "'Barlow',sans-serif" }}>{step.sub}</div>}
@@ -131,8 +140,8 @@ export default function TrackingPage() {
             </div>
 
             <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginTop: 16 }}>
-              {order.items.map((item, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: i < order.items.length - 1 ? "1px solid #1a1a1a" : "none" }}>
+              {order.items.map((item) => (
+                <div key={`${item.name}-${item.size}-${item.qty}`} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
                   <div style={{ fontWeight: 700, letterSpacing: 1 }}>{item.name} ×{item.qty}</div>
                   <div style={{ color: "#39ff14", fontWeight: 900 }}>₹{item.price * item.qty}</div>
                 </div>

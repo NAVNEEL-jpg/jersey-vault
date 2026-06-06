@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { API_BASE } from '../config/api';
 import logo from "../assets/jerseyvault-logo.jpeg";
 
 export default function AuthPage() {
@@ -71,9 +72,32 @@ export default function AuthPage() {
         #jv-auth-root .auth-field.err    { border-color: #ff4444; }
         #jv-auth-root .auth-field::placeholder { color: #52525b; }
 
+        #jv-auth-root .auth-nav {
+          background: rgba(10,10,10,0.95); border-bottom: 1px solid #1a1a1a;
+          padding: 0 24px; height: 60px; display: flex; align-items: center;
+          justify-content: space-between; position: sticky; top: 0; z-index: 50;
+        }
+        #jv-auth-root .auth-bg-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        #jv-auth-root .auth-bg-blob { position: absolute; top: 10%; left: -10%; width: 500px; height: 500px; border-radius: 50%; background: #39ff14; filter: blur(120px); }
+        #jv-auth-root .auth-bg-blob2 { position: absolute; bottom: 10%; right: -10%; width: 400px; height: 400px; border-radius: 50%; background: #00aaff; filter: blur(120px); }
+        #jv-auth-root .auth-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; position: relative; z-index: 1; }
+        #jv-auth-root .auth-success-icon { width: 90px; height: 90px; border-radius: 50%; background: #39ff1420; border: 2px solid #39ff14; display: flex; align-items: center; justify-content: center; font-size: 42px; margin: 0 auto 24px; }
+        #jv-auth-root .auth-back-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 13px; letter-spacing: 2px; margin-bottom: 24px; display: flex; align-items: center; gap: 6px; }
+        #jv-auth-root .auth-store-btn { margin-top: 28px; background: #39ff14; color: #000; border: none; padding: 14px 36px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 14px; letter-spacing: 3px; cursor: pointer; }
+        #jv-auth-root .auth-error { color: #ff4444; font-size: 12px; letter-spacing: 1px; }
+        #jv-auth-root .auth-error.mb { margin-bottom: 12px; }
+        #jv-auth-root .auth-error.mt { margin-top: 4px; }
+        #jv-auth-root .auth-divider-text { color: #333; font-size: 12px; letter-spacing: 2px; }
+        #jv-auth-root .auth-strength-label { font-size: 12px; letter-spacing: 2px; font-weight: 700; }
+        #jv-auth-root .auth-match-ok { color: #39ff14; font-size: 12px; margin-top: 4px; letter-spacing: 1px; }
+        #jv-auth-root .auth-text-link { background:none; border:none; padding:0; font:inherit; cursor:pointer; color:#555; font-size:12px; letter-spacing:2px; transition:color 0.2s; text-decoration:none; }
+        #jv-auth-root .auth-text-link:hover { color:#39ff14; }
+        #jv-auth-root .auth-text-link-accent { background:none; border:none; padding:0; font:inherit; cursor:pointer; color:#39ff14; font-weight:700; letter-spacing:2px; }
+        #jv-auth-root .auth-terms { color: #333; font-size: 12px; text-align: center; margin-top: 14px; font-family: 'Barlow', sans-serif; letter-spacing: 1px; line-height: 1.6; }
+
         #jv-auth-root .auth-label {
           font-family: 'Barlow', sans-serif;
-          font-size: 11px; letter-spacing: 3px; color: #a1a1aa;
+          font-size: 12px; letter-spacing: 3px; color: #a1a1aa;
           margin-bottom: 7px; font-weight: 600; display: block;
           text-transform: uppercase;
         }
@@ -143,7 +167,7 @@ export default function AuthPage() {
   const validate = () => {
     const e = {};
     if (mode === "signup" && !form.name.trim()) e.name = "Name is required";
-    if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Enter a valid email";
+    if (!/\S+@\S+\.\S+/.test(form.email.trim())) e.email = "Enter a valid email";
     if (mode === "signup" && !/^\d{7,15}$/.test(form.phone)) e.phone = "Enter valid phone number";
     if (form.password.length < 6) e.password = "Minimum 6 characters";
     if (mode === "signup" && form.password !== form.confirm) e.confirm = "Passwords don't match";
@@ -154,26 +178,57 @@ export default function AuthPage() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
+    const normalizedEmail = form.email.trim().toLowerCase();
     if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+      const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: form.password });
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
       setLoading(false);
       navigate('/', { replace: true });
     } else {
-      const { error } = await supabase.auth.signUp({
-        email: form.email, password: form.password,
-        options: { data: { full_name: form.name, phone: `${form.countryCode}${form.phone}` } }
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: form.password,
+        options: { data: { full_name: form.name.trim(), phone: `${form.countryCode}${form.phone}` } }
       });
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+
+      const token = data?.session?.access_token;
+      if (token) {
+        try {
+          const response = await fetch(`${API_BASE}/api/users/save`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name: form.name.trim(),
+              full_name: form.name.trim(),
+              phone: `${form.countryCode}${form.phone}`,
+            }),
+          });
+
+          if (!response.ok) {
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.message || "Profile creation failed");
+          }
+        } catch (profileError) {
+          setErrors({ email: profileError.message });
+          setLoading(false);
+          return;
+        }
+      }
+
       setLoading(false);
       setSuccess(true);
     }
   };
 
   const handleForgot = async () => {
-    if (!/\S+@\S+\.\S+/.test(forgotEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
+    const normalizedEmail = forgotEmail.trim().toLowerCase();
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
     if (error) { setErrors({ forgot: error.message }); setLoading(false); return; }
     setLoading(false);
     setForgotSent(true);
@@ -211,11 +266,7 @@ export default function AuthPage() {
     }}>
 
       {/* NAV */}
-      <nav style={{
-        background: "rgba(10,10,10,0.95)", borderBottom: "1px solid #1a1a1a",
-        padding: "0 24px", height: 60, display: "flex", alignItems: "center",
-        justifyContent: "space-between", position: "sticky", top: 0, zIndex: 50
-      }}>
+      <nav className="auth-nav">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <img src={logo} alt="JerseyVault" style={{ width: 36, height: 36, objectFit: "contain", mixBlendMode: "screen" }} />
           <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>
@@ -226,31 +277,30 @@ export default function AuthPage() {
       </nav>
 
       {/* BG BLOBS */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div className="auth-bg-blob"  style={{ position: "absolute", top: "10%",    left: "-10%",  width: 500, height: 500, borderRadius: "50%", background: "#39ff14", filter: "blur(120px)" }} />
-        <div className="auth-bg-blob2" style={{ position: "absolute", bottom: "10%", right: "-10%", width: 400, height: 400, borderRadius: "50%", background: "#00aaff", filter: "blur(120px)" }} />
+      <div className="auth-bg-wrap">
+        <div className="auth-bg-blob" />
+        <div className="auth-bg-blob2" />
       </div>
 
       {/* MAIN */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px", position: "relative", zIndex: 1 }}>
+      <div className="auth-main">
         <div className="auth-panel" style={{ width: "100%", maxWidth: 440 }}>
 
           {success ? (
             <div style={{ textAlign: "center" }} className="auth-fade-up">
-              <div className="auth-pop-in" style={{ width: 90, height: 90, borderRadius: "50%", background: "#39ff1420", border: "2px solid #39ff14", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, margin: "0 auto 24px" }}>✓</div>
+              <div className="auth-pop-in auth-success-icon">✓</div>
               <h2 style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>ACCOUNT CREATED!</h2>
               <p style={{ color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>
                 Welcome to JerseyVault, {form.name}!
               </p>
-              <button onClick={() => navigate('/', { replace: true })}
-                style={{ marginTop: 28, background: "#39ff14", color: "#000", border: "none", padding: "14px 36px", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 14, letterSpacing: 3, cursor: "pointer" }}>
+              <button type="button" className="auth-store-btn" onClick={() => navigate('/', { replace: true })}>
                 GO TO STORE →
               </button>
             </div>
 
           ) : mode === "forgot" ? (
             <div className="auth-fade-up">
-              <button onClick={() => switchMode("login")} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 13, letterSpacing: 2, marginBottom: 24, display: "flex", alignItems: "center", gap: 6 }}>← BACK TO LOGIN</button>
+              <button type="button" className="auth-back-btn" onClick={() => switchMode("login")}>← BACK TO LOGIN</button>
               <h2 style={{ fontSize: 34, fontWeight: 800, marginBottom: 6, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>FORGOT <span style={{ color: "#39ff14" }}>PASSWORD?</span></h2>
               <p style={{ color: "#71717a", fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginBottom: 28, lineHeight: 1.5 }}>Enter your email and we'll send you a reset link.</p>
               {forgotSent ? (
@@ -261,12 +311,12 @@ export default function AuthPage() {
                 </div>
               ) : (
                 <>
-                  <label className="auth-label">EMAIL ADDRESS</label>
+                  <label className="auth-label" htmlFor="auth-forgot-email">EMAIL ADDRESS</label>
                   <div className="auth-field-wrap">
-                    <input className={`auth-field${errors.forgot ? " err" : ""}`} placeholder="you@email.com" value={forgotEmail} onChange={e => { setForgotEmail(e.target.value); setErrors({}); }} />
+                    <input id="auth-forgot-email" className={`auth-field${errors.forgot ? " err" : ""}`} placeholder="you@email.com" value={forgotEmail} onChange={e => { setForgotEmail(e.target.value); setErrors({}); }} />
                   </div>
-                  {errors.forgot && <div style={{ color: "#ff4444", fontSize: 11, marginBottom: 12, letterSpacing: 1 }}>{errors.forgot}</div>}
-                  <button className="auth-submit-btn" style={{ marginTop: 16 }} onClick={handleForgot}>
+                  {errors.forgot && <div className="auth-error mb">{errors.forgot}</div>}
+                  <button type="button" className="auth-submit-btn" style={{ marginTop: 16 }} onClick={handleForgot}>
                     {loading
                       ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}><span style={spinnerStyle} />SENDING...</span>
                       : "SEND RESET LINK →"}
@@ -290,12 +340,12 @@ export default function AuthPage() {
 
               {/* TABS */}
               <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28 }}>
-                <button className={`auth-tab${mode === "login"  ? " active" : ""}`} onClick={() => switchMode("login")}>LOGIN</button>
-                <button className={`auth-tab${mode === "signup" ? " active" : ""}`} onClick={() => switchMode("signup")}>SIGN UP</button>
+                <button type="button" className={`auth-tab${mode === "login"  ? " active" : ""}`} onClick={() => switchMode("login")}>LOGIN</button>
+                <button type="button" className={`auth-tab${mode === "signup" ? " active" : ""}`} onClick={() => switchMode("signup")}>SIGN UP</button>
               </div>
 
               {/* GOOGLE */}
-              <button className="auth-google-btn" style={{ marginBottom: 20 }} onClick={handleGoogle}>
+              <button type="button" className="auth-google-btn" style={{ marginBottom: 20 }} onClick={handleGoogle}>
                 <svg width="18" height="18" viewBox="0 0 48 48">
                   <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                   <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -307,49 +357,49 @@ export default function AuthPage() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
                 <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
-                <span style={{ color: "#333", fontSize: 11, letterSpacing: 2 }}>OR</span>
+                <span className="auth-divider-text">OR</span>
                 <div style={{ flex: 1, height: 1, background: "#1a1a1a" }} />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {mode === "signup" && (
                   <div>
-                    <label className="auth-label">FULL NAME</label>
+                    <label className="auth-label" htmlFor="auth-name">FULL NAME</label>
                     <div className="auth-field-wrap">
-                      <input className={`auth-field${errors.name ? " err" : ""}`} placeholder="Neel Kumar" value={form.name} onChange={e => update("name", e.target.value)} />
+                      <input id="auth-name" className={`auth-field${errors.name ? " err" : ""}`} placeholder="Neel Kumar" value={form.name} onChange={e => update("name", e.target.value)} />
                     </div>
-                    {errors.name && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.name}</div>}
+                    {errors.name && <div className="auth-error mt">{errors.name}</div>}
                   </div>
                 )}
 
                 <div>
-                  <label className="auth-label">EMAIL ADDRESS</label>
+                  <label className="auth-label" htmlFor="auth-email">EMAIL ADDRESS</label>
                   <div className="auth-field-wrap">
-                    <input className={`auth-field${errors.email ? " err" : ""}`} placeholder="you@email.com" value={form.email} onChange={e => update("email", e.target.value)} />
+                    <input id="auth-email" className={`auth-field${errors.email ? " err" : ""}`} placeholder="you@email.com" value={form.email} onChange={e => update("email", e.target.value)} />
                   </div>
-                  {errors.email && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.email}</div>}
+                  {errors.email && <div className="auth-error mt">{errors.email}</div>}
                 </div>
 
                 {mode === "signup" && (
                   <div>
-                    <label className="auth-label">PHONE NUMBER</label>
+                    <label className="auth-label" htmlFor="auth-phone">PHONE NUMBER</label>
                     <div className="auth-field-wrap" style={{ display: "flex", gap: 8 }}>
-                      <select className="auth-field" style={{ width: "90px", padding: "14px 8px", fontSize: "14px" }} value={form.countryCode} onChange={e => update("countryCode", e.target.value)}>
+                      <select id="auth-country-code" className="auth-field" style={{ width: "90px", padding: "14px 8px", fontSize: "14px" }} value={form.countryCode} onChange={e => update("countryCode", e.target.value)} aria-label="Country code">
                         {COUNTRY_CODES.map(c => <option key={c.code + c.country} value={c.code}>{c.country} {c.code}</option>)}
                       </select>
-                      <input className={`auth-field${errors.phone ? " err" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => update("phone", e.target.value)} inputMode="numeric" />
+                      <input id="auth-phone" className={`auth-field${errors.phone ? " err" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => update("phone", e.target.value)} inputMode="numeric" />
                     </div>
-                    {errors.phone && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.phone}</div>}
+                    {errors.phone && <div className="auth-error mt">{errors.phone}</div>}
                   </div>
                 )}
 
                 <div>
-                  <label className="auth-label">PASSWORD</label>
+                  <label className="auth-label" htmlFor="auth-password">PASSWORD</label>
                   <div className="auth-field-wrap">
-                    <input className={`auth-field${errors.password ? " err" : ""}`} type={showPass ? "text" : "password"} placeholder="Min. 6 characters" value={form.password} onChange={e => update("password", e.target.value)} style={{ paddingRight: 44 }} />
-                    <button className="auth-eye-btn" onClick={() => setShowPass(p => !p)}>{showPass ? "🙈" : "👁️"}</button>
+                    <input id="auth-password" className={`auth-field${errors.password ? " err" : ""}`} type={showPass ? "text" : "password"} placeholder="Min. 6 characters" value={form.password} onChange={e => update("password", e.target.value)} style={{ paddingRight: 44 }} />
+                    <button type="button" className="auth-eye-btn" onClick={() => setShowPass(p => !p)}>{showPass ? "🙈" : "👁️"}</button>
                   </div>
-                  {errors.password && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.password}</div>}
+                  {errors.password && <div className="auth-error mt">{errors.password}</div>}
                   {mode === "signup" && form.password.length > 0 && (
                     <div style={{ marginTop: 8 }}>
                       <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
@@ -357,36 +407,33 @@ export default function AuthPage() {
                           <div key={i} style={{ flex: 1, height: 3, background: i <= strength ? strengthColors[strength] : "#222", transition: "background 0.3s" }} />
                         ))}
                       </div>
-                      <span style={{ fontSize: 10, letterSpacing: 2, color: strengthColors[strength], fontWeight: 700 }}>{strengthLabels[strength]}</span>
+                      <span className="auth-strength-label" style={{ color: strengthColors[strength] }}>{strengthLabels[strength]}</span>
                     </div>
                   )}
                 </div>
 
                 {mode === "signup" && (
                   <div>
-                    <label className="auth-label">CONFIRM PASSWORD</label>
+                    <label className="auth-label" htmlFor="auth-confirm">CONFIRM PASSWORD</label>
                     <div className="auth-field-wrap">
-                      <input className={`auth-field${errors.confirm ? " err" : ""}`} type={showConfirm ? "text" : "password"} placeholder="Re-enter password" value={form.confirm} onChange={e => update("confirm", e.target.value)} style={{ paddingRight: 44 }} />
-                      <button className="auth-eye-btn" onClick={() => setShowConfirm(p => !p)}>{showConfirm ? "🙈" : "👁️"}</button>
+                      <input id="auth-confirm" className={`auth-field${errors.confirm ? " err" : ""}`} type={showConfirm ? "text" : "password"} placeholder="Re-enter password" value={form.confirm} onChange={e => update("confirm", e.target.value)} style={{ paddingRight: 44 }} />
+                      <button type="button" className="auth-eye-btn" onClick={() => setShowConfirm(p => !p)}>{showConfirm ? "🙈" : "👁️"}</button>
                     </div>
-                    {errors.confirm && <div style={{ color: "#ff4444", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>{errors.confirm}</div>}
-                    {form.confirm && form.password === form.confirm && <div style={{ color: "#39ff14", fontSize: 11, marginTop: 4, letterSpacing: 1 }}>✓ Passwords match</div>}
+                    {errors.confirm && <div className="auth-error mt">{errors.confirm}</div>}
+                    {form.confirm && form.password === form.confirm && <div className="auth-match-ok">✓ Passwords match</div>}
                   </div>
                 )}
               </div>
 
               {mode === "login" && (
                 <div style={{ textAlign: "right", marginTop: 10 }}>
-                  <span onClick={() => switchMode("forgot")}
-                    style={{ color: "#555", fontSize: 12, letterSpacing: 2, cursor: "pointer", transition: "color 0.2s" }}
-                    onMouseEnter={e => e.target.style.color = "#39ff14"}
-                    onMouseLeave={e => e.target.style.color = "#555"}>
+                  <button type="button" className="auth-text-link" onClick={() => switchMode("forgot")}>
                     FORGOT PASSWORD?
-                  </span>
+                  </button>
                 </div>
               )}
 
-              <button className="auth-submit-btn" style={{ marginTop: 22 }} onClick={handleSubmit}>
+              <button type="button" className="auth-submit-btn" style={{ marginTop: 22 }} onClick={handleSubmit}>
                 {loading
                   ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                       <span style={spinnerStyle} />
@@ -396,17 +443,16 @@ export default function AuthPage() {
               </button>
 
               {mode === "signup" && (
-                <p style={{ color: "#333", fontSize: 11, textAlign: "center", marginTop: 14, fontFamily: "'Barlow', sans-serif", letterSpacing: 1, lineHeight: 1.6 }}>
-                  By signing up you agree to our <span style={{ color: "#555", cursor: "pointer" }}>Terms of Service</span> and <span style={{ color: "#555", cursor: "pointer" }}>Privacy Policy</span>
+                <p className="auth-terms">
+                  By signing up you agree to our <Link to="/terms" className="auth-text-link">Terms of Service</Link> and <Link to="/privacy" className="auth-text-link">Privacy Policy</Link>
                 </p>
               )}
 
               <p style={{ textAlign: "center", marginTop: 20, color: "#444", fontSize: 13, letterSpacing: 1 }}>
                 {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-                <span onClick={() => switchMode(mode === "login" ? "signup" : "login")}
-                  style={{ color: "#39ff14", cursor: "pointer", fontWeight: 700, letterSpacing: 2 }}>
+                <button type="button" className="auth-text-link-accent" onClick={() => switchMode(mode === "login" ? "signup" : "login")}>
                   {mode === "login" ? "SIGN UP" : "LOGIN"}
-                </span>
+                </button>
               </p>
             </div>
           )}

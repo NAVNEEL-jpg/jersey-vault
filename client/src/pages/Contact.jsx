@@ -43,11 +43,25 @@ export default function Contact() {
         .contact-card.ig:hover { border-left-color:#bc1888; box-shadow:0 12px 40px rgba(188,24,136,0.25); }
         .number-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
         .number { font-size:22px; font-weight:900; letter-spacing:2px; color:#fff; }
-        .sublabel { font-size:11px; letter-spacing:3px; color:#555; font-weight:700; margin-bottom:16px; }
+        .sublabel { font-size:12px; letter-spacing:3px; color:#555; font-weight:700; margin-bottom:16px; }
+        .legal-nav { background:rgba(10,10,10,0.95); border-bottom:1px solid #1a1a1a; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+        .legal-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:8px; }
+        .contact-row { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+        .contact-icon-circle { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+        .contact-icon-circle.wa { background:#25D36615; border:1px solid #25D36640; }
+        .contact-icon-circle.ig { background:#bc188815; border:1px solid #bc188840; }
+        .contact-cta { margin-top:16px; display:inline-block; padding:10px 24px; font-weight:900; font-size:13px; letter-spacing:3px; }
+        .contact-cta.wa { background:#25D366; color:#000; }
+        .contact-cta.ig { background:linear-gradient(90deg,#f09433,#bc1888); color:#fff; }
+        .contact-region-label { font-size:12px; letter-spacing:2px; color:#555; margin-bottom:2px; }
+        .contact-hours-label { font-size:12px; letter-spacing:3px; color:#39ff14; font-weight:700; margin-bottom:8px; }
+        .legal-footer-copy { color:#333; font-size:12px; letter-spacing:2px; }
+        .legal-footer-link { color:#666; font-size:12px; letter-spacing:2px; text-decoration:none; transition:color 0.2s; }
+        .contact-hint { font-size:12px; font-family:'Barlow',sans-serif; color:#555; }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ background:"rgba(10,10,10,0.95)", borderBottom:"1px solid #1a1a1a", padding:"0 24px", height:60, display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50 }}>
+      <nav className="legal-nav">
         <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
           <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
           <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
@@ -64,7 +78,7 @@ export default function Contact() {
 
         {/* HEADER */}
         <div style={{ marginBottom:40, animation:"fadeUp 0.4s ease" }}>
-          <p style={{ color:"#39ff14", letterSpacing:6, fontSize:11, fontWeight:700, marginBottom:8 }}>GET IN TOUCH</p>
+          <p className="legal-eyebrow">GET IN TOUCH</p>
           <h1 style={{ fontSize:"clamp(36px,8vw,64px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9 }}>
             CONTACT <span style={{ color:"#39ff14" }}>US</span>
           </h1>
@@ -82,20 +96,20 @@ export default function Contact() {
           style={{ marginBottom:12 }}
         >
           <div className="sublabel">WHATSAPP — FASTEST RESPONSE</div>
-          <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20 }}>
-            <div style={{ width:56, height:56, background:"#25D36615", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid #25D36640" }}>
+          <div className="contact-row">
+            <div className="contact-icon-circle wa">
               <WhatsAppIcon />
             </div>
             <div>
               <div style={{ fontSize:13, letterSpacing:3, color:"#25D366", fontWeight:700, marginBottom:4 }}>WHATSAPP US</div>
-              <div style={{ fontSize:11, fontFamily:"'Barlow',sans-serif", color:"#555" }}>Tap to open WhatsApp chat</div>
+              <div className="contact-hint">Tap to open WhatsApp chat</div>
             </div>
           </div>
 
           <div className="number-row">
             <div style={{ width:8, height:8, borderRadius:"50%", background:"#25D366", flexShrink:0 }} />
             <div>
-              <div style={{ fontSize:11, letterSpacing:2, color:"#555", marginBottom:2 }}>INDIA</div>
+              <div className="contact-region-label">INDIA</div>
               <div className="number">+91 70297 86817</div>
             </div>
           </div>
@@ -103,14 +117,12 @@ export default function Contact() {
           <div className="number-row">
             <div style={{ width:8, height:8, borderRadius:"50%", background:"#25D366", flexShrink:0 }} />
             <div>
-              <div style={{ fontSize:11, letterSpacing:2, color:"#555", marginBottom:2 }}>INTERNATIONAL</div>
+              <div className="contact-region-label">INTERNATIONAL</div>
               <div className="number">+1 (579) 475-9370</div>
             </div>
           </div>
 
-          <div style={{ marginTop:16, display:"inline-block", background:"#25D366", color:"#000", padding:"10px 24px", fontWeight:900, fontSize:13, letterSpacing:3 }}>
-            CHAT ON WHATSAPP →
-          </div>
+          <div className="contact-cta wa">CHAT ON WHATSAPP →</div>
         </a>
 
         {/* INSTAGRAM CARD */}
@@ -122,29 +134,27 @@ export default function Contact() {
           style={{ marginBottom:12 }}
         >
           <div className="sublabel">INSTAGRAM — DM US ANYTIME</div>
-          <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20 }}>
-            <div style={{ width:56, height:56, background:"#bc188815", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", border:"1px solid #bc188840" }}>
+          <div className="contact-row">
+            <div className="contact-icon-circle ig">
               <InstagramIcon />
             </div>
             <div>
               <div style={{ fontSize:13, letterSpacing:3, color:"#e6683c", fontWeight:700, marginBottom:4 }}>FOLLOW & DM US</div>
-              <div style={{ fontSize:11, fontFamily:"'Barlow',sans-serif", color:"#555" }}>Tap to open Instagram profile</div>
+              <div className="contact-hint">Tap to open Instagram profile</div>
             </div>
           </div>
 
           <div className="number-row">
             <div style={{ width:8, height:8, borderRadius:"50%", background:"#bc1888", flexShrink:0 }} />
             <div>
-              <div style={{ fontSize:11, letterSpacing:2, color:"#555", marginBottom:2 }}>INSTAGRAM HANDLE</div>
+              <div className="contact-region-label">INSTAGRAM HANDLE</div>
               <div className="number" style={{ background:"linear-gradient(90deg,#f09433,#bc1888)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
                 @the_jerseyvault
               </div>
             </div>
           </div>
 
-          <div style={{ marginTop:16, display:"inline-block", background:"linear-gradient(90deg,#f09433,#bc1888)", color:"#fff", padding:"10px 24px", fontWeight:900, fontSize:13, letterSpacing:3 }}>
-            OPEN INSTAGRAM →
-          </div>
+          <div className="contact-cta ig">OPEN INSTAGRAM →</div>
         </a>
 
         {/* EMAIL */}
@@ -156,7 +166,7 @@ export default function Contact() {
 
         {/* HOURS */}
         <div style={{ background:"#39ff1410", border:"1px solid #39ff1430", padding:"20px 24px", marginTop:12, animation:"fadeUp 0.4s ease 0.4s both" }}>
-          <div style={{ fontSize:11, letterSpacing:3, color:"#39ff14", fontWeight:700, marginBottom:8 }}>SUPPORT HOURS</div>
+          <div className="contact-hours-label">SUPPORT HOURS</div>
           <div style={{ fontFamily:"'Barlow',sans-serif", fontSize:14, color:"#aaa", lineHeight:1.8 }}>
             Monday – Saturday: 10:00 AM – 8:00 PM IST<br />
             Sunday: 11:00 AM – 5:00 PM IST
@@ -166,10 +176,10 @@ export default function Contact() {
 
       <footer style={{ borderTop:"1px solid #1a1a1a", padding:"32px 24px", textAlign:"center", marginTop:48 }}>
         <div style={{ fontWeight:900, fontSize:22, letterSpacing:4, marginBottom:8 }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></div>
-        <p style={{ color:"#333", fontSize:11, letterSpacing:2 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+        <p className="legal-footer-copy">© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
         <div style={{ display:"flex", justifyContent:"center", gap:24, marginTop:16 }}>
           {[["PRIVACY","/privacy"],["TERMS","/terms"],["CONTACT","/contact"],["FAQ","/faq"]].map(([l,h]) => (
-            <Link key={l} to={h} style={{ color:"#666", fontSize:11, letterSpacing:2, textDecoration:"none", transition:"color 0.2s" }}
+            <Link key={l} to={h} className="legal-footer-link"
               onMouseEnter={e=>e.target.style.color="#39ff14"} onMouseLeave={e=>e.target.style.color="#666"}>{l}</Link>
           ))}
         </div>

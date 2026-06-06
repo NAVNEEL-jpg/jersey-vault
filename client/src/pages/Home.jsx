@@ -18,17 +18,8 @@ const FLAME_ID = "jv-flame";
 
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   return (
-    <div style={{ position: "relative", display: "inline-block", lineHeight: 0.9 }}>
-      <span style={{
-        fontSize: "clamp(40px,8vw,100px)",
-        fontWeight: 900,
-        fontStyle: "italic",
-        letterSpacing: "-2px",
-        color: "#ffffff",
-        display: "block",
-        fontFamily: "'Barlow Condensed', sans-serif",
-        userSelect: "none",
-      }}>
+    <div className="flame-text-wrap">
+      <span className="flame-text-main">
         {text}
       </span>
       <svg
@@ -123,18 +114,18 @@ function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobi
   return (
     <>
       <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
-      <span className="nav-link" onClick={scrollToShop}>SHOP</span>
+      <button type="button" className="nav-link" onClick={scrollToShop}>SHOP</button>
       <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
       <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
-      <span className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</span>
+      <button type="button" className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</button>
       <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
       {user ? (
-        <span className="nav-link" onClick={handleLogout}>LOGOUT</span>
+        <button type="button" className="nav-link" onClick={handleLogout}>LOGOUT</button>
       ) : (
         <Link to="/auth" className="nav-link" onClick={() => setMobileMenuOpen(false)}>LOGIN</Link>
       )}
       {isAdmin && (
-        <span className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</span>
+        <button type="button" className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</button>
       )}
     </>
   );
@@ -186,10 +177,13 @@ export default function JerseyStore() {
   // Cart validation runs only when searchParams changes (i.e. when products load).
   // We read the latest cart via a functional setState pattern instead.
   useEffect(() => {
+    let cancelled = false;
+    let scrollTimer;
+
     const teamId = searchParams.get("team");
     if (teamId) {
       supabase.from("teams").select("name").eq("id", teamId).single()
-        .then(({ data }) => { if (data) setActiveTeamName(data.name); });
+        .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
     } else {
       setActiveTeamName("");
     }
@@ -198,14 +192,14 @@ export default function JerseyStore() {
     if (teamId) query = query.eq("team_id", teamId);
 
     query.then(({ data, error }) => {
+      if (cancelled) return;
       if (!error && data) {
         setJerseys(data);
         if (teamId) {
-          setTimeout(() => {
+          scrollTimer = setTimeout(() => {
             document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
           }, 100);
         }
-        // FIX: Read latest cart state functionally to avoid stale closure
         const validIds = new Set(data.map(p => p.id));
         setCart(prevCart => {
           const filteredCart = prevCart.filter(item => validIds.has(item.id));
@@ -219,6 +213,11 @@ export default function JerseyStore() {
       }
       setLoadingProducts(false);
     });
+
+    return () => {
+      cancelled = true;
+      if (scrollTimer) clearTimeout(scrollTimer);
+    };
   }, [searchParams, showToast]);
 
   useEffect(() => {
@@ -397,6 +396,7 @@ const matchesSearch =
   }
 
   .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
+  button.nav-link { background:none; border:none; padding:0; font:inherit; }
   .nav-link:hover { color:#39ff14; }
 
   .card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; height:420px; }
@@ -618,7 +618,7 @@ letter-spacing: 4px !important;
 
 #jv-root .size-label {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 5px;
   color: var(--text-muted);
@@ -753,8 +753,10 @@ letter-spacing: 4px !important;
   /* ══════════════════════════════════════
      MODAL
   ══════════════════════════════════════ */
-  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:100; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(8px); padding:16px; }
-  .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; }
+  .modal-bg { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .modal-bg-dismiss { position:absolute; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); border:none; padding:0; cursor:pointer; width:100%; height:100%; }
+  .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; }
+  .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; position:relative; z-index:1; }
   .modal-img { width:100%; height:240px; object-fit:cover; display:block; }
   .modal-img-placeholder { width:100%; height:240px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
 
@@ -767,14 +769,14 @@ letter-spacing: 4px !important;
   .cart-item:hover { background:#0c0c0c; }
   .cart-item-img { width:56px; height:56px; object-fit:cover; background:#0d0d0d; flex-shrink:0; border:1px solid #1a1a1a; border-radius:2px; }
   .cart-item-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:17px; letter-spacing:1px; color:#eee; line-height:1.1; }
-  .cart-item-meta { font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:3px; color:#333; margin-top:3px; font-weight:700; }
+  .cart-item-meta { font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:3px; color:#333; margin-top:3px; font-weight:700; }
   .cart-item-price { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:900; color:#39ff14; margin-top:6px; letter-spacing:1px; animation: priceReveal 0.3s ease; }
   .cart-tag { display:inline-flex; align-items:center; gap:6px; margin-top:5px; }
-  .cart-tag-size { background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:2px; padding:3px 8px; border-radius:2px; }
+  .cart-tag-size { background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:3px 8px; border-radius:2px; }
   .cart-tag-qty { color:#333; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; }
 
   .cart-total-row { display:flex; justify-content:space-between; align-items:center; padding:16px 20px 8px; background:#050505; border-top:1px solid #141414; }
-  .cart-total-label { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:6px; color:#333; text-transform:uppercase; }
+  .cart-total-label { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:6px; color:#333; text-transform:uppercase; }
   .cart-total-amount { font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:36px; color:var(--green); letter-spacing:2px; line-height:1; animation: priceReveal 0.25s ease; }
 
   .search-input { background:#1a1a1a; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
@@ -783,8 +785,8 @@ letter-spacing: 4px !important;
   .skeleton { background:linear-gradient(90deg, #0f0f0f 25%, #161616 50%, #0f0f0f 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
   .logo-img { width:52px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.3) contrast(1.13) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; background:transparent; }
   .logo-wrap { display:flex; align-items:center; gap:8px; }
-  .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#c0392b; color:#fff; font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; border-radius:2px; }
-  .type-badge-card { position:absolute; top:12px; right:12px; font-size:9px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; background:rgba(0,0,0,0.75); border:1px solid rgba(57,255,20,0.3); color:var(--green); border-radius:2px; backdrop-filter:blur(4px); }
+  .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#c0392b; color:#fff; font-size:12px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; border-radius:2px; }
+  .type-badge-card { position:absolute; top:12px; right:12px; font-size:12px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; background:rgba(0,0,0,0.75); border:1px solid rgba(57,255,20,0.3); color:var(--green); border-radius:2px; backdrop-filter:blur(4px); }
   .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #151515; border-bottom:1px solid #151515; background:#070707; }
   .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #151515; }
   .stat-cell:last-child { border-right:none; }
@@ -811,7 +813,7 @@ letter-spacing: 4px !important;
 
   .cart-total-row { padding:12px 16px 8px; }
   .cart-total-amount { font-size:26px; }
-  .cart-total-label { font-size:11px; }
+  .cart-total-label { font-size:12px; }
   .cart-item { padding:12px 16px; gap:10px; }
   .cart-item-name { font-size:15px; }
   .cart-item-price { font-size:17px; }
@@ -854,24 +856,63 @@ letter-spacing: 4px !important;
   .cart-total-amount { font-size:22px; }
   .stat-cell { padding:10px 0; }
 }
+
+  .flame-text-wrap { position:relative; display:inline-block; line-height:0.9; }
+  .flame-text-main { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#fff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
+  .toast-banner { position:fixed; bottom:24px; right:24px; background:var(--green); color:#000; padding:13px 20px 13px 16px; font-weight:900; letter-spacing:2px; font-size:12px; z-index:999; animation:toastIn 0.35s cubic-bezier(0.23,1,0.32,1); max-width:calc(100vw - 48px); display:flex; align-items:center; gap:10px; border-radius:2px; box-shadow:0 8px 32px rgba(57,255,20,0.3); }
+  .toast-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(0,0,0,0.2); border-radius:50%; font-size:12px; flex-shrink:0; }
+  .site-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
+  .logo-title { font-weight:900; font-size:20px; letter-spacing:3px; color:#fff; }
+  .logo-title-accent { color:#39ff14; }
+  .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
+  .icon-action-btn { background:transparent; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s; }
+  .icon-action-btn:hover { color:#39ff14; }
+  .icon-cart-btn { gap:8px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:1px; }
+  .cart-count-inline { color:#39ff14; font-size:19px; font-weight:900; line-height:1; }
+  .mobile-search-gap { margin-bottom:8px; }
+  .hero-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(7,7,7,0.99) 100%); pointer-events:none; }
+  .hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
+  .hero-subtitle { color:#aaa; margin-top:20px; font-size:14px; letter-spacing:3px; font-family:'Barlow',sans-serif; font-weight:400; position:relative; z-index:1; }
+  .hero-cta-row { margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
+  .hero-btn-primary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:#39ff14; color:#000; border:none; padding:14px 40px; font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:16px; letter-spacing:5px; cursor:pointer; animation:pulse 2s infinite; border-radius:2px; }
+  .hero-btn-secondary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#fff; border:1px solid #2a2a2a; padding:14px 40px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:4px; cursor:pointer; border-radius:2px; transition:border-color 0.2s; }
+  .hero-divider { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); }
+  .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+  .stat-label { font-size:12px; letter-spacing:4px; color:#777; margin-top:4px; font-weight:700; }
+  .card-body { padding:16px 16px 0; flex:1; }
+  .card-title { font-size:15px; font-weight:900; letter-spacing:1px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; min-height:54px; }
+  .card-price { font-size:24px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
+  .stock-warning { font-size:12px; color:#e67e22; letter-spacing:3px; font-weight:700; }
+  .modal-close-btn { position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.8); border:1px solid #2a2a2a; color:#888; font-size:14px; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; z-index:2; font-family:'Barlow Condensed',sans-serif; font-weight:900; border-radius:2px; transition:border-color 0.2s, color 0.2s; }
+  .modal-close-btn:hover { border-color:#39ff14; color:#39ff14; }
+  .modal-type-badge { display:inline-block; font-size:12px; letter-spacing:4px; color:#000; font-weight:900; background:#39ff14; padding:3px 10px; border-radius:2px; }
+  .cart-overlay { position:fixed; inset:0; z-index:150; }
+  .cart-header { display:flex; align-items:center; justify-content:space-between; padding:20px; border-bottom:1px solid #111; }
+  .cart-count-badge { display:inline-block; margin-left:10px; background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:2px 8px; vertical-align:middle; border-radius:2px; }
+  .cart-close-btn { background:none; border:1px solid #1a1a1a; color:#444; font-size:14px; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; transition:border-color 0.2s, color 0.2s; border-radius:2px; }
+  .cart-close-btn:hover { border-color:#39ff14; color:#39ff14; }
+  .cart-remove-btn { background:none; border:1px solid #151515; color:#2a2a2a; cursor:pointer; font-size:12px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:2px; }
+  .cart-remove-btn:hover { border-color:#c0392b; color:#c0392b; background:rgba(192,57,43,0.08); }
+  .cart-shipping-note { font-size:12px; color:#888; margin-top:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; }
+  .cart-secure-note { text-align:center; color:#1a1a1a; font-size:12px; letter-spacing:3px; padding-bottom:16px; font-weight:700; }
 `}</style>
 
         {/* TOAST */}
         {toast && (
-          <div style={{ position: "fixed", bottom: 24, right: 24, background: "var(--green)", color: "#000", padding: "13px 20px 13px 16px", fontWeight: 900, letterSpacing: 2, fontSize: 12, zIndex: 999, animation: "toastIn 0.35s cubic-bezier(0.23,1,0.32,1)", maxWidth: "calc(100vw - 48px)", display: "flex", alignItems: "center", gap: 10, borderRadius: 2, boxShadow: "0 8px 32px rgba(57,255,20,0.3)" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20, height: 20, background: "rgba(0,0,0,0.2)", borderRadius: "50%", fontSize: 11, flexShrink: 0 }}>✓</span>
+          <div className="toast-banner">
+            <span className="toast-icon">✓</span>
             {toast}
           </div>
         )}
 
         {/* NAVBAR */}
-        <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(7,7,7,0.97)", backdropFilter: "blur(12px)", borderBottom: "1px solid #151515", padding: "0 20px 0 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, height: 64, animation: "slideDown 0.5s ease" }}>
+        <nav className="site-nav">
           <div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
             <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
-            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
+            <span className="logo-title">JERSEY<span className="logo-title-accent">VAULT</span></span>
           </div>
           <div className="desktop-search">
-            <input className="search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <input className="search-input" placeholder="SEARCH JERSEYS..." aria-label="Search jerseys" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
           {/* FIX: NavLinks is now a proper component */}
           <div className="desktop-nav-links">
@@ -885,10 +926,12 @@ letter-spacing: 4px !important;
               setCartOpen={setCartOpen}
             />
           </div>
-          <div className="nav-right" style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0, marginLeft: "auto" }}>
+          <div className="nav-right">
              {/* SEARCH ICON */}
              <div className="mobile-search-btn">
-             <button
+             <button type="button"
+ aria-label="Open search"
+ className="icon-action-btn"
  onClick={() => {
   setMobileMenuOpen(true);
 
@@ -897,18 +940,6 @@ letter-spacing: 4px !important;
     el?.focus();
   }, 100);
 }}
-  style={{
-    background:"transparent",
-    border:"none",
-    color:"#fff",
-    cursor:"pointer",
-    display:"flex",
-    alignItems:"center",
-    justifyContent:"center",
-    padding:0
-  }}
-  onMouseEnter={e => e.currentTarget.style.color="#39ff14"}
-  onMouseLeave={e => e.currentTarget.style.color="#fff"}
 >
   <svg
     width="22"
@@ -926,21 +957,20 @@ letter-spacing: 4px !important;
 </button>
 </div>
              {/* CART BUTTON */}
-            <button
+            <button type="button"
+              aria-label="Open cart"
+              className="icon-action-btn icon-cart-btn"
               onClick={() => setCartOpen(true)}
-              style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 15, letterSpacing: 1, padding: 0, transition: "color 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#39ff14"}
-              onMouseLeave={e => e.currentTarget.style.color = "#fff"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
               {cartCount > 0 && (
-                <span style={{ color: "#39ff14", fontSize: 19, fontWeight: 900, lineHeight: 1 }}>{cartCount}</span>
+                <span className="cart-count-inline">{cartCount}</span>
               )}
             </button>
-            <button className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
+            <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
               {mobileMenuOpen ? (
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
@@ -952,7 +982,7 @@ letter-spacing: 4px !important;
             </button>
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-            <input className="search-input h-search-input" placeholder="SEARCH JERSEYS..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom: 8 }} />
+            <input className="search-input h-search-input mobile-search-gap" placeholder="SEARCH JERSEYS..." aria-label="Search jerseys" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             {/* FIX: NavLinks component used in mobile menu too */}
             <NavLinks
               user={user}
@@ -972,30 +1002,30 @@ letter-spacing: 4px !important;
 
         {/* HERO */}
         <section className="hero-section" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(7,7,7,0.99) 100%)", pointerEvents: "none" }} />
-          <p style={{ color: "#39ff14", letterSpacing: 6, fontSize: 11, fontWeight: 700, marginBottom: 16, position: "relative", zIndex: 1, opacity: 0.8 }}>THE ULTIMATE COLLECTION</p>
+          <div className="hero-overlay" />
+          <p className="hero-eyebrow">THE ULTIMATE COLLECTION</p>
           <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 1 }}>
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
             <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
           </h1>
-          <p style={{ color: "#aaa", marginTop: 20, fontSize: 14, letterSpacing: 3, fontFamily: "'Barlow',sans-serif", fontWeight: 400, position: "relative", zIndex: 1 }}>Official jerseys from football, cricket &amp; basketball</p>
-          <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
-            <button onClick={scrollToShop} style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#39ff14", color: "#000", border: "none", padding: "14px 40px", fontFamily: "'Bebas Neue','Barlow Condensed',sans-serif", fontWeight: 400, fontSize: 16, letterSpacing: 5, cursor: "pointer", animation: "pulse 2s infinite", borderRadius: 2 }}>
+          <p className="hero-subtitle">Official jerseys from football, cricket &amp; basketball</p>
+          <div className="hero-cta-row">
+            <button type="button" className="hero-btn-primary" onClick={scrollToShop}>
               SHOP NOW
             </button>
-            <button onClick={() => navigate("/teams")} style={{ all: "unset", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "#fff", border: "1px solid #2a2a2a", padding: "14px 40px", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: 4, cursor: "pointer", borderRadius: 2, transition: "border-color 0.2s" }}>
+            <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")}>
               VIEW TEAMS
             </button>
           </div>
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, #39ff14, transparent)" }} />
+          <div className="hero-divider" />
         </section>
 
         {/* STATS */}
         <div className="stats-grid">
           {[["100+", "JERSEYS"], ["5K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
-              <div style={{ fontSize: 30, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>{num}</div>
-              <div style={{ fontSize: 10, letterSpacing: 4, color: "#777", marginTop: 4, fontWeight: 700 }}>{label}</div>
+              <div className="stat-num">{num}</div>
+              <div className="stat-label">{label}</div>
             </div>
           ))}
         </div>
@@ -1009,7 +1039,7 @@ letter-spacing: 4px !important;
             </h2>
             <div className="filter-bar">
               {filterButtons.map(({ key, label }) => (
-                <button key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
+                <button type="button" key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
                   <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
                     {label}
                   </span>
@@ -1038,7 +1068,11 @@ letter-spacing: 4px !important;
           ) : (
             <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
               {filtered.map((jersey, i) => (
-                <div key={jersey.id} className="card" onClick={() => { setSelectedJersey(jersey); setSelectedSize("M"); }} style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}>
+                <div
+                  key={jersey.id}
+                  className="card"
+                  style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}
+                >
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
                   {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
                   <div className="card-img-wrap">
@@ -1049,21 +1083,20 @@ letter-spacing: 4px !important;
                     )}
                     <div className="card-overlay" />
                   </div>
-                  <div style={{ padding: "16px 16px 0", flex: 1 }}>
+                  <div className="card-body">
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                      <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.2, minHeight: "54px" }}>{jersey.name}</div>
-                      <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{jersey.price}</div>
+                      <div className="card-title">{jersey.name}</div>
+                      <div className="card-price">₹{jersey.price}</div>
                       {jersey.stock > 0 && jersey.stock <= 5 && (
-                        <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, fontWeight: 700 }}>ONLY {jersey.stock} LEFT</div>
+                        <div className="stock-warning">ONLY {jersey.stock} LEFT</div>
                       )}
                     </div>
                   </div>
                   <div style={{ marginTop: "auto" }}>
-                    <button
+                    <button type="button"
                       className="add-btn"
                       disabled={jersey.stock === 0}
-                      onClick={e => {
-                        e.stopPropagation();
+                      onClick={() => {
                         if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
                       }}
                     >
@@ -1102,10 +1135,10 @@ letter-spacing: 4px !important;
         {/* FOOTER */}
         <footer style={{ background: "#040404", borderTop: "1px solid #111", padding: "40px 24px", textAlign: "center" }}>
           <div style={{ fontWeight: 900, fontSize: 26, letterSpacing: 5, marginBottom: 8, fontFamily: "'Bebas Neue',sans-serif" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
-          <p style={{ color: "#555", fontSize: 11, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
+          <p style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
             {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["FAQ", "/faq"]].map(([l, h]) => (
-              <Link key={l} to={h} style={{ color: "#555", fontSize: 11, letterSpacing: 3, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
+              <Link key={l} to={h} style={{ color: "#555", fontSize: 12, letterSpacing: 3, cursor: "pointer", transition: "color 0.2s", textDecoration: "none" }}
                 onMouseEnter={e => e.target.style.color = "#39ff14"} onMouseLeave={e => e.target.style.color = "#555"}>{l}</Link>
             ))}
           </div>
@@ -1113,12 +1146,11 @@ letter-spacing: 4px !important;
 
         {/* SIZE PICKER MODAL */}
         {selectedJersey && (
-          <div className="modal-bg" onClick={() => setSelectedJersey(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal-bg">
+            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => setSelectedJersey(null)} />
+            <div className="modal">
               <div style={{ position: "relative" }}>
-                <button onClick={() => setSelectedJersey(null)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.8)", border: "1px solid #2a2a2a", color: "#888", fontSize: 14, cursor: "pointer", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, borderRadius: 2, transition: "border-color 0.2s, color 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor="#39ff14"; e.currentTarget.style.color="#39ff14"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a2a"; e.currentTarget.style.color="#888"; }}>✕</button>
+                <button type="button" className="modal-close-btn" onClick={() => setSelectedJersey(null)}>✕</button>
                 {selectedJersey.image_url ? (
                   <img src={selectedJersey.image_url} alt={selectedJersey.name} className="modal-img" />
                 ) : (
@@ -1134,12 +1166,12 @@ letter-spacing: 4px !important;
                 <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
                   {selectedJersey.type && (
-                    <span style={{ display: "inline-block", fontSize: 9, letterSpacing: 4, color: "#000", fontWeight: 900, background: "#39ff14", padding: "3px 10px", borderRadius: 2 }}>{selectedJersey.type}</span>
+                    <span className="modal-type-badge">{selectedJersey.type}</span>
                   )}
                   <span style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{selectedJersey.price}</span>
                 </div>
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
-                  <div style={{ fontSize: 10, color: "#e67e22", letterSpacing: 3, marginTop: 8, fontWeight: 700 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
+                  <div className="stock-warning" style={{ marginTop: 8 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
                 )}
               </div>
 
@@ -1150,7 +1182,7 @@ letter-spacing: 4px !important;
                     const sizeStock = getSizeStock(selectedJersey, s);
                     const outOfStock = sizeStock === 0;
                     return (
-                      <button
+                      <button type="button"
                         key={s}
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
                         onClick={() => !outOfStock && setSelectedSize(s)}
@@ -1161,7 +1193,7 @@ letter-spacing: 4px !important;
                     );
                   })}
                 </div>
-                <button
+                <button type="button"
                   className="add-btn filled-variant"
                   style={{ marginTop: 24, fontSize: 16, padding: "16px" }}
                   onClick={() => addToCart(selectedJersey, selectedSize)}
@@ -1177,22 +1209,19 @@ letter-spacing: 4px !important;
 
         {/* CART PANEL */}
         {cartOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 150 }}>
-            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)" }} onClick={() => setCartOpen(false)} />
+          <div className="cart-overlay">
+            <button type="button" className="cart-backdrop" aria-label="Close cart" onClick={() => setCartOpen(false)} />
             <div className="cart-panel">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 20px", borderBottom: "1px solid #111" }}>
+              <div className="cart-header">
                 <div>
                   <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, fontStyle: "italic", color: "#888" }}>YOUR</span>
                   {" "}
                   <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
                   {cartCount > 0 && (
-                    <span style={{ display: "inline-block", marginLeft: 10, background: "var(--green)", color: "#000", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 10, letterSpacing: 2, padding: "2px 8px", verticalAlign: "middle", borderRadius: 2 }}>{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
+                    <span className="cart-count-badge">{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
                   )}
                 </div>
-                <button onClick={() => setCartOpen(false)}
-                  style={{ background: "none", border: "1px solid #1a1a1a", color: "#444", fontSize: 14, cursor: "pointer", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, transition: "border-color 0.2s, color 0.2s", borderRadius: 2 }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor="#39ff14"; e.currentTarget.style.color="#39ff14"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="#1a1a1a"; e.currentTarget.style.color="#444"; }}>✕</button>
+                <button type="button" className="cart-close-btn" onClick={() => setCartOpen(false)}>✕</button>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto" }}>
@@ -1200,7 +1229,7 @@ letter-spacing: 4px !important;
                   <div style={{ textAlign: "center", padding: "60px 20px", color: "#1e1e1e" }}>
                     <div style={{ fontSize: 48 }}>🛒</div>
                     <p style={{ marginTop: 12, letterSpacing: 4, fontSize: 12, fontWeight: 900, fontStyle: "italic", color: "#2a2a2a" }}>CART IS EMPTY</p>
-                    <p style={{ marginTop: 8, letterSpacing: 3, fontSize: 10, color: "#1a1a1a" }}>ADD SOME FIRE JERSEYS</p>
+                    <p style={{ marginTop: 8, letterSpacing: 3, fontSize: 12, color: "#1a1a1a" }}>ADD SOME FIRE JERSEYS</p>
                   </div>
                 ) : (
                   cart.map((item, idx) => (
@@ -1218,10 +1247,7 @@ letter-spacing: 4px !important;
                         </div>
                         <div className="cart-item-price">₹{(item.price * item.qty).toLocaleString()}</div>
                       </div>
-                      <button onClick={() => removeFromCart(item.id, item.size)}
-                        style={{ background: "none", border: "1px solid #151515", color: "#2a2a2a", cursor: "pointer", fontSize: 12, width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, flexShrink: 0, transition: "all 0.15s", borderRadius: 2 }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor="#c0392b"; e.currentTarget.style.color="#c0392b"; e.currentTarget.style.background="rgba(192,57,43,0.08)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor="#151515"; e.currentTarget.style.color="#2a2a2a"; e.currentTarget.style.background="none"; }}>✕</button>
+                      <button type="button" className="cart-remove-btn" onClick={() => removeFromCart(item.id, item.size)}>✕</button>
                     </div>
                   ))
                 )}
@@ -1232,7 +1258,7 @@ letter-spacing: 4px !important;
                   <div className="cart-total-row">
                     <div>
                       <span className="cart-total-label" style={{ color: "#aaa", fontSize: 13, letterSpacing: 4, fontWeight: 900 }}>ORDER TOTAL</span>
-                      <div style={{ fontSize: 11, color: "#888", marginTop: 4, fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: 2 }}>
+                      <div className="cart-shipping-note">
                         {total >= 1999
                           ? "✓ FREE SHIPPING APPLIED"
                           : `ADD ₹${(1999 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
@@ -1240,11 +1266,11 @@ letter-spacing: 4px !important;
                     </div>
                     <span className="cart-total-amount">₹{total.toLocaleString()}</span>
                   </div>
-                  <button className="checkout-btn" onClick={handleCheckout}>
+                  <button type="button" className="checkout-btn" onClick={handleCheckout}>
                     <span>PROCEED TO CHECKOUT</span>
                     <span className="checkout-arrow">→</span>
                   </button>
-                  <p style={{ textAlign: "center", color: "#1a1a1a", fontSize: 9, letterSpacing: 3, paddingBottom: 16, fontWeight: 700 }}>✦ SECURED BY RAZORPAY ✦</p>
+                  <p className="cart-secure-note">✦ SECURED BY RAZORPAY ✦</p>
                 </div>
               )}
             </div>

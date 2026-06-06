@@ -1,5 +1,5 @@
 import express from 'express';
-import { getStats, getAllUsers } from '../controllers/adminController.js';
+import { getStats, getAllUsers, deleteUser } from '../controllers/adminController.js';
 import { generateInvoice } from '../controllers/invoiceController.js';
 import { protect, adminOnly } from '../middlewares/authMiddleware.js';
 
@@ -11,6 +11,7 @@ router.use(adminOnly);
 
 router.get('/stats', getStats);
 router.get('/users', getAllUsers);
+router.delete('/users/:id', deleteUser);
 router.get('/orders/:id/invoice', generateInvoice);
 
 export default router;
