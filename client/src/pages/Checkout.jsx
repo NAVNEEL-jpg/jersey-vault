@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { initiatePayment, placeCodOrderFree } from "../razorpay";
+import { initiatePayment, placeCodOrderFree, checkAndRecoverPayment } from '../razorpay';
 import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
 
@@ -32,8 +32,10 @@ export default function CheckoutPage() {
 
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [payMethod, setPayMethod] = useState("razorpay");
+  const [payMethod, setPayMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('idle');
+  // idle | processing | verifying | success | failed | dismissed | error | recovering
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", pincode: "" });
   const [errors, setErrors] = useState({});
 
@@ -118,19 +120,21 @@ export default function CheckoutPage() {
 
   const handlePlace = async () => {
   setLoading(true);
+  setPaymentStatus('idle');
   try {
-    // FIX: always load Razorpay script first
     const razorpayReady = await loadRazorpayScript();
     if (!razorpayReady) {
-      alert("Unable to load Razorpay. Please refresh and try again.");
+      alert('Unable to load Razorpay. Please refresh and try again.');
       setLoading(false);
       return;
     }
 
-    if (payMethod === "cod") {
-      initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true);
+    const onStatusChange = (status) => setPaymentStatus(status);
+
+    if (payMethod === 'cod') {
+      initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true, onStatusChange);
     } else {
-      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false);
+      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false, onStatusChange);
     }
   } finally {
     setLoading(false);
@@ -483,16 +487,76 @@ export default function CheckoutPage() {
 
               <button className="next-btn" onClick={handlePlace} disabled={loading}>
                 {loading ? (
-                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                    <span style={{ width: 18, height: 18, border: "2px solid #000", borderTop: "2px solid transparent", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                    <span style={{ width: 18, height: 18, border: '2px solid #000', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
                     PROCESSING...
                   </span>
-                ) : payMethod === "cod"
+                ) : payMethod === 'cod'
                   ? (subtotal >= 1999
                     ? `PAY DEPOSIT ₹99 → (₹${(subtotal - 99).toLocaleString()} on delivery)`
                     : `PAY SHIPPING ₹99 → (₹${subtotal.toLocaleString()} on delivery)`)
                   : `PAY NOW — ₹${total.toLocaleString()} →`}
               </button>
+
+              {/* ── Payment Status Overlay ── */}
+              {paymentStatus === 'processing' && (
+                <div style={{ background: 'rgba(0,0,0,0.85)', border: '1px solid #27272a', padding: '16px 20px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                  <span style={{ color: '#a1a1aa', fontSize: 13, letterSpacing: 1 }}>Processing Payment...</span>
+                </div>
+              )}
+
+              {paymentStatus === 'verifying' && (
+                <div style={{ background: 'rgba(0,255,68,0.04)', border: '1px solid rgba(0,255,68,0.2)', padding: '16px 20px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                  <span style={{ color: '#00ff44', fontSize: 13, letterSpacing: 1 }}>Verifying Payment... Please wait.</span>
+                </div>
+              )}
+
+              {(paymentStatus === 'failed' || paymentStatus === 'dismissed' || paymentStatus === 'error') && (
+                <div style={{ background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.25)', padding: '20px', marginTop: 12 }}>
+                  <div style={{ color: '#ff6666', fontSize: 14, fontWeight: 700, letterSpacing: 1, marginBottom: 8 }}>
+                    {paymentStatus === 'dismissed' ? '⚠️ Payment window closed' : '❌ Payment Failed'}
+                  </div>
+                  <div style={{ color: '#a1a1aa', fontSize: 12, letterSpacing: 0.5, lineHeight: 1.6, marginBottom: 14 }}>
+                    {paymentStatus === 'dismissed'
+                      ? 'Did you complete payment inside your UPI app? Click below to check.'
+                      : 'Something went wrong. If money was debited from your account, click below to verify.'}
+                  </div>
+                  <button
+                    style={{ background: '#00ff44', color: '#000', border: 'none', padding: '12px 20px', fontWeight: 700, fontSize: 13, letterSpacing: 2, cursor: 'pointer', width: '100%', marginBottom: 8 }}
+                    onClick={async () => {
+                      const orderId = localStorage.getItem('pendingRazorpayOrderId');
+                      if (!orderId) { alert('No pending order found. Please contact support.'); return; }
+                      setPaymentStatus('recovering');
+                      const result = await checkAndRecoverPayment(orderId);
+                      if (result.status === 'captured') {
+                        setPaymentStatus('success');
+                        alert('✅ Payment confirmed! Redirecting to your order...');
+                        // Re-finalize from localStorage form data
+                        const formData = JSON.parse(localStorage.getItem('pendingOrderForm') || '{}');
+                        navigate('/success');
+                      } else {
+                        setPaymentStatus('failed');
+                        alert(`Payment status: ${result.status || 'not captured'}. Please try again or contact support with Order ID: ${orderId}`);
+                      }
+                    }}
+                  >
+                    🔍 CHECK PAYMENT STATUS
+                  </button>
+                  <div style={{ color: '#555', fontSize: 11, letterSpacing: 1, textAlign: 'center' }}>
+                    Order ID: <span style={{ color: '#888' }}>{localStorage.getItem('pendingRazorpayOrderId') || '—'}</span>
+                  </div>
+                </div>
+              )}
+
+              {paymentStatus === 'recovering' && (
+                <div style={{ background: 'rgba(0,255,68,0.04)', border: '1px solid rgba(0,255,68,0.2)', padding: '16px 20px', marginTop: 4, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 18, height: 18, border: '2px solid #00ff44', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                  <span style={{ color: '#00ff44', fontSize: 13, letterSpacing: 1 }}>Checking payment with Razorpay...</span>
+                </div>
+              )}
+
               <button className="back-btn" onClick={() => setStep(1)}>← BACK</button>
             </div>
           )}
