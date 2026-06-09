@@ -5,12 +5,12 @@ export const getStats = async (req, res) => {
     // 1. Revenue & Orders
     const { data: orders, error: orderError } = await supabase
       .from('orders')
-      .select('total, total_price, status');
+      .select('total, status');
 
     if (orderError) throw orderError;
 
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((acc, order) => acc + (order.total ?? order.total_price ?? 0), 0);
+    const totalRevenue = orders.reduce((acc, order) => acc + (order.total ?? 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
     // 2. Total Users
@@ -35,7 +35,12 @@ export const getStats = async (req, res) => {
       pendingOrders
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Admin Stats Error:", error);
+    console.error(error?.stack);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 };
 
@@ -49,21 +54,31 @@ export const getAllUsers = async (req, res) => {
 
     let query = supabase
       .from('profiles')
-      .select('id, name, full_name, email, phone, role, created_at', { count: 'exact' })
-      .order('created_at', { ascending: false })
+      .select('id, full_name, email, phone, role', { count: 'exact' })
+      .order('id', { ascending: false })
       .range(from, to);
 
     if (search) {
       const safeSearch = search.replace(/[%_]/g, '');
-      query = query.or(`email.ilike.%${safeSearch}%,name.ilike.%${safeSearch}%,full_name.ilike.%${safeSearch}%`);
+      query = query.or(`email.ilike.%${safeSearch}%,full_name.ilike.%${safeSearch}%`);
     }
 
     const { data: users, count, error } = await query;
 
-    if (error) throw error;
-    res.json({ users, page, limit, total: count || 0 });
+    if (error) {
+      console.error('[getAllUsers] Supabase Error Details:', JSON.stringify(error, null, 2));
+      throw error;
+    }
+    
+    res.json({ success: true, users, page, limit, total: count || 0 });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[getAllUsers] Unexpected Error:', error);
+    console.error('[getAllUsers] Stack Trace:', error.stack);
+    
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Internal server error occurred while fetching users.' 
+    });
   }
 };
 

@@ -1,6 +1,5 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Agentation } from 'agentation';
 import Success from "./pages/Success";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -67,7 +66,6 @@ function App() {
           <Route path="/teams" element={<Teams />} />
         </Routes>
       </Suspense>
-      <Agentation />
     </Router>
   );
 }

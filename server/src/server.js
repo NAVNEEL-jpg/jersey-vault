@@ -61,7 +61,7 @@ if (fs.existsSync(buildPath)) {
     },
   }));
 
-  app.get('*', (req, res, next) => {
+  app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
       return next();
     }
