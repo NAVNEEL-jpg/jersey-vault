@@ -130,6 +130,7 @@ export const initiatePayment = async (
 
   // Step 1 — Create Razorpay Order on backend
   let razorpayOrderId;
+  let razorpayKey;
   try {
     const res = await fetch(`${API}/api/payment/create-order`, {
       method: 'POST',
@@ -145,6 +146,7 @@ export const initiatePayment = async (
     if (!res.ok) throw new Error('Failed to create payment order');
     const data = await res.json();
     razorpayOrderId = data.order_id;
+    razorpayKey = data.key || process.env.REACT_APP_RAZORPAY_KEY;
   } catch (err) {
     console.error('create-order failed:', err);
     onStatusChange('error');
@@ -157,7 +159,7 @@ export const initiatePayment = async (
   localStorage.setItem('pendingOrderForm', JSON.stringify({ name, email, phone, form, isCOD, amountToPayNow }));
 
   const options = {
-    key: process.env.REACT_APP_RAZORPAY_KEY,
+    key: razorpayKey,
     order_id: razorpayOrderId,              // ← links modal to our order
     amount: Math.round(amountToPayNow) * 100,
     currency: 'INR',
