@@ -522,11 +522,11 @@ export default function Success() {
     };
 
     saveOrder();
-    fetch("https://clytujskrmcnstzuvuaf.supabase.co/functions/v1/send-invoice", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order }),
-    });
+    
+    // Automatically send invoice email using Supabase client to include Auth headers
+    supabase.functions.invoke("send-invoice", {
+      body: { order },
+    }).catch(err => console.error("Auto-invoice failed:", err));
   }, [order]);
   return (
     <>
@@ -658,7 +658,7 @@ export default function Success() {
             className="btn-secondary"
             style={{ color: "var(--green)", borderColor: "var(--green-border)", width: "100%" }}
           disabled={!order}
-            onClick={() => downloadInvoice(order)}
+            onClick={() => downloadInvoice(order?.orderId || order?.id)}
           >
             📄 DOWNLOAD INVOICE
           </button>
