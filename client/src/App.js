@@ -18,6 +18,39 @@ const Admin = lazy(() => import("./pages/AdminPage"));
 function App() {
   return (
     <Router>
+      <a 
+        href="#main-content" 
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: '0',
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: '0'
+        }}
+        onFocus={(e) => {
+          e.target.style.position = 'static';
+          e.target.style.width = 'auto';
+          e.target.style.height = 'auto';
+          e.target.style.clip = 'auto';
+          e.target.style.padding = '10px';
+          e.target.style.background = '#000';
+          e.target.style.color = '#fff';
+          e.target.style.zIndex = '9999';
+        }}
+        onBlur={(e) => {
+          e.target.style.position = 'absolute';
+          e.target.style.width = '1px';
+          e.target.style.height = '1px';
+          e.target.style.clip = 'rect(0, 0, 0, 0)';
+          e.target.style.padding = '0';
+        }}
+      >
+        Skip to content
+      </a>
       <Suspense fallback={<div className="text-white p-5">Loading...</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
