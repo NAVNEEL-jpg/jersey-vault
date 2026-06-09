@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { calcOrderTotals } from './utils/shipping';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API_URL || '/api';
 
 // ─── Finalize order in Supabase + send email ─────────────────────────────────
 async function finalizeOrder({
