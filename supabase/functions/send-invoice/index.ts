@@ -1,153 +1,78 @@
-import { serve } from "https://deno.land/std/http/server.ts"
-import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib"
+import { serve } from "https://deno.land/std/http/server.ts";
+import { generateInvoicePDF } from "../_shared/invoiceTemplate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const body = await req.json()
+  try {
+    const body = await req.json();
+    const order = body.order;
 
-  const order = body.order
+    if (!order) {
+      throw new Error("Missing order in request body.");
+    }
 
-  const pdfDoc = await PDFDocument.create()
+    const pdfBytes = await generateInvoicePDF(order);
+    const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL");
 
-  const page = pdfDoc.addPage([600, 800])
+    if (!FROM_EMAIL) {
+      throw new Error("RESEND_FROM_EMAIL secret is not configured.");
+    }
 
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-
-  page.drawText("JERSEYVAULT", {
-    x: 50,
-    y: 760,
-    size: 26,
-    font: bold,
-    color: rgb(0.22, 1, 0.08)
-  })
-
-  page.drawText(`Order ID: ${order.orderId}`, {
-    x: 50,
-    y: 710,
-    size: 14,
-    font
-  })
-
-  page.drawText(`Tracking ID: ${order.trackingId}`, {
-    x: 50,
-    y: 690,
-    size: 14,
-    font
-  })
-
-  page.drawText(`Customer: ${order.customer?.name}`, {
-    x: 50,
-    y: 650,
-    size: 13,
-    font
-  })
-
-  let y = 580
-
-  order.items.forEach((item: any) => {
-
-    page.drawText(
-      `${item.name} | ${item.size} | Qty:${item.qty}`,
-      {
-        x: 50,
-        y,
-        size: 12,
-        font
-      }
-    )
-
-    y -= 24
-  })
-
-  page.drawText(`TOTAL: ₹${order.total}`, {
-    x: 50,
-    y: y - 20,
-    size: 18,
-    font: bold
-  })
-
-  const pdfBytes = await pdfDoc.save()
-
-  const pdfBase64 = btoa(
-    String.fromCharCode(...pdfBytes)
-  )
-
-  const RESEND_API_KEY =
-    Deno.env.get("RESEND_API_KEY")
-
-  await fetch(
-    "https://api.resend.com/emails",
-    {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-
       headers: {
-        "Authorization":
-          `Bearer ${RESEND_API_KEY}`,
-
-        "Content-Type":
-          "application/json"
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json"
       },
-
       body: JSON.stringify({
-
-        from:
-          "JerseyVault <onboarding@resend.dev>",
-
-        to:
-          order.customer.email,
-
-        subject:
-          `Your JerseyVault Invoice ${order.orderId}`,
-
+        from: `JerseyVault <${FROM_EMAIL}>`,
+        to: order.customer.email,
+        subject: `Your JerseyVault Invoice ${order.orderId}`,
         html: `
           <h2>Order Confirmed ✅</h2>
-
-          <p>
-            Order ID:
-            <strong>${order.orderId}</strong>
-          </p>
-
-          <p>
-            Tracking ID:
-            <strong>${order.trackingId}</strong>
-          </p>
-
-          <p>
-            Your invoice PDF is attached.
-          </p>
+          <p>Order ID: <strong>${order.orderId}</strong></p>
+          <p>Tracking ID: <strong>${order.trackingId}</strong></p>
+          <p>Your invoice PDF is attached.</p>
         `,
-
         attachments: [
           {
-            filename:
-              `${order.orderId}.pdf`,
-
-            content:
-              pdfBase64
+            filename: `${order.orderId}.pdf`,
+            content: pdfBase64
           }
         ]
       })
-    }
-  )
+    });
 
-  return new Response(
-    JSON.stringify({
-      success: true
-    }),
-    {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json"
-      }
+    const errorText = await res.text();
+
+    console.log("FROM:", FROM_EMAIL);
+    console.log("TO:", order.customer.email);
+    console.log("SUBJECT:", `Your JerseyVault Invoice ${order.orderId}`);
+    console.log("RESEND STATUS:", res.status);
+    console.log("RESEND RESPONSE:", errorText);
+
+    if (!res.ok) {
+      throw new Error(`Resend failed: ${res.status} ${errorText}`);
     }
-  )
-})
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
+  }
+});

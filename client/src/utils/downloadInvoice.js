@@ -7,45 +7,30 @@ export async function downloadInvoice(orderId, { admin = false } = {}) {
   }
 
   try {
-    // Get order data from Supabase
-    const { data: order, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
-
-    if (error || !order) throw new Error("Order not found");
-
-    // Call Edge Function to generate PDF and send email
-    const { data, error: fnError } = await supabase.functions.invoke("send-invoice", {
-      body: {
-        order: {
-          id: order.id,
-          orderId: order.id,
-          total: order.total,
-          payMethod: order.pay_method,
-          address: order.address,
-          city: order.city,
-          state: order.state,
-          pincode: order.pincode,
-          items: order.items || [],
-          customer: {
-            name: order.customer_name,
-            email: order.customer_email,
-            phone: order.customer_phone,
-          },
-        }
-      }
+    // Call Edge Function to generate PDF directly using orderId
+    const { data, error: fnError } = await supabase.functions.invoke("download-invoice", {
+      body: { orderId: orderId }
     });
 
     if (fnError) throw new Error(fnError.message);
 
-    alert("✅ Invoice sent to customer's email successfully!");
+    // Provide browser download for the PDF blob
+    const blob = new Blob([data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Invoice-${orderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    alert("✅ Invoice downloaded successfully!");
     return true;
 
   } catch (e) {
     console.error("Invoice failed:", e);
-    alert("❌ " + (e.message || "Could not send invoice."));
+    alert("❌ " + (e.message || "Could not download invoice."));
     return false;
   }
 }

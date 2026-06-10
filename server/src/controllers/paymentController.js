@@ -276,6 +276,36 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
       }
     }
   }
+
+  // Trigger send-invoice automatically
+  try {
+    const { data, error } = await supabase.functions.invoke("send-invoice", {
+      body: {
+        order: {
+          id: orderId,
+          orderId: orderId,
+          trackingId: trackingId,
+          total: order_data.total,
+          payMethod: order_data.pay_method || 'Online',
+          address: order_data.address,
+          city: order_data.city,
+          state: order_data.state,
+          pincode: order_data.pincode,
+          items: order_data.items || [],
+          customer: {
+            name: order_data.customer_name,
+            email: order_data.customer_email,
+            phone: order_data.customer_phone,
+          },
+        }
+      }
+    });
+    if (error) {
+      console.error("Auto send-invoice edge function failed:", error);
+    }
+  } catch (err) {
+    console.error("Failed to trigger send-invoice automatically:", err);
+  }
 }
 
 export const placeCodOrder = async (req, res) => {
