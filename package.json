@@ -16,6 +16,7 @@
     "react-doctor": "^0.4.0"
   },
   "dependencies": {
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "react-ga4": "^3.0.1"
   }
 }

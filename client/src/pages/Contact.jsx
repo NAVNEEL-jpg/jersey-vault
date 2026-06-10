@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/jerseyvault-logo.jpeg";
+import ReactGA from "react-ga4";
 
 // WhatsApp SVG
 const WhatsAppIcon = () => (
@@ -94,6 +95,7 @@ export default function Contact() {
           rel="noopener noreferrer"
           className="contact-card wa"
           style={{ marginBottom:12 }}
+          onClick={() => ReactGA.event("whatsapp_click", { source: "Contact" })}
         >
           <div className="sublabel">WHATSAPP — FASTEST RESPONSE</div>
           <div className="contact-row">

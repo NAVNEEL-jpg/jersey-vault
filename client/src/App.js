@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import ReactGA from "react-ga4";
 import Success from "./pages/Success";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -14,11 +15,41 @@ import Teams from "./pages/Teams";
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Admin = lazy(() => import("./pages/AdminPage"));
 
-function App() {
+// Initialize GA4 with your unique Measurement ID and debug mode for development
+ReactGA.initialize([
+  {
+    trackingId: "G-0600VGPLMN",
+    gtagOptions: {
+      debug_mode: process.env.NODE_ENV === "development"
+    }
+  }
+]);
+
+// Component to track page views on route change
+function PageTracker() {
+  const location = React.useMemo(() => window.location, []);
+  
+  React.useEffect(() => {
+    // We can't easily use useLocation without moving this inside Router,
+    // but we'll handle the router tracking properly below.
+  }, []);
+  
+  return null;
+}
+
+// Better approach: wrap the app content in a component that uses useLocation
+
+function AppContent() {
+  const location = useLocation();
+
+  React.useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
+  }, [location]);
+
   return (
-    <Router>
-      <a 
-        href="#main-content" 
+    <>
+      <a
+        href="#main-content"
         style={{
           position: 'absolute',
           width: '1px',
@@ -66,6 +97,14 @@ function App() {
           <Route path="/teams" element={<Teams />} />
         </Routes>
       </Suspense>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

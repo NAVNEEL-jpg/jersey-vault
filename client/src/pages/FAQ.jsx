@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import logo from "../assets/jerseyvault-logo.jpeg";
 import { useState } from "react";
+import ReactGA from "react-ga4";
 
 const faqs = [
   {
@@ -201,7 +202,8 @@ export default function FAQ() {
             We typically respond within a few hours.
           </p>
           <div style={{ display:"flex", gap:12, justifyContent:"center", flexWrap:"wrap" }}>
-            <a href="https://wa.me/917029786817" target="_blank" rel="noopener noreferrer" className="faq-cta-whatsapp">
+            <a href="https://wa.me/917029786817" target="_blank" rel="noopener noreferrer" className="faq-cta-whatsapp"
+               onClick={() => ReactGA.event("whatsapp_click", { source: "FAQ" })}>
               WHATSAPP US →
             </a>
             <a href="https://instagram.com/the_jerseyvault" target="_blank" rel="noopener noreferrer" className="faq-cta-instagram">

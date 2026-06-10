@@ -10,6 +10,7 @@ import macronlogo from "../assets/brands/macron.png";
 import hummellogo from "../assets/brands/hummel.png";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from '../supabase';
+import ReactGA from "react-ga4";
 import logo from "../assets/jerseyvault-logo.jpeg";
 import heroBg from "../assets/hero-bg.jpeg";
 
@@ -117,7 +118,7 @@ function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobi
       <button type="button" className="nav-link" onClick={scrollToShop}>SHOP</button>
       <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
       <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
-      <button type="button" className="nav-link" onClick={() => { setCartOpen(true); setMobileMenuOpen(false); }}>CART</button>
+      <button type="button" className="nav-link" onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); setMobileMenuOpen(false); }}>CART</button>
       <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
       {user ? (
         <button type="button" className="nav-link" onClick={handleLogout}>LOGOUT</button>
@@ -167,10 +168,41 @@ export default function JerseyStore() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTeamName, setActiveTeamName] = useState("");
 
+  useEffect(() => {
+    if (searchQuery.trim().length > 2) {
+      const delayFn = setTimeout(() => {
+        ReactGA.event("search", { search_term: searchQuery.trim() });
+      }, 1000);
+      return () => clearTimeout(delayFn);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const teamId = searchParams.get("team");
+    if (teamId && activeTeamName) {
+      ReactGA.event("view_team", { team_id: teamId, team_name: activeTeamName });
+    }
+  }, [searchParams, activeTeamName]);
+
   // FIX: showToast wrapped in useCallback so it's stable across renders
   const showToast = useCallback((msg) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  }, []);
+
+  const openQuickView = useCallback((jersey) => {
+    setSelectedJersey(jersey);
+    setSelectedSize("");
+    ReactGA.event("view_item", {
+      currency: "INR",
+      value: jersey.price,
+      items: [{
+        item_id: jersey.id,
+        item_name: jersey.name,
+        price: jersey.price,
+        item_category: jersey.type
+      }]
+    });
   }, []);
 
   // FIX: cart removed from the dependency array to avoid infinite loops.
@@ -272,6 +304,18 @@ const matchesSearch =
 }), [jerseys, searchQuery, activeFilter]);
 
   const addToCart = useCallback((jersey, size) => {
+    ReactGA.event("add_to_cart", {
+      currency: "INR",
+      value: jersey.price,
+      items: [{
+        item_id: jersey.id,
+        item_name: jersey.name,
+        price: jersey.price,
+        item_variant: size,
+        item_category: jersey.type,
+        quantity: 1
+      }]
+    });
     setCart(prev => {
       const existing = prev.find(i => i.id === jersey.id && i.size === size);
       if (existing) return prev.map(i => i.id === jersey.id && i.size === size ? { ...i, qty: i.qty + 1 } : i);
@@ -820,6 +864,8 @@ letter-spacing: 4px !important;
   .cart-item-img { width:48px; height:48px; }
   .card-img { height:180px; }
   .card-img-wrap { height:180px; }
+  .card { height:400px; }
+  .card-grid { grid-template-columns:repeat(2, 1fr) !important; }
   .stats-grid { grid-template-columns:repeat(3,1fr); }
   .stat-cell { padding:14px 0; }
   .filter-btn { font-size:14px !important; padding:6px 12px; }
@@ -960,7 +1006,7 @@ letter-spacing: 4px !important;
             <button type="button"
               aria-label="Open cart"
               className="icon-action-btn icon-cart-btn"
-              onClick={() => setCartOpen(true)}
+              onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -1097,7 +1143,14 @@ letter-spacing: 4px !important;
                       className="add-btn"
                       disabled={jersey.stock === 0}
                       onClick={() => {
-                        if (jersey.stock > 0) { setSelectedJersey(jersey); setSelectedSize("M"); }
+                        if (jersey.stock > 0) { 
+                          ReactGA.event("view_item", {
+                            currency: "INR", value: jersey.price,
+                            items: [{ item_id: jersey.id, item_name: jersey.name, price: jersey.price, item_category: jersey.type }]
+                          });
+                          setSelectedJersey(jersey); 
+                          setSelectedSize("M"); 
+                        }
                       }}
                     >
                       {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
@@ -1185,7 +1238,12 @@ letter-spacing: 4px !important;
                       <button type="button"
                         key={s}
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
-                        onClick={() => !outOfStock && setSelectedSize(s)}
+                        onClick={() => {
+                          if (!outOfStock) {
+                            setSelectedSize(s);
+                            ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
+                          }
+                        }}
                         disabled={outOfStock}
                       >
                         {s}

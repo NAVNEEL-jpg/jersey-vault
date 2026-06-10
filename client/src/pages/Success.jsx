@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { supabase } from "../supabase";
+import ReactGA from "react-ga4";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500;600&display=swap');
@@ -497,28 +498,26 @@ export default function Success() {
     if (!order) return;
 
     const saveOrder = async () => {
-      if (order.savedToDB) return;
-
-      const { error } = await supabase
-        .from("orders")
-        .insert({
-          order_id: order.orderId,
-          tracking_id: order.trackingId,
-          customer_name: order.customer?.name,
-          email: order.customer?.email,
-          phone: order.customer?.phone,
-          address: order.customer?.address,
-          items: order.items,
-          total: order.total,
-          payment_method: order.payMethod,
-          amount_paid: order.amountPaid || order.total,
-          status: "Confirmed",
+      let updated = { ...order };
+      if (!updated.gaTracked) {
+        ReactGA.event("purchase", {
+          transaction_id: updated.orderId || updated.id,
+          value: updated.total,
+          currency: "INR",
+          items: updated.items?.map(item => ({
+            item_id: item.id,
+            item_name: item.name,
+            price: item.price,
+            quantity: item.qty || 1,
+            item_variant: item.size
+          }))
         });
-
-      if (!error) {
-        const updated = { ...order, savedToDB: true };
-        localStorage.setItem("latestOrder", JSON.stringify(updated));
+        updated.gaTracked = true;
       }
+      if (!updated.savedToDB) {
+        updated.savedToDB = true;
+      }
+      localStorage.setItem("latestOrder", JSON.stringify(updated));
     };
 
     saveOrder();

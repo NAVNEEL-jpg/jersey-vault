@@ -232,21 +232,59 @@ export const reconcilePayment = async (req, res) => {
 };
 
 // ─── Internal helper ─────────────────────────────────────────────────────────
-async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, order_data }) {
-  if (!razorpay_order_id) return;
+async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...order_data }) {
+  if (!razorpay_order_id && order_data.pay_method !== 'COD') return;
+
+  const orderId = razorpay_payment_id || order_data.id || `COD-${Date.now()}`;
 
   const { error } = await supabase
     .from('orders')
-    .update({
-      pay_method: 'Online',
-      razorpay_payment_id,
-      payment_captured: true,
+    .upsert({
+      id: orderId,
+      customer_name: order_data.customer_name,
+      customer_email: order_data.customer_email,
+      customer_phone: order_data.customer_phone,
+      address: order_data.address,
+      city: order_data.city,
+      state: order_data.state,
+      pincode: order_data.pincode,
+      items: order_data.items,
+      subtotal: order_data.subtotal,
+      shipping: order_data.shipping,
+      total: order_data.total,
+      pay_method: order_data.pay_method || 'Online',
       status: 'confirmed',
-    })
-    .eq('razorpay_order_id', razorpay_order_id)
-    .neq('status', 'confirmed');
+      razorpay_order_id: razorpay_order_id || null,
+      razorpay_payment_id: razorpay_payment_id || null,
+      payment_captured: order_data.pay_method !== 'COD',
+    }, { onConflict: 'id' });
 
   if (error) {
     console.error('finalizeOrderInDB error:', error);
+    return;
+  }
+
+  if (order_data.items && Array.isArray(order_data.items)) {
+    for (const item of order_data.items) {
+      const { data: p } = await supabase.from('products').select('size_stock').eq('id', item.id).single();
+      if (p?.size_stock) {
+        const newSizeStock = { ...p.size_stock };
+        newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
+        await supabase.from('products').update({ size_stock: newSizeStock }).eq('id', item.id);
+      }
+    }
   }
 }
+
+export const placeCodOrder = async (req, res) => {
+  try {
+    const { order_data } = req.body;
+    if (!order_data) return res.status(400).json({ message: 'Missing order_data' });
+    
+    await finalizeOrderInDB({ ...order_data, pay_method: 'COD' });
+    res.json({ success: true, order_id: order_data.id });
+  } catch (err) {
+    console.error('placeCodOrder error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};

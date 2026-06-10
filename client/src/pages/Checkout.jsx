@@ -4,6 +4,7 @@ import { initiatePayment, placeCodOrderFree, checkAndRecoverPayment } from '../r
 import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
 import { API_BASE } from "../config/api";
+import ReactGA from "react-ga4";
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
@@ -24,6 +25,20 @@ export default function CheckoutPage() {
   const [password, setPassword] = useState("");
 
   useEffect(() => {
+    if (cart.length > 0) {
+      ReactGA.event("begin_checkout", {
+        currency: "INR",
+        value: calcOrderTotals(cart).total,
+        items: cart.map(item => ({
+          item_id: item.id,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.qty,
+          item_variant: item.size
+        }))
+      });
+    }
+
     supabase.auth.getSession().then(({ data }) => {
       if (data?.session) {
         setUser(data.session.user);
@@ -130,19 +145,7 @@ export default function CheckoutPage() {
   };
 
   const decrementStock = async () => {
-    for (const item of cart) {
-      const { data: product } = await supabase
-        .from("products")
-        .select("size_stock")
-        .eq("id", item.id)
-        .single();
-
-      if (product?.size_stock) {
-        const newSizeStock = { ...product.size_stock };
-        newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
-        await supabase.from("products").update({ size_stock: newSizeStock }).eq("id", item.id);
-      }
-    }
+    // Handled by backend now
   };
 
   const handlePlace = async () => {

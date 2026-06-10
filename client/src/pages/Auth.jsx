@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { API_BASE } from '../config/api';
+import ReactGA from "react-ga4";
 import logo from "../assets/jerseyvault-logo.jpeg";
 
 export default function AuthPage() {
@@ -182,6 +183,7 @@ export default function AuthPage() {
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: form.password });
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+      ReactGA.event("login", { method: "Email" });
       setLoading(false);
       navigate('/', { replace: true });
     } else {
@@ -219,6 +221,7 @@ export default function AuthPage() {
         }
       }
 
+      ReactGA.event("sign_up", { method: "Email" });
       setLoading(false);
       setSuccess(true);
     }

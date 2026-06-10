@@ -36,31 +36,7 @@ async function finalizeOrder({
     razorpayPaymentId,
   };
 
-  const { error: insertError } = await supabase.from('orders').insert({
-    id: orderId,
-    customer_name: name,
-    customer_email: customerEmail,
-    customer_phone: phone,
-    address: form.address,
-    city: form.city,
-    state: form.state,
-    pincode: form.pincode,
-    items: cart,
-    subtotal,
-    shipping,
-    total,
-    pay_method: isCOD ? 'COD' : 'Online',
-    status: 'confirmed',
-    razorpay_order_id: razorpayOrderId,
-    razorpay_payment_id: razorpayPaymentId,
-    payment_captured: !isCOD,
-  });
-
-  if (insertError) {
-    console.error('Supabase Insert Error:', insertError);
-    alert('Payment successful, but failed to save order. Please contact support.');
-  }
-
+  // Backend handles DB insert now
   if (decrementStock) await decrementStock();
 
   await supabase.functions
@@ -94,19 +70,49 @@ export async function placeCodOrderFree(
   name, email, phone, cart, navigate, decrementStock, form, user
 ) {
   const orderId = `COD-${Date.now()}`;
-  await finalizeOrder({
-    orderId,
-    name,
-    email,
-    phone,
-    cart,
-    navigate,
-    decrementStock,
-    form,
-    user,
-    isCOD: true,
-    amountPaid: 0,
-  });
+  const { subtotal, shipping, total } = calcOrderTotals(cart);
+  const customerEmail = email || user?.email || '';
+
+  const orderData = {
+    id: orderId,
+    customer_name: name,
+    customer_email: customerEmail,
+    customer_phone: phone,
+    address: form.address,
+    city: form.city,
+    state: form.state,
+    pincode: form.pincode,
+    items: cart,
+    subtotal,
+    shipping,
+    total,
+  };
+
+  try {
+    const res = await fetch(`${API}/api/payment/cod`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_data: orderData }),
+    });
+    if (!res.ok) throw new Error('Failed to place COD order');
+
+    await finalizeOrder({
+      orderId,
+      name,
+      email,
+      phone,
+      cart,
+      navigate,
+      decrementStock,
+      form,
+      user,
+      isCOD: true,
+      amountPaid: 0,
+    });
+  } catch (err) {
+    console.error(err);
+    alert('Failed to place COD order. Please try again.');
+  }
 }
 
 // ─── Main payment initiator ───────────────────────────────────────────────────
@@ -190,6 +196,7 @@ export const initiatePayment = async (
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
+            order_data: orderData,
           }),
         });
 
