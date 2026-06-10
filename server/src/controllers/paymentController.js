@@ -236,6 +236,7 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
   if (!razorpay_order_id && order_data.pay_method !== 'COD') return;
 
   const orderId = razorpay_payment_id || order_data.id || `COD-${Date.now()}`;
+  const trackingId = `TRK-${orderId.slice(-6).toUpperCase()}`;
 
   const { error } = await supabase
     .from('orders')
@@ -254,6 +255,7 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
       total: order_data.total,
       pay_method: order_data.pay_method || 'Online',
       status: 'confirmed',
+      tracking_id: trackingId,
       razorpay_order_id: razorpay_order_id || null,
       razorpay_payment_id: razorpay_payment_id || null,
       payment_captured: order_data.pay_method !== 'COD',

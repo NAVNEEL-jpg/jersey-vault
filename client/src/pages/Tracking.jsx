@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "../supabase";
 
 const statusColors = ["#555", "#ffaa00", "#00aaff", "#ff6600", "#39ff14"];
 const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
@@ -18,24 +19,28 @@ export default function TrackingPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleTrack = () => {
+  const handleTrack = async () => {
     if (!inputId.trim()) {
-      setError("Please enter an Order ID");
+      setError("Please enter an Order ID or Tracking ID");
       return;
     }
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      const data = localStorage.getItem("latestOrder");
-      const realOrder = data ? JSON.parse(data) : null;
-      if (realOrder && inputId.trim().toUpperCase() === String(realOrder.id).toUpperCase()) {
-        setOrder(realOrder);
-      } else {
-        setOrder(null);
-        setError("Order not found ❌");
-      }
-      setLoading(false);
-    }, 1200);
+    
+    const trackId = inputId.trim().toUpperCase();
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .or(`tracking_id.eq.${trackId},id.eq.${trackId}`)
+      .single();
+
+    if (data && !error) {
+      setOrder({ ...data, id: data.id, trackingId: data.tracking_id });
+    } else {
+      setOrder(null);
+      setError("Order not found ❌");
+    }
+    setLoading(false);
   };
 
   const total = order ? order.items.reduce((s, i) => s + i.price * i.qty, 0) : 0;

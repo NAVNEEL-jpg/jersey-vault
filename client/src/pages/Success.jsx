@@ -472,7 +472,7 @@ function loadLatestOrder() {
 
     // Provide fallbacks using the real database id
     if (!parsed.orderId) parsed.orderId = parsed.id;
-    if (!parsed.trackingId) parsed.trackingId = "TRK-" + (parsed.id || "").substring(4, 10).toUpperCase();
+    if (!parsed.trackingId) parsed.trackingId = `TRK-${(parsed.id || "").slice(-6).toUpperCase()}`;
 
     localStorage.setItem("latestOrder", JSON.stringify(parsed));
     return parsed;

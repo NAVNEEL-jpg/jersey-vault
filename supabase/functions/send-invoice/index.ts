@@ -1,7 +1,15 @@
 import { serve } from "https://deno.land/std/http/server.ts"
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib"
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   const body = await req.json()
 
@@ -137,8 +145,8 @@ serve(async (req) => {
     }),
     {
       headers: {
-        "Content-Type":
-          "application/json"
+        ...corsHeaders,
+        "Content-Type": "application/json"
       }
     }
   )
