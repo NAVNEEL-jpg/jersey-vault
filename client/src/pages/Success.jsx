@@ -470,19 +470,9 @@ function loadLatestOrder() {
 
     const parsed = JSON.parse(data);
 
-    if (!parsed.orderId) {
-      parsed.orderId =
-        "JV-" +
-        Math.random().toString(36).substring(2, 7).toUpperCase() +
-        "-" +
-        Date.now().toString().slice(-4);
-    }
-
-    if (!parsed.trackingId) {
-      parsed.trackingId =
-        "TRK-" +
-        Math.random().toString(36).substring(2, 8).toUpperCase();
-    }
+    // Provide fallbacks using the real database id
+    if (!parsed.orderId) parsed.orderId = parsed.id;
+    if (!parsed.trackingId) parsed.trackingId = "TRK-" + (parsed.id || "").substring(4, 10).toUpperCase();
 
     localStorage.setItem("latestOrder", JSON.stringify(parsed));
     return parsed;
@@ -657,7 +647,7 @@ export default function Success() {
             className="btn-secondary"
             style={{ color: "var(--green)", borderColor: "var(--green-border)", width: "100%" }}
           disabled={!order}
-            onClick={() => downloadInvoice(order?.orderId || order?.id)}
+            onClick={() => downloadInvoice(order?.id)}
           >
             📄 DOWNLOAD INVOICE
           </button>

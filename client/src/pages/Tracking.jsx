@@ -28,7 +28,7 @@ export default function TrackingPage() {
     setTimeout(() => {
       const data = localStorage.getItem("latestOrder");
       const realOrder = data ? JSON.parse(data) : null;
-      if (realOrder && inputId.trim().toUpperCase() === realOrder.id) {
+      if (realOrder && inputId.trim().toUpperCase() === String(realOrder.id).toUpperCase()) {
         setOrder(realOrder);
       } else {
         setOrder(null);

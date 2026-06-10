@@ -179,13 +179,18 @@ export const initiatePayment = async (
       onStatusChange('verifying');
 
       const orderData = {
-        name,
-        email: customerEmail,
-        phone,
-        cart,
-        form,
-        isCOD,
-        amountPaid: amountToPayNow,
+        customer_name: name,
+        customer_email: customerEmail,
+        customer_phone: phone,
+        items: cart,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        pincode: form.pincode,
+        subtotal: calcOrderTotals(cart).subtotal,
+        shipping: calcOrderTotals(cart).shipping,
+        total: calcOrderTotals(cart).total,
+        amount_paid: amountToPayNow,
       };
 
       try {
