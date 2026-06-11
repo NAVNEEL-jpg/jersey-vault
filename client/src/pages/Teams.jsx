@@ -169,7 +169,7 @@ export default function Teams() {
       )}
       {isAdmin && (
         <button type="button" className="t-nav-link" style={{ color: "#39ff14" }}
-          onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</button>
+          onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}><span>⚙</span><span>ADMIN</span></button>
       )}
     </>
   ), [user, isAdmin, handleLogout, navigate]);
@@ -212,8 +212,8 @@ export default function Teams() {
           @keyframes glowPulse  { 0%,100%{box-shadow:0 0 14px var(--green-glow);} 50%{box-shadow:0 0 28px var(--green-glow), 0 0 8px var(--green);} }
 
           /* ── NAV LINKS ── */
-          .t-nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
-          button.t-nav-link { background:none; border:none; padding:0; font:inherit; }
+          .t-nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; display:flex; align-items:center; gap:6px; }
+          button.t-nav-link { background:none; border:none; padding:0; font-family:inherit; }
           .t-nav-link:hover { color:#39ff14; }
           .t-nav-link.active-nav { color:#39ff14; }
 

@@ -126,7 +126,7 @@ function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobi
         <Link to="/auth" className="nav-link" onClick={() => setMobileMenuOpen(false)}>LOGIN</Link>
       )}
       {isAdmin && (
-        <button type="button" className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}>⚙ ADMIN</button>
+        <button type="button" className="nav-link" style={{ color: "#39ff14" }} onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}><span>⚙</span><span>ADMIN</span></button>
       )}
     </>
   );
@@ -439,8 +439,8 @@ const matchesSearch =
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; }
-  button.nav-link { background:none; border:none; padding:0; font:inherit; }
+  .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; cursor:pointer; display:flex; align-items:center; gap:6px; }
+  button.nav-link { background:none; border:none; padding:0; font-family:inherit; }
   .nav-link:hover { color:#39ff14; }
 
   .card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; height:420px; }

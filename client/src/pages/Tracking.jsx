@@ -73,7 +73,7 @@ export default function TrackingPage() {
         .timeline-dot.done { background:#39ff14; color:#000; box-shadow:0 0 12px rgba(57,255,20,0.5); }
         .timeline-dot.pending { background:#111; color:#444; border:1px solid #333; }
         .status-card { background:#111; border:1px solid #1a1a1a; padding:24px; margin-bottom:16px; border-left:3px solid #39ff14; }
-        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; position:relative; }
+        .nav-link { color:#bbb; text-decoration:none; font-weight:600; letter-spacing:2px; font-size:13px; transition:color 0.2s; position:relative; display:flex; align-items:center; gap:6px; }
         .nav-link::after { content:''; position:absolute; left:0; bottom:-3px; width:0; height:2px; background:#39ff14; transition:width 0.25s cubic-bezier(0.25,1,0.5,1); }
         .nav-link:hover { color:#39ff14; }
         .nav-link:hover::after { width:100%; }

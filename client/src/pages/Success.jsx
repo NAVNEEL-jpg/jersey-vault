@@ -511,11 +511,6 @@ export default function Success() {
     };
 
     saveOrder();
-    
-    // Automatically send invoice email using Supabase client to include Auth headers
-    supabase.functions.invoke("send-invoice", {
-      body: { order },
-    }).catch(err => console.error("Auto-invoice failed:", err));
   }, [order]);
   return (
     <>
