@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import ReactGA from "react-ga4";
+import clarity from "@microsoft/clarity";
 import Success from "./pages/Success";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -24,6 +25,16 @@ ReactGA.initialize([
     }
   }
 ]);
+
+// Initialize Microsoft Clarity securely
+if (!window.clarityInitialized) {
+  try {
+    clarity.init("x5jhqrw2dq");
+    window.clarityInitialized = true;
+  } catch (e) {
+    console.error("Clarity init failed", e);
+  }
+}
 
 // Component to track page views on route change
 function PageTracker() {
