@@ -1,6 +1,8 @@
+import { Helmet } from "react-helmet-async";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
+import ReactGA from "react-ga4";
 
 const statusColors = ["#555", "#ffaa00", "#00aaff", "#ff6600", "#39ff14"];
 const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
@@ -36,6 +38,10 @@ export default function TrackingPage() {
 
     if (data && !error) {
       setOrder({ ...data, id: data.id, trackingId: data.tracking_id });
+      ReactGA.event("track_order", {
+        tracking_id: data.tracking_id || trackId,
+        order_status: data.status || 0
+      });
     } else {
       setOrder(null);
       setError("Order not found ❌");
@@ -53,6 +59,7 @@ export default function TrackingPage() {
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
+      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/tracking" /></Helmet>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
         .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }

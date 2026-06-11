@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import logo from "../assets/jerseyvault-logo.jpeg";
 import ReactGA from "react-ga4";
@@ -28,6 +29,7 @@ const InstagramIcon = () => (
 export default function Contact() {
   return (
     <div style={{ fontFamily:"'Barlow Condensed', sans-serif", background:"#0a0a0a", minHeight:"100vh", color:"#fff" }}>
+      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/contact" /></Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }

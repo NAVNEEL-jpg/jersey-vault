@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import jordanlogo from "../assets/brands/jordan.png";
 import nikelogo from "../assets/brands/nike.png";
@@ -20,6 +21,7 @@ const FLAME_ID = "jv-flame";
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   return (
     <div className="flame-text-wrap">
+      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/" /></Helmet>
       <span className="flame-text-main">
         {text}
       </span>

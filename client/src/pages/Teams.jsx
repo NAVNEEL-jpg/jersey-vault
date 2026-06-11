@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
@@ -12,6 +13,7 @@ const FLAME_ID = "jv-flame-teams";
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
   return (
     <div className="t-flame-wrap">
+      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/teams" /></Helmet>
       <span className="t-flame-text">{text}</span>
       <svg
         style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "visible", pointerEvents: "none" }}
