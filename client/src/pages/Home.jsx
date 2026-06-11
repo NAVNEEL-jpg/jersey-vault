@@ -220,7 +220,7 @@ export default function JerseyStore() {
       setActiveTeamName("");
     }
 
-    let query = supabase.from("products").select("*").eq("status", "active");
+    let query = supabase.from("products").select("id, name, price, type, size_stock, stock, image_url, status, team_id").eq("status", "active");
     if (teamId) query = query.eq("team_id", teamId);
 
     query.then(({ data, error }) => {
