@@ -5,7 +5,6 @@ import {
   razorpayWebhook,
   checkPaymentStatus,
   reconcilePayment,
-  reconcilePayment,
 } from '../controllers/paymentController.js';
 import { protect, adminOnly } from '../middlewares/authMiddleware.js';
 
