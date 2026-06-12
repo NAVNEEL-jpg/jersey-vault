@@ -344,34 +344,33 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     }
   }
 
-  // Trigger send-invoice automatically
+  // Trigger send-invoice directly via Resend API
   try {
-    const { data, error } = await supabase.functions.invoke("send-invoice", {
-      body: {
-        order: {
-          id: orderId,
-          orderId: orderId,
-          trackingId: trackingId,
-          total: order_data.total,
-          payMethod: order_data.pay_method || 'Online',
-          address: order_data.address,
-          city: order_data.city,
-          state: order_data.state,
-          pincode: order_data.pincode,
-          items: order_data.items || [],
-          customer: {
-            name: order_data.customer_name,
-            email: order_data.customer_email,
-            phone: order_data.customer_phone,
-          },
-        }
-      }
-    });
-    if (error) {
-      console.error("Auto send-invoice edge function failed:", error);
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+    const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@thejerseyvault.in';
+    
+    if (RESEND_API_KEY) {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: `JerseyVault <${FROM_EMAIL}>`,
+          to: order_data.customer_email,
+          subject: `Your JerseyVault Invoice ${orderId}`,
+          html: `
+            <h2>Order Confirmed ✅</h2>
+            <p>Order ID: <strong>${orderId}</strong></p>
+            <p>Tracking ID: <strong>${trackingId}</strong></p>
+            <p>Your order has been successfully placed. We will notify you once it ships.</p>
+          `
+        })
+      });
     }
   } catch (err) {
-    console.error("Failed to trigger send-invoice automatically:", err);
+    console.error("Failed to send order email:", err);
   }
 }
 

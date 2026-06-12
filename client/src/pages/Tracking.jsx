@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
 import ReactGA from "react-ga4";
+import { API_BASE } from "../config/api";
 
 const statusColors = ["#555", "#ffaa00", "#00aaff", "#ff6600", "#39ff14"];
 const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
@@ -30,21 +31,21 @@ export default function TrackingPage() {
     setError("");
     
     const trackId = inputId.trim().toUpperCase();
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .or(`tracking_id.eq.${trackId},id.eq.${trackId}`)
-      .single();
-
-    if (data && !error) {
-      setOrder({ ...data, id: data.id, trackingId: data.tracking_id });
-      ReactGA.event("track_order", {
-        tracking_id: data.tracking_id || trackId,
-        order_status: data.status || 0
-      });
-    } else {
-      setOrder(null);
-      setError("Order not found ❌");
+    try {
+      const res = await fetch(`${API_BASE}/orders/track/${trackId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrder({ ...data, id: data.id, trackingId: data.tracking_id });
+        ReactGA.event("track_order", {
+          tracking_id: data.tracking_id || trackId,
+          order_status: data.status || 0
+        });
+      } else {
+        setError("Order not found or invalid ID.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Unable to track order right now.");
     }
     setLoading(false);
   };

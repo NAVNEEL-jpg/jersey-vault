@@ -14,6 +14,27 @@ const calculateShipping = (address) => {
   return 120;
 };
 
+// @desc    Track an order by ID or Tracking ID
+// @route   GET /api/orders/track/:trackingId
+export const trackOrder = async (req, res) => {
+  try {
+    const trackId = req.params.trackingId.toUpperCase();
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, tracking_id, status, created_at, expected_delivery, customer_name, total, items')
+      .or(`tracking_id.eq.${trackId},id.eq.${trackId}`)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ message: 'Order not found' });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Track order error:', err);
+    res.status(500).json({ message: 'Server error tracking order' });
+  }
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 export const createOrder = async (req, res) => {
