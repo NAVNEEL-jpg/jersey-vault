@@ -39,28 +39,6 @@ async function finalizeOrder({
   // Backend handles DB insert now
   if (decrementStock) await decrementStock();
 
-  await supabase.functions
-    .invoke('smooth-worker', {
-      body: {
-        customerName: name,
-        customerEmail,
-        orderId,
-        date: order.date,
-        items: cart,
-        subtotal,
-        shipping,
-        total,
-        amountPaid,
-        address: form.address,
-        city: form.city,
-        state: form.state,
-        pincode: form.pincode,
-        phone,
-        payMethod: isCOD ? 'Cash on Delivery' : 'Online Payment',
-      },
-    })
-    .catch(() => {});
-
   localStorage.setItem('latestOrder', JSON.stringify(order));
   navigate('/success');
 }

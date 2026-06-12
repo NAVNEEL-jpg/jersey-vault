@@ -95,10 +95,10 @@ export const verifyPayment = async (req, res) => {
         
         if (order_data.pay_method === 'COD') {
           expectedPayment = COD_DEPOSIT;
-          isMatch = (amountPaid === expectedPayment);
+          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
         } else {
           expectedPayment = total;
-          isMatch = (amountPaid === expectedPayment && clientTotal === total);
+          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment) && Math.round(clientTotal) === Math.round(total));
         }
 
         console.log(`PAYMENT_SECURITY_AUDIT:
