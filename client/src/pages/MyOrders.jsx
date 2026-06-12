@@ -23,6 +23,7 @@ export default function MyOrders() {
 
       if (!u) {
         setLoading(false);
+        navigate('/auth', { state: { from: '/myorders' }, replace: true });
         return;
       }
 

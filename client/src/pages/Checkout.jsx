@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { initiatePayment, placeCodOrderFree, checkAndRecoverPayment } from '../razorpay';
+import { initiatePayment, checkAndRecoverPayment } from '../razorpay';
 import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
 import { API_BASE } from "../config/api";
@@ -71,8 +71,8 @@ export default function CheckoutPage() {
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Required";
-    if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
-    if (!/\S+@\S+\.\S+/.test(form.email.trim())) e.email = "Enter valid email";
+    if (!/^[6-9]\d{9}$/.test(form.phone)) e.phone = "Enter valid 10-digit number";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Enter valid email";
     if (!user && password.length > 0 && password.length < 6) e.password = "Minimum 6 characters";
     if (!form.address.trim()) e.address = "Required";
     if (!form.city.trim()) e.city = "Required";

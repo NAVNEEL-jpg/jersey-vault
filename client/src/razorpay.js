@@ -66,54 +66,7 @@ async function finalizeOrder({
 }
 
 // ─── COD with free shipping (no Razorpay charge) ─────────────────────────────
-export async function placeCodOrderFree(
-  name, email, phone, cart, navigate, decrementStock, form, user
-) {
-  const orderId = `COD-${Date.now()}`;
-  const { subtotal, shipping, total } = calcOrderTotals(cart);
-  const customerEmail = email || user?.email || '';
-
-  const orderData = {
-    id: orderId,
-    customer_name: name,
-    customer_email: customerEmail,
-    customer_phone: phone,
-    address: form.address,
-    city: form.city,
-    state: form.state,
-    pincode: form.pincode,
-    items: cart,
-    subtotal,
-    shipping,
-    total,
-  };
-
-  try {
-    const res = await fetch(`${API}/api/payment/cod`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order_data: orderData }),
-    });
-    if (!res.ok) throw new Error('Failed to place COD order');
-
-    await finalizeOrder({
-      orderId,
-      name,
-      email,
-      phone,
-      cart,
-      navigate,
-      decrementStock,
-      form,
-      user,
-      isCOD: true,
-      amountPaid: 0,
-    });
-  } catch (err) {
-    console.error(err);
-    alert('Failed to place COD order. Please try again.');
-  }
-}
+// REMOVED (Insecure Endpoint)
 
 // ─── Main payment initiator ───────────────────────────────────────────────────
 export const initiatePayment = async (
@@ -191,6 +144,7 @@ export const initiatePayment = async (
         shipping: calcOrderTotals(cart).shipping,
         total: calcOrderTotals(cart).total,
         amount_paid: amountToPayNow,
+        pay_method: isCOD ? 'COD' : 'Online',
       };
 
       try {

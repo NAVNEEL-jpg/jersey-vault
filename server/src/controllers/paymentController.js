@@ -3,6 +3,38 @@ import razorpay from '../config/razorpay.js';
 import { supabase } from '../config/supabase.js';
 
 // ─── POST /api/payment/create-order ────────────────────────────────────────
+const ENFORCE_SECURITY = true;
+const FREE_SHIPPING_MIN = 1999;
+const SHIPPING_FEE = 99;
+const COD_DEPOSIT = 99;
+
+const calcShipping = (subtotal) => subtotal >= FREE_SHIPPING_MIN ? 0 : SHIPPING_FEE;
+
+async function recalculateCart(items) {
+  let subtotal = 0;
+  const verifiedItems = [];
+
+  for (const item of items) {
+    const { data: p } = await supabase.from('products').select('price, discount_price, name').eq('id', item.id).single();
+    if (p) {
+      const price = p.discount_price || p.price;
+      subtotal += price * item.qty;
+      verifiedItems.push({
+        ...item,
+        price,
+        name: p.name,
+      });
+    } else {
+      throw new Error(`Product not found: ${item.id}`);
+    }
+  }
+
+  const shipping = calcShipping(subtotal);
+  const total = subtotal + shipping;
+
+  return { subtotal, shipping, total, verifiedItems };
+}
+
 // Creates a Razorpay Order so we have an order_id to reconcile against.
 export const createRazorpayOrder = async (req, res) => {
   try {
@@ -53,12 +85,47 @@ export const verifyPayment = async (req, res) => {
 
     // Mark order paid in Supabase
     if (order_data) {
-      await finalizeOrderInDB({
-        ...order_data,
-        razorpay_order_id,
-        razorpay_payment_id,
-        paymentStatus: 'captured',
-      });
+      try {
+        const { subtotal, shipping, total, verifiedItems } = await recalculateCart(order_data.items || []);
+        const clientTotal = order_data.total;
+        const amountPaid = order_data.amount_paid;
+        
+        let isMatch = false;
+        let expectedPayment = 0;
+        
+        if (order_data.pay_method === 'COD') {
+          expectedPayment = COD_DEPOSIT;
+          isMatch = (amountPaid === expectedPayment);
+        } else {
+          expectedPayment = total;
+          isMatch = (amountPaid === expectedPayment && clientTotal === total);
+        }
+
+        console.log(`PAYMENT_SECURITY_AUDIT:
+Client Total: ₹${clientTotal}
+Client Amount Paid: ₹${amountPaid}
+Server Total: ₹${total}
+Expected Payment: ₹${expectedPayment}
+Match: ${isMatch ? 'YES' : 'NO'}`);
+
+        if (ENFORCE_SECURITY && !isMatch) {
+          return res.status(400).json({ message: 'Payment verification failed due to amount mismatch' });
+        }
+
+        await finalizeOrderInDB({
+          ...order_data,
+          items: verifiedItems,
+          subtotal,
+          shipping,
+          total,
+          razorpay_order_id,
+          razorpay_payment_id,
+          paymentStatus: 'captured',
+        });
+      } catch (calcError) {
+        console.error('Cart calculation error:', calcError);
+        return res.status(400).json({ message: 'Invalid cart data' });
+      }
     }
 
     res.json({ success: true, payment_id: razorpay_payment_id });
@@ -180,7 +247,7 @@ export const checkPaymentStatus = async (req, res) => {
   } catch (err) {
     console.error('checkPaymentStatus error:', err);
     res.status(500).json({ message: err.message });
-  }
+  } 
 };
 
 // ─── GET /api/payment/reconcile/:query ──────────────────────────────────────
@@ -308,15 +375,4 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
   }
 }
 
-export const placeCodOrder = async (req, res) => {
-  try {
-    const { order_data } = req.body;
-    if (!order_data) return res.status(400).json({ message: 'Missing order_data' });
-    
-    await finalizeOrderInDB({ ...order_data, pay_method: 'COD' });
-    res.json({ success: true, order_id: order_data.id });
-  } catch (err) {
-    console.error('placeCodOrder error:', err);
-    res.status(500).json({ message: err.message });
-  }
-};
+

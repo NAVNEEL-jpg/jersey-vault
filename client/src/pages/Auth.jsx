@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { API_BASE } from '../config/api';
 import ReactGA from "react-ga4";
@@ -7,6 +7,8 @@ import logo from "../assets/jerseyvault-logo.jpeg";
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectUrl = location.state?.from || '/';
   const styleRef = useRef(null);
   const [mode, setMode] = useState("login");
   const [loading, setLoading] = useState(false);
@@ -161,15 +163,15 @@ export default function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data?.session) navigate('/', { replace: true });
+      if (data?.session) navigate(redirectUrl, { replace: true });
     });
   }, []);
 
   const validate = () => {
     const e = {};
     if (mode === "signup" && !form.name.trim()) e.name = "Name is required";
-    if (!/\S+@\S+\.\S+/.test(form.email.trim())) e.email = "Enter a valid email";
-    if (mode === "signup" && !/^\d{7,15}$/.test(form.phone)) e.phone = "Enter valid phone number";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Enter a valid email";
+    if (mode === "signup" && !/^[6-9]\d{9}$/.test(form.phone)) e.phone = "Enter valid 10-digit phone number";
     if (form.password.length < 6) e.password = "Minimum 6 characters";
     if (mode === "signup" && form.password !== form.confirm) e.confirm = "Passwords don't match";
     setErrors(e);
@@ -185,7 +187,7 @@ export default function AuthPage() {
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
       ReactGA.event("login", { method: "Email" });
       setLoading(false);
-      navigate('/', { replace: true });
+      navigate(redirectUrl, { replace: true });
     } else {
       const { data, error } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -229,7 +231,7 @@ export default function AuthPage() {
 
   const handleForgot = async () => {
     const normalizedEmail = forgotEmail.trim().toLowerCase();
-    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
     if (error) { setErrors({ forgot: error.message }); setLoading(false); return; }
@@ -296,8 +298,8 @@ export default function AuthPage() {
               <p style={{ color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>
                 Welcome to JerseyVault, {form.name}!
               </p>
-              <button type="button" className="auth-store-btn" onClick={() => navigate('/', { replace: true })}>
-                GO TO STORE →
+              <button type="button" className="auth-store-btn" onClick={() => navigate(redirectUrl, { replace: true })}>
+                CONTINUE →
               </button>
             </div>
 

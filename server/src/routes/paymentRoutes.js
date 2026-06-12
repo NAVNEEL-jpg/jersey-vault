@@ -5,7 +5,7 @@ import {
   razorpayWebhook,
   checkPaymentStatus,
   reconcilePayment,
-  placeCodOrder,
+  reconcilePayment,
 } from '../controllers/paymentController.js';
 import { protect, adminOnly } from '../middlewares/authMiddleware.js';
 
@@ -17,8 +17,7 @@ router.post('/create-order', createRazorpayOrder);
 // Verify signature after success callback
 router.post('/verify', verifyPayment);
 
-// Place COD order
-router.post('/cod', placeCodOrder);
+// Removed POST /cod
 
 // Razorpay webhook — raw body handled in server.js
 router.post('/webhook', razorpayWebhook);
