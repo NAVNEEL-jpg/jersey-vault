@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { invoiceUrl } from "../config/api";
 
 export async function downloadInvoice(orderId, { admin = false } = {}) {
   if (!orderId) {
@@ -7,22 +8,21 @@ export async function downloadInvoice(orderId, { admin = false } = {}) {
   }
 
   try {
-    // Call Edge Function to generate PDF directly using orderId
-    const { data, error: fnError } = await supabase.functions.invoke("download-invoice", {
-      body: { orderId: orderId }
-    });
-
-    if (fnError) throw new Error(fnError.message);
+    const url = invoiceUrl(orderId, { admin });
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to generate invoice (${res.status})`);
+    }
+    const blob = await res.blob();
 
     // Provide browser download for the PDF blob
-    const blob = new Blob([data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
+    const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = blobUrl;
     a.download = `Invoice-${orderId}.pdf`;
     document.body.appendChild(a);
     a.click();
-    window.URL.revokeObjectURL(url);
+    window.URL.revokeObjectURL(blobUrl);
     document.body.removeChild(a);
 
     alert("✅ Invoice downloaded successfully!");

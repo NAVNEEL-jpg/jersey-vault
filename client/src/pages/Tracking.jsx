@@ -32,7 +32,7 @@ export default function TrackingPage() {
     
     const trackId = inputId.trim().toUpperCase();
     try {
-      const res = await fetch(`${API_BASE}/orders/track/${trackId}`);
+      const res = await fetch(`${API_BASE}/api/orders/track/${trackId}`);
       if (res.ok) {
         const data = await res.json();
         setOrder({ ...data, id: data.id, trackingId: data.tracking_id });
