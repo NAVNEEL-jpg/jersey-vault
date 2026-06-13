@@ -1,4 +1,6 @@
 import PDFDocument from 'pdfkit';
+import { COD_DEPOSIT } from '../controllers/paymentController.js';
+
 
 /**
  * Generates a PDF buffer for a given order object.
@@ -40,72 +42,110 @@ export function generatePDFBuffer(order) {
         (k) => payMethod.includes(k) || (order.payment_type || '').toUpperCase() === 'COD'
       );
 
+      const amountPaidOnline = isCOD ? COD_DEPOSIT : total;
+      const balanceDue = isCOD ? Math.max(0, total - amountPaidOnline) : 0;
+
       // Header
       doc.fillColor('#39ff14').fontSize(24).text('JERSEYVAULT', 50, 50);
-      doc.fillColor('#555555').fontSize(10).text('THE ULTIMATE JERSEY COLLECTION', 50, 80);
+      doc.fillColor('#555555').fontSize(10)
+        .text('The Ultimate Jersey Collection', 50, doc.y + 4)
+        .text('www.thejerseyvault.in', 50, doc.y + 2)
+        .text('support@thejerseyvault.in', 50, doc.y + 2)
+        .text('+91 7029786817', 50, doc.y + 2);
+      const leftHeaderY = doc.y;
 
-      doc.fillColor('#000000').fontSize(20).text('INVOICE', 400, 50, { align: 'right' });
-      doc.fontSize(10).text(`Order ID: ${order.id}`, 400, 75, { align: 'right' });
-      doc.text(`Date: ${orderDate}`, 400, 90, { align: 'right' });
+      doc.fillColor('#000000').fontSize(20).text('INVOICE', 400, 50, { align: 'right', width: 145 });
+      doc.fontSize(9)
+        .text(`Invoice Number:\nINV-${(order.id || '').slice(-6).toUpperCase()}`, 400, doc.y + 10, { align: 'right', width: 145 })
+        .text(`Order ID:\n${order.id}`, 400, doc.y + 5, { align: 'right', width: 145 })
+        .text(`Tracking ID:\n${order.tracking_id || 'N/A'}`, 400, doc.y + 5, { align: 'right', width: 145 })
+        .text(`Invoice Date:\n${orderDate}`, 400, doc.y + 5, { align: 'right', width: 145 });
+      const rightHeaderY = doc.y;
 
-      doc.moveTo(50, 115).lineTo(545, 115).strokeColor('#cccccc').stroke();
+      const headerBottom = Math.max(leftHeaderY, rightHeaderY) + 15;
+      doc.moveTo(50, headerBottom).lineTo(545, headerBottom).strokeColor('#cccccc').stroke();
+
+      const billingTop = headerBottom + 25;
 
       // Customer
-      doc.fillColor('#000000').fontSize(12).text('BILL TO:', 50, 140, { underline: true });
-      doc.fontSize(10)
-        .text(customerName, 50, 160)
-        .text(address, 50, 175)
-        .text(`${city}${city && state ? ', ' : ''}${state}${pincode ? ` - ${pincode}` : ''}`, 50, 190)
-        .text(`Phone: ${phone}`, 50, 205)
-        .text(`Email: ${email}`, 50, 220);
+      doc.fillColor('#000000').fontSize(12).font('Helvetica-Bold').text('BILL TO:', 50, billingTop, { underline: true });
+      doc.font('Helvetica').fontSize(10).text(customerName, 50, billingTop + 20, { width: 250 });
+      if (address) doc.text(address, { width: 250 });
+      const cityStatePin = [city, state].filter(Boolean).join(', ') + (pincode ? ` - ${pincode}` : '');
+      if (cityStatePin) doc.text(cityStatePin, { width: 250 });
+      if (phone && phone !== 'N/A') doc.text(`Phone: ${phone}`, { width: 250 });
+      if (email && email !== 'N/A') doc.text(`Email: ${email}`, { width: 250 });
+      const leftHeight = doc.y;
 
       // Payment
-      doc.fontSize(12).text('PAYMENT METHOD:', 350, 140, { underline: true });
-      doc.fontSize(10).text(payMethod, 350, 160).text(`Status: ${status}`, 350, 175);
+      doc.fontSize(12).font('Helvetica-Bold').text('PAYMENT:', 350, billingTop, { underline: true });
+      doc.font('Helvetica').fontSize(10).text(`Method: ${payMethod}`, 350, billingTop + 20, { width: 195 });
+      doc.text(`Status: ${status}`, { width: 195 });
+      const rightHeight = doc.y;
 
       // Items table
-      const tableTop = 270;
-      doc.rect(50, tableTop, 495, 20).fill('#f0f0f0');
-      doc.fillColor('#000000').fontSize(10)
-        .text('DESCRIPTION', 60, tableTop + 5)
-        .text('SIZE', 300, tableTop + 5)
-        .text('QTY', 370, tableTop + 5)
-        .text('PRICE', 430, tableTop + 5)
-        .text('TOTAL', 495, tableTop + 5);
+      const tableTop = Math.max(leftHeight, rightHeight) + 40;
+      doc.rect(50, tableTop, 495, 25).fill('#eeeeee');
+      doc.fillColor('#000000').fontSize(10).font('Helvetica-Bold')
+        .text('DESCRIPTION', 60, tableTop + 8)
+        .text('SIZE', 300, tableTop + 8)
+        .text('QTY', 370, tableTop + 8)
+        .text('PRICE', 430, tableTop + 8)
+        .text('TOTAL', 495, tableTop + 8);
 
-      let currentY = tableTop + 30;
+      let currentY = tableTop + 35;
       const items = Array.isArray(order.items) ? order.items : [];
+      doc.font('Helvetica');
 
-      items.forEach((item) => {
+      items.forEach((item, index) => {
         const qty = Number(item.qty) || 0;
         const price = Number(item.price) || 0;
+        const startY = currentY;
+
         doc.text(item.name || 'Product', 60, currentY, { width: 220 });
-        doc.text(item.size || '-', 300, currentY);
-        doc.text(String(qty), 370, currentY);
-        doc.text(`₹${price}`, 430, currentY);
-        doc.text(`₹${price * qty}`, 495, currentY);
-        currentY += 25;
+        const nameHeight = doc.y - startY;
+
+        doc.text(item.size || '-', 300, startY);
+        doc.text(String(qty), 370, startY);
+        doc.text(`₹${price}`, 430, startY);
+        doc.text(`₹${price * qty}`, 495, startY);
+
+        currentY += Math.max(nameHeight, 15) + 10;
+
+        // Row separator
+        if (index < items.length - 1) {
+          doc.moveTo(50, currentY - 5).lineTo(545, currentY - 5).strokeColor('#eeeeee').stroke();
+        }
       });
 
-      const summaryY = currentY + 30;
+      const summaryY = currentY + 15;
       doc.moveTo(350, summaryY).lineTo(545, summaryY).strokeColor('#cccccc').stroke();
 
-      doc.fontSize(10).text('SUBTOTAL:', 400, summaryY + 10).text(`₹${subtotal}`, 495, summaryY + 10);
-      doc.text('SHIPPING:', 400, summaryY + 25).text(`₹${shipping}`, 495, summaryY + 25);
+      doc.font('Helvetica').fontSize(10).text('Subtotal:', 400, summaryY + 15).text(`₹${subtotal}`, 495, summaryY + 15);
+      doc.text('Shipping:', 400, summaryY + 30).text(`₹${shipping}`, 495, summaryY + 30);
 
+      let nextY = summaryY + 45;
       if (isCOD) {
-        doc.text('COD FEE:', 400, summaryY + 40).text(`₹${codFee}`, 495, summaryY + 40);
-        doc.text('PAID ONLINE:', 400, summaryY + 55).text('₹99', 495, summaryY + 55);
-        doc.fillColor('#39ff14').fontSize(12).text('BALANCE DUE (COD):', 350, summaryY + 75);
-        doc.text(`₹${Math.max(0, total - 99)}`, 495, summaryY + 75);
+        doc.text('COD Deposit:', 400, nextY).text(`₹${COD_DEPOSIT}`, 495, nextY);
+        nextY += 15;
+        doc.text('Amount Paid Online:', 400, nextY).text(`₹${COD_DEPOSIT}`, 495, nextY);
+        nextY += 20;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(12).text('BALANCE DUE ON DELIVERY:', 280, nextY);
+        doc.text(`₹${balanceDue}`, 495, nextY);
       } else {
-        doc.fillColor('#39ff14').fontSize(12).text('AMOUNT PAID:', 350, summaryY + 55);
-        doc.text(`₹${total}`, 495, summaryY + 55);
+        nextY += 15;
+        doc.fillColor('#000000').font('Helvetica-Bold').fontSize(12).text('PAID IN FULL:', 350, nextY);
+        doc.text(`₹${total}`, 495, nextY);
       }
 
-      doc.fillColor('#888888').fontSize(10)
-        .text('Thank you for shopping with JerseyVault!', 50, 700, { align: 'center', width: 495 })
-        .text('This is a computer generated invoice.', 50, 715, { align: 'center', width: 495 });
+      // Tracking prominence
+      doc.fillColor('#000000').font('Helvetica-Bold').fontSize(12).text('TRACKING:', 50, nextY - 15);
+      doc.fillColor('#000000').fontSize(14).text(`Tracking ID: ${order.tracking_id || 'N/A'}`, 50, nextY + 5);
+
+      doc.fillColor('#888888').font('Helvetica').fontSize(9)
+        .text('Thank you for shopping with Jersey Vault.', 50, 715, { align: 'center', width: 495 })
+        .text('For support: support@thejerseyvault.in | +91 7029786817 | www.thejerseyvault.in', 50, 730, { align: 'center', width: 495 })
+        .text('This is a computer-generated invoice and does not require a signature.', 50, 745, { align: 'center', width: 495 });
 
       doc.end();
     } catch (error) {

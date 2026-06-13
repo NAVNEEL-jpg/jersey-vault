@@ -192,10 +192,13 @@ const css = `
 
   .ob-value {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 900;
     color: #fff;
     letter-spacing: 2px;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
   }
 
   .status-pill {
@@ -463,6 +466,42 @@ const STEPS = [
   { label: "Delivered", icon: "4", on: false },
 ];
 
+function CopyButton({ text, label }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button 
+      onClick={handleCopy} 
+      aria-label={label}
+      style={{
+        background: 'transparent',
+        border: 'none',
+        color: copied ? 'var(--green)' : 'var(--muted)',
+        cursor: 'pointer',
+        marginLeft: '8px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      }}
+      title={label}
+    >
+      {copied ? (
+        <span style={{ fontSize: '10px', fontWeight: 'bold', position: 'absolute', top: '-18px', left: '50%', transform: 'translateX(-50%)', color: 'var(--green)' }}></span>
+      ) : null}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+  );
+}
+
 function loadLatestOrder() {
   try {
     const data = localStorage.getItem("latestOrder");
@@ -554,6 +593,7 @@ export default function Success() {
 
   <div className="ob-value">
     {order ? order.orderId : "Loading..."}
+    {order && <CopyButton text={order.orderId} label="Copy Order ID" />}
   </div>
 
   {/* TRACKING ID */}
@@ -563,6 +603,8 @@ export default function Success() {
       fontSize: 13,
       color: "var(--muted)",
       letterSpacing: 1,
+      display: "flex",
+      alignItems: "center"
     }}
   >
     Tracking ID:
@@ -576,6 +618,7 @@ export default function Success() {
     >
       {order?.trackingId}
     </span>
+    {order?.trackingId && <CopyButton text={order.trackingId} label="Copy Tracking ID" />}
   </div>
 </div>
               <div className="status-pill">

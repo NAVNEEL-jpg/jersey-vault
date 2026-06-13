@@ -4,10 +4,10 @@ import { supabase } from '../config/supabase.js';
 import { generatePDFBuffer } from '../utils/pdfGenerator.js';
 
 // ─── POST /api/payment/create-order ────────────────────────────────────────
-const ENFORCE_SECURITY = true;
-const FREE_SHIPPING_MIN = 1999;
-const SHIPPING_FEE = 99;
-const COD_DEPOSIT = 99;
+export const ENFORCE_SECURITY = true;
+export const FREE_SHIPPING_MIN = 1999;
+export const SHIPPING_FEE = 99;
+export const COD_DEPOSIT = 99;
 
 const calcShipping = (subtotal) => subtotal >= FREE_SHIPPING_MIN ? 0 : SHIPPING_FEE;
 
