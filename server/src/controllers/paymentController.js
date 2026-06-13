@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import razorpay from '../config/razorpay.js';
 import { supabase } from '../config/supabase.js';
+import { generatePDFBuffer } from '../utils/pdfGenerator.js';
 
 // ─── POST /api/payment/create-order ────────────────────────────────────────
 const ENFORCE_SECURITY = true;
@@ -356,6 +357,35 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@thejerseyvault.in';
     
     if (RESEND_API_KEY) {
+      // 1. Fetch exact canonical DB record
+      const { data: savedOrder, error: fetchErr } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+        
+      if (fetchErr || !savedOrder) {
+        console.error('Failed to fetch saved order for email:', fetchErr);
+        throw new Error('Order not found in DB');
+      }
+
+      // 2. Generate PDF Attachment
+      let attachments = [];
+      try {
+        const pdfBuffer = await generatePDFBuffer(savedOrder);
+        const pdfBase64 = pdfBuffer.toString('base64');
+        attachments.push({
+          filename: `Invoice-${savedOrder.id}.pdf`,
+          content: pdfBase64
+        });
+        console.log('PDF_ATTACHMENT_SIZE', pdfBuffer.length);
+        console.log('EMAIL_ATTACHMENT_ORDER', savedOrder.id);
+      } catch (pdfErr) {
+        console.error('Failed to generate PDF Attachment:', pdfErr);
+        // Continue without attachment
+      }
+
+      // 3. Send via Resend
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -364,14 +394,15 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
         },
         body: JSON.stringify({
           from: `JerseyVault <${FROM_EMAIL}>`,
-          to: order_data.customer_email,
-          subject: `Your JerseyVault Invoice ${orderId}`,
+          to: savedOrder.customer_email,
+          subject: `Your JerseyVault Invoice ${savedOrder.id}`,
           html: `
             <h2>Order Confirmed ✅</h2>
-            <p>Order ID: <strong>${orderId}</strong></p>
-            <p>Tracking ID: <strong>${trackingId}</strong></p>
+            <p>Order ID: <strong>${savedOrder.id}</strong></p>
+            <p>Tracking ID: <strong>${savedOrder.tracking_id}</strong></p>
             <p>Your order has been successfully placed. We will notify you once it ships.</p>
-          `
+          `,
+          attachments: attachments.length > 0 ? attachments : undefined
         })
       });
 
@@ -380,7 +411,7 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
       console.log('RESEND_RESPONSE', data);
 
       if (!res.ok) {
-        console.error('RESEND_ERROR', data);
+        console.error('RESEND_ATTACHMENT_ERROR', data);
       }
     }
   } catch (err) {
