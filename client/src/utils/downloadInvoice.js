@@ -9,7 +9,12 @@ export async function downloadInvoice(orderId, { admin = false } = {}) {
 
   try {
     const url = invoiceUrl(orderId, admin);
-    const res = await fetch(url);
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers = {};
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       throw new Error(`Failed to generate invoice (${res.status})`);
     }

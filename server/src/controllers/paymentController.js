@@ -356,7 +356,7 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@thejerseyvault.in';
     
     if (RESEND_API_KEY) {
-      await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -374,6 +374,14 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
           `
         })
       });
+
+      const data = await res.json();
+      console.log('RESEND_STATUS', res.status);
+      console.log('RESEND_RESPONSE', data);
+
+      if (!res.ok) {
+        console.error('RESEND_ERROR', data);
+      }
     }
   } catch (err) {
     console.error("Failed to send order email:", err);
