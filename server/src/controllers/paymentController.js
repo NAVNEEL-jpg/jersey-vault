@@ -15,9 +15,15 @@ async function recalculateCart(items) {
   const verifiedItems = [];
 
   for (const item of items) {
-    const { data: p } = await supabase.from('products').select('price, discount_price, name').eq('id', item.id).single();
+    const { data: p, error } = await supabase.from('products').select('price, name').eq('id', item.id).single();
+    
+    if (error) {
+      console.error('Supabase query error in recalculateCart:', error);
+      throw new Error(`Product query failed for ${item.id}: ${error.message}`);
+    }
+
     if (p) {
-      const price = p.discount_price || p.price;
+      const price = p.price;
       subtotal += price * item.qty;
       verifiedItems.push({
         ...item,

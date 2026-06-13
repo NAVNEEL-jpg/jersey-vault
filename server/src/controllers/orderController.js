@@ -21,7 +21,7 @@ export const trackOrder = async (req, res) => {
     const trackId = req.params.trackingId.toUpperCase();
     const { data, error } = await supabase
       .from('orders')
-      .select('id, tracking_id, status, created_at, expected_delivery, customer_name, total, items')
+      .select('id, tracking_id, status, created_at, customer_name, total, items')
       .or(`tracking_id.eq.${trackId},id.eq.${trackId}`)
       .maybeSingle();
 

@@ -8,7 +8,7 @@ export async function downloadInvoice(orderId, { admin = false } = {}) {
   }
 
   try {
-    const url = invoiceUrl(orderId, { admin });
+    const url = invoiceUrl(orderId, admin);
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`Failed to generate invoice (${res.status})`);

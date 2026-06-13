@@ -31,6 +31,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Standard Middlewares
+app.set('trust proxy', 1);
 app.use(cors());
 
 // Raw body for Razorpay webhook signature verification (must be before express.json)
