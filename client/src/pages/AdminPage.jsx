@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
+import BrandLogo from "../components/BrandLogo";
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
 const statusColors = {
@@ -581,8 +582,7 @@ export default function AdminPage() {
       {/* NAV */}
       <nav className="admin-nav">
         <div className="admin-nav-left">
-          <div className="admin-logo-badge">J</div>
-          <span className="admin-logo-text">JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></span>
+          <BrandLogo style={{ height: "36px" }} />
           <span className="admin-badge">ADMIN</span>
         </div>
         <div className="admin-nav-right">

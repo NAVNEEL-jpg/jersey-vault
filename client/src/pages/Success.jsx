@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { supabase } from "../supabase";
 import ReactGA from "react-ga4";
+import BrandLogo from "../components/BrandLogo";
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500;600&display=swap');
@@ -561,12 +562,9 @@ export default function Success() {
 
         {/* NAV */}
         <nav className="nav">
-          <a href="/" className="logo">
-            <div className="logo-box">J</div>
-            <div className="logo-text">
-              JERSEY<span className="g">VAULT</span>
-            </div>
-          </a>
+          <Link to="/" style={{ textDecoration: "none" }}>
+            <BrandLogo />
+          </Link>
           <div className="nav-tag">ORDER<br />CONFIRMED</div>
         </nav>
 

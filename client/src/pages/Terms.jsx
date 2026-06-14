@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import logo from "../assets/jerseyvault-logo.jpeg";
+import BrandLogo from "../components/BrandLogo";
 
 const sections = [
   {
@@ -111,9 +111,8 @@ export default function Terms() {
 
       {/* NAV */}
       <nav className="legal-nav">
-        <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
-         <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
-          <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
+        <Link to="/" style={{ textDecoration:"none" }}>
+          <BrandLogo />
         </Link>
         <div style={{ display:"flex", gap:32 }}>
           <Link to="/" className="nav-link">HOME</Link>

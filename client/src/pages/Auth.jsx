@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { API_BASE } from '../config/api';
 import ReactGA from "react-ga4";
-import logo from "../assets/jerseyvault-logo.jpeg";
+import BrandLogo from "../components/BrandLogo";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -273,10 +273,7 @@ export default function AuthPage() {
       {/* NAV */}
       <nav className="auth-nav">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <img src={logo} alt="JerseyVault" style={{ width: 36, height: 36, objectFit: "contain", mixBlendMode: "screen" }} />
-          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>
-            JERSEY<span style={{ color: "#39ff14" }}>VAULT</span>
-          </span>
+          <BrandLogo />
         </div>
         <span style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>YOUR ACCOUNT</span>
       </nav>
@@ -334,7 +331,9 @@ export default function AuthPage() {
             <div className="auth-fade-up">
               {/* LOGO */}
               <div style={{ marginBottom: 28, textAlign: "center" }}>
-                <img src={logo} alt="JerseyVault" style={{ width: 72, height: 72, objectFit: "contain", mixBlendMode: "screen", filter: "brightness(1.1) contrast(1.05)", margin: "0 auto 16px", display: "block" }} />
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+                  <BrandLogo logoSize="72px" textSize="40px" style={{ filter: "brightness(1.1) contrast(1.05)" }} />
+                </div>
                 <h1 style={{ fontSize: 32, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>
                   {mode === "login" ? <>WELCOME <span style={{ color: "#39ff14" }}>BACK</span></> : <>CREATE <span style={{ color: "#39ff14" }}>ACCOUNT</span></>}
                 </h1>

@@ -5,6 +5,7 @@ import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
 import { API_BASE } from "../config/api";
 import ReactGA from "react-ga4";
+import BrandLogo from "../components/BrandLogo";
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
@@ -350,8 +351,7 @@ export default function CheckoutPage() {
       {/* NAV */}
       <nav className="checkout-nav">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div className="checkout-logo-badge">J</div>
-          <span className="checkout-nav-title" style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3 }}>JERSEY<span style={{ color: "#00E65B", fontWeight: 900 }}>VAULT</span></span>
+          <BrandLogo style={{ height: "36px" }} />
         </div>
         <span className="checkout-nav-secure" style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>SECURE CHECKOUT 🔒</span>
       </nav>

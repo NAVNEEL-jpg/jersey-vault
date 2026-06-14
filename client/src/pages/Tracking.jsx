@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "../supabase";
 import ReactGA from "react-ga4";
 import { API_BASE } from "../config/api";
+import BrandLogo from "../components/BrandLogo";
 
 const statusColors = ["#555", "#ffaa00", "#00aaff", "#ff6600", "#39ff14"];
 const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
@@ -88,11 +89,8 @@ export default function TrackingPage() {
       `}</style>
 
       <nav className="track-nav">
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <div className="track-logo-badge">J</div>
-          <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 3, color: "#fff" }}>
-            JERSEY<span style={{ color: "#39ff14" }}>VAULT</span>
-          </span>
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <BrandLogo />
         </Link>
         <div style={{ display: "flex", gap: 28 }}>
           <Link to="/" className="nav-link">HOME</Link>

@@ -2,9 +2,8 @@ import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
-import logo from "../assets/jerseyvault-logo.jpeg";
 import heroBg from "../assets/hero-bg.jpeg";
-const LOGO_SRC = logo;
+import BrandLogo from "../components/BrandLogo";
 const FLAME_ID = "jv-flame-teams";
 
 /* ─────────────────────────────────────────
@@ -350,10 +349,7 @@ export default function Teams() {
         {/* ════════════════════ NAVBAR ════════════════════ */}
         <nav className="t-nav">
           <Link to="/" className="t-logo-wrap" style={{ textDecoration:"none", flexShrink:0 }}>
-            <img src={LOGO_SRC} alt="JerseyVault logo" className="t-logo-img" />
-            <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>
-              JERSEY<span style={{ color:"#39ff14" }}>VAULT</span>
-            </span>
+            <BrandLogo />
           </Link>
 
           <div className="t-desktop-search">

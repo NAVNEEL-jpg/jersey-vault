@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import logo from "../assets/jerseyvault-logo.jpeg";
+import BrandLogo from "../components/BrandLogo";
 import ReactGA from "react-ga4";
 
 // WhatsApp SVG
@@ -65,10 +65,7 @@ export default function Contact() {
 
       {/* NAV */}
       <nav className="legal-nav">
-        <Link to="/" style={{ display:"flex", alignItems:"center", gap:8, textDecoration:"none" }}>
-          <img src={logo} alt="JerseyVault logo" style={{ width:44, height:44, objectFit:"contain", mixBlendMode:"screen", filter:"brightness(1.1) contrast(1.05)", display:"block" }} />
-          <span style={{ fontWeight:900, fontSize:20, letterSpacing:3, color:"#fff" }}>JERSEY<span style={{ color:"#39ff14" }}>VAULT</span></span>
-        </Link>
+        <BrandLogo logoSize="44px" textSize="20px" style={{ filter:"brightness(1.1) contrast(1.05)", textDecoration:"none" }} />
         <div style={{ display:"flex", gap:32 }}>
           <Link to="/" className="nav-link">HOME</Link>
           <Link to="/tracking" className="nav-link">TRACK</Link>

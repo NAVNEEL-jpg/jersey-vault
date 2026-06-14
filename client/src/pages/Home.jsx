@@ -12,10 +12,9 @@ import hummellogo from "../assets/brands/hummel.png";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from '../supabase';
 import ReactGA from "react-ga4";
-import logo from "../assets/jerseyvault-logo.jpeg";
 import heroBg from "../assets/hero-bg.jpeg";
+import BrandLogo from "../components/BrandLogo";
 
-const LOGO_SRC = logo;
 const FLAME_ID = "jv-flame";
 
 const CartoonFlameText = memo(function CartoonFlameText({ text }) {
@@ -963,10 +962,7 @@ letter-spacing: 4px !important;
 
         {/* NAVBAR */}
         <nav className="site-nav">
-          <div className="logo-wrap" style={{ flexShrink: 0, marginLeft: 0, paddingLeft: 0 }}>
-            <img src={LOGO_SRC} alt="JerseyVault logo" className="logo-img" />
-            <span className="logo-title">JERSEY<span className="logo-title-accent">VAULT</span></span>
-          </div>
+          <BrandLogo style={{ marginLeft: 0, paddingLeft: 0 }} />
           <div className="desktop-search">
             <input className="search-input" placeholder="SEARCH JERSEYS..." aria-label="Search jerseys" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
           </div>
