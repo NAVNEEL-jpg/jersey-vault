@@ -14,6 +14,7 @@ import { supabase } from '../supabase';
 import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
+import AnnouncementPopup from "../components/AnnouncementPopup";
 
 const FLAME_ID = "jv-flame";
 
@@ -259,6 +260,15 @@ export default function JerseyStore() {
       if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [searchParams, showToast]);
+
+  useEffect(() => {
+    if (searchParams.get("featured") === "true") {
+      setActiveFilter("FEATURED");
+      setTimeout(() => {
+        document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     try { sessionStorage.setItem("jv_visited", "1"); } catch { }
@@ -1344,6 +1354,7 @@ letter-spacing: 4px !important;
           </div>
         )}
       </div>
+      <AnnouncementPopup />
     </>
   );
 }
