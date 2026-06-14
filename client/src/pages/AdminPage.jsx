@@ -26,6 +26,7 @@ const EMPTY_FORM = {
   type: "FAN VERSION",
   team_id: "",
   size_stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+  featured: false,
 };
 
 const EMPTY_TEAM_FORM = {
@@ -42,6 +43,12 @@ export default function AdminPage() {
   const [products, setProducts] = useState([]);
   const [activeTab, setActiveTab] = useState("orders");
   const [updatingId, setUpdatingId] = useState(null);
+
+  // Settings
+  const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
+  const [settingsSuccess, setSettingsSuccess] = useState("");
 
   // Product form
   const [showAddForm, setShowAddForm] = useState(false);
@@ -125,6 +132,10 @@ export default function AdminPage() {
 
       supabase.from("teams").select("*").order("sport,name")
         .then(({ data }) => { if (data) setAllTeams(data); });
+        
+      fetch(`${API_BASE}/api/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(d => { if (d && d.featured_category_name) setFeaturedCategoryName(d.featured_category_name); })
+        .catch(() => {});
     };
     fetchAdminData();
   }, [authed]);
@@ -218,6 +229,31 @@ export default function AdminPage() {
     setUpdatingId(null);
   };
 
+  const handleSaveSettings = async () => {
+    setSettingsSaving(true);
+    setSettingsError("");
+    setSettingsSuccess("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${API_BASE}/api/admin/settings`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}` 
+        },
+        body: JSON.stringify({ featured_category_name: featuredCategoryName.trim() || "FEATURED" })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to save settings");
+      setSettingsSuccess("Settings saved successfully.");
+      setTimeout(() => setSettingsSuccess(""), 3000);
+    } catch (err) {
+      setSettingsError(err.message);
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setFormError("");
@@ -257,6 +293,7 @@ export default function AdminPage() {
       image_url: formData.image_url.trim() || null,
       type: formData.type,
       team_id: formData.team_id || null,
+      featured: formData.featured || false,
     };
     const { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
     if (error) { setFormError("Failed to add product: " + error.message); setFormSaving(false); return; }
@@ -640,6 +677,22 @@ export default function AdminPage() {
         {/* ══════════ PRODUCTS TAB ══════════ */}
         {activeTab === "stock" && (
           <div>
+            {/* FEATURED CATEGORY SETTINGS */}
+            <div className="add-product-form" style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 12, letterSpacing: 4, color: "#39ff14", marginBottom: 20, fontWeight: 900 }}>FEATURED CATEGORY SETTINGS</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="admin-settings-featured">Category Name</label>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                    <input id="admin-settings-featured" className="form-input" type="text" placeholder="e.g. CLEARANCE SALE" value={featuredCategoryName} onChange={e => setFeaturedCategoryName(e.target.value)} style={{ maxWidth: 300 }} />
+                    <button type="button" className="btn-primary" onClick={handleSaveSettings} disabled={settingsSaving}>{settingsSaving ? "SAVING..." : "Save"}</button>
+                  </div>
+                  {settingsError && <div className="form-error" style={{ marginTop: 8 }}>{settingsError}</div>}
+                  {settingsSuccess && <div style={{ color: "#39ff14", fontSize: 12, marginTop: 8, letterSpacing: 1 }}>{settingsSuccess}</div>}
+                </div>
+              </div>
+            </div>
+
             {/* Toolbar: Add Product + Add Team (shortcut) */}
             <div className="product-toolbar">
               <button type="button" className="add-product-toggle" onClick={() => { setShowAddForm(f => !f); if (showAddForm) resetProductForm(); }}>
@@ -682,6 +735,10 @@ export default function AdminPage() {
                         <option value="inactive">INACTIVE</option>
                         <option value="draft">DRAFT</option>
                       </select>
+                    </div>
+                    <div className="form-field" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 }}>
+                      <input id="admin-product-featured" type="checkbox" checked={formData.featured || false} onChange={e => handleFormChange("featured", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#39ff14" }} />
+                      <label className="form-label" htmlFor="admin-product-featured" style={{ marginBottom: 0, cursor: "pointer", color: formData.featured ? "#39ff14" : "#555" }}>☑ FEATURED PRODUCT</label>
                     </div>
                   </div>
 
@@ -875,7 +932,6 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* Product list */}
             <div style={{ background: "#111", border: "1px solid #1a1a1a" }}>
               {products.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "80px 0", color: "#333" }}>
@@ -884,7 +940,7 @@ export default function AdminPage() {
                 </div>
               ) : products.map(p => (
                 <StockRow key={p.id} product={p} deletingId={deletingId} confirmDeleteId={confirmDeleteId} setConfirmDeleteId={setConfirmDeleteId} onDelete={handleDeleteProduct}
-                  onUpdate={(id, newSizeStock) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock } : x))} />
+                  onUpdate={(id, newSizeStock, newFeatured) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured } : x))} />
               ))}
             </div>
           </div>
@@ -1109,11 +1165,14 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   const [localSizeStock, setLocalSizeStock] = useState(
     () => ({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) })
   );
+  const [localFeatured, setLocalFeatured] = useState(!!p.featured);
+  const [savingFeatured, setSavingFeatured] = useState(false);
 
   // Keep local copy in sync when parent refreshes the product
   useEffect(() => {
     setLocalSizeStock({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) });
-  }, [p.size_stock]);
+    setLocalFeatured(!!p.featured);
+  }, [p.size_stock, p.featured]);
 
   const handleSizeRestock = async (size) => {
     const qty = parseInt(sizeInputs[size] || 0);
@@ -1146,9 +1205,23 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
     // Update local state immediately so the next click is correct
     setLocalSizeStock(newSizeStock);
-    onUpdate(p.id, newSizeStock);
+    onUpdate(p.id, newSizeStock, localFeatured);
     setSizeInputs(prev => ({ ...prev, [size]: "" }));
     setSavingSize(null);
+  };
+
+  const handleToggleFeatured = async () => {
+    setSavingFeatured(true);
+    setSaveError(null);
+    const newFeatured = !localFeatured;
+    const { error } = await supabase.from("products").update({ featured: newFeatured }).eq("id", p.id);
+    if (error) {
+      setSaveError(`Failed to update featured status: ${error.message}`);
+    } else {
+      setLocalFeatured(newFeatured);
+      onUpdate(p.id, localSizeStock, newFeatured);
+    }
+    setSavingFeatured(false);
   };
 
   const isConfirming = confirmDeleteId === p.id;
@@ -1192,7 +1265,11 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
           </div>
         </div>
 
-        <div style={{ flexShrink: 0, marginLeft: 12 }}>
+        <div style={{ flexShrink: 0, marginLeft: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, fontWeight: 900, color: localFeatured ? "#39ff14" : "#555", letterSpacing: 1 }}>
+            <input type="checkbox" checked={localFeatured} onChange={handleToggleFeatured} disabled={savingFeatured} style={{ width: 14, height: 14, accentColor: "#39ff14", cursor: "pointer" }} />
+            FEATURED
+          </label>
           {!isConfirming ? (
             <button type="button" className="btn-danger" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
               🗑 REMOVE

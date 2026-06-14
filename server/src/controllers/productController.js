@@ -47,7 +47,7 @@ export const getProductById = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
   try {
-    const { name, price, originalPrice, description, images, image, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured } = req.body;
+    const { name, price, originalPrice, description, images, image, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured, featured } = req.body;
 
     const imgList = Array.isArray(images) && images.length > 0
       ? images
@@ -70,6 +70,7 @@ export const createProduct = async (req, res) => {
         discountPercent,
         slug: slugFinal,
         isFeatured: isFeatured || false,
+        featured: featured || false,
       }])
       .select()
       .single();
@@ -85,7 +86,7 @@ export const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
   try {
-    const { name, price, originalPrice, description, images, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured } = req.body;
+    const { name, price, originalPrice, description, images, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured, featured } = req.body;
 
     const { data, error } = await supabase
       .from('products')
@@ -102,6 +103,7 @@ export const updateProduct = async (req, res) => {
         discountPercent,
         slug,
         isFeatured,
+        featured,
       })
       .eq('id', req.params.id)
       .select()
@@ -131,7 +133,7 @@ export const deleteProduct = async (req, res) => {
       console.error("SUPABASE DELETE ERROR:", error);
       throw error;
     }
-    
+
     console.log("DELETE SUCCESSFUL");
     res.json({ message: 'Product removed' });
   } catch (error) {

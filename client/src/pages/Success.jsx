@@ -492,7 +492,9 @@ function CopyButton({ text, label }) {
       title={label}
     >
       {copied ? (
-        <span style={{ fontSize: '10px', fontWeight: 'bold', position: 'absolute', top: '-18px', left: '50%', transform: 'translateX(-50%)', color: 'var(--green)' }}></span>
+        <span style={{ fontSize: '10px', fontWeight: 'bold', position: 'absolute', top: '-18px', left: '50%', transform: 'translateX(-50%)', color: 'var(--green)' }}>
+          
+        </span>
       ) : null}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

@@ -137,10 +137,10 @@ function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobi
 const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
 const filterButtons = [
-  { key: "ALL",            label: "ALL" },
-  { key: "FAN VERSION",    label: "FAN VERSION" },
+  { key: "ALL", label: "ALL" },
+  { key: "FAN VERSION", label: "FAN VERSION" },
   { key: "PLAYER VERSION", label: "PLAYER VERSION" },
-  { key: "RETRO",          label: "RETRO" },
+  { key: "RETRO", label: "RETRO" },
 ];
 
 export default function JerseyStore() {
@@ -169,6 +169,13 @@ export default function JerseyStore() {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTeamName, setActiveTeamName] = useState("");
+  const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
+
+  useEffect(() => {
+    supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
+      .then(({ data }) => { if (data && data.value) setFeaturedCategoryName(data.value); })
+      .catch(() => { setFeaturedCategoryName("FEATURED"); });
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim().length > 2) {
@@ -222,7 +229,7 @@ export default function JerseyStore() {
       setActiveTeamName("");
     }
 
-    let query = supabase.from("products").select("id, name, price, type, size_stock, stock, image_url, status, team_id").eq("status", "active");
+    let query = supabase.from("products").select("id, name, price, type, size_stock, stock, image_url, status, team_id, featured").eq("status", "active");
     if (teamId) query = query.eq("team_id", teamId);
 
     query.then(({ data, error }) => {
@@ -255,7 +262,7 @@ export default function JerseyStore() {
   }, [searchParams, showToast]);
 
   useEffect(() => {
-    try { sessionStorage.setItem("jv_visited", "1"); } catch {}
+    try { sessionStorage.setItem("jv_visited", "1"); } catch { }
   }, []);
 
   // This effect is intentionally run once on mount to trigger the hero fade-in.
@@ -286,7 +293,7 @@ export default function JerseyStore() {
   useEffect(() => {
     try {
       sessionStorage.setItem("cart", JSON.stringify(cart));
-    } catch {}
+    } catch { }
   }, [cart]);
 
   useEffect(() => {
@@ -295,15 +302,16 @@ export default function JerseyStore() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-const filtered = useMemo(() => jerseys.filter(j => {
-const matchesSearch =
-  (j.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase());
+  const filtered = useMemo(() => jerseys.filter(j => {
+    const matchesSearch =
+      (j.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase());
 
-  const matchesFilter =
-    activeFilter === "ALL" || j.type === activeFilter;
+    const matchesFilter =
+    activeFilter === "ALL" || 
+    (activeFilter === "FEATURED" ? j.featured === true : j.type === activeFilter);
 
-  return matchesSearch && matchesFilter;
-}), [jerseys, searchQuery, activeFilter]);
+    return matchesSearch && matchesFilter;
+  }), [jerseys, searchQuery, activeFilter]);
 
   const addToCart = useCallback((jersey, size) => {
     ReactGA.event("add_to_cart", {
@@ -347,7 +355,7 @@ const matchesSearch =
     setUser(null);
     setIsAdmin(false);
     setCart([]);
-    try { sessionStorage.removeItem("cart"); } catch {}
+    try { sessionStorage.removeItem("cart"); } catch { }
     setMobileMenuOpen(false);
   }, []);
 
@@ -975,44 +983,44 @@ letter-spacing: 4px !important;
             />
           </div>
           <div className="nav-right">
-             {/* SEARCH ICON */}
-             <div className="mobile-search-btn">
-             <button type="button"
- aria-label="Open search"
- className="icon-action-btn"
- onClick={() => {
-  setMobileMenuOpen(true);
+            {/* SEARCH ICON */}
+            <div className="mobile-search-btn">
+              <button type="button"
+                aria-label="Open search"
+                className="icon-action-btn"
+                onClick={() => {
+                  setMobileMenuOpen(true);
 
-  setTimeout(() => {
-    const el = document.querySelector(".h-search-input");
-    el?.focus();
-  }, 100);
-}}
->
-  <svg
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="11" cy="11" r="7"/>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-  </svg>
-</button>
-</div>
-             {/* CART BUTTON */}
+                  setTimeout(() => {
+                    const el = document.querySelector(".h-search-input");
+                    el?.focus();
+                  }, 100);
+                }}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </button>
+            </div>
+            {/* CART BUTTON */}
             <button type="button"
               aria-label="Open cart"
               className="icon-action-btn icon-cart-btn"
               onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
               {cartCount > 0 && (
                 <span className="cart-count-inline">{cartCount}</span>
@@ -1021,8 +1029,8 @@ letter-spacing: 4px !important;
             <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
               {mobileMenuOpen ? (
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               ) : (
                 <><span /><span /><span /></>
@@ -1086,7 +1094,10 @@ letter-spacing: 4px !important;
               <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
             <div className="filter-bar">
-              {filterButtons.map(({ key, label }) => (
+              {filterButtons.slice(0, 3).concat(
+                { key: "FEATURED", label: featuredCategoryName.toUpperCase() },
+                filterButtons.slice(3)
+              ).map(({ key, label }) => (
                 <button type="button" key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
                   <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
                     {label}
@@ -1117,7 +1128,7 @@ letter-spacing: 4px !important;
             <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
               {filtered.map((jersey, i) => (
                 <div
-                  key={jersey.id}
+                  key={`${activeFilter}-${jersey.id}`}
                   className="card"
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}
                 >
@@ -1145,13 +1156,13 @@ letter-spacing: 4px !important;
                       className="add-btn"
                       disabled={jersey.stock === 0}
                       onClick={() => {
-                        if (jersey.stock > 0) { 
+                        if (jersey.stock > 0) {
                           ReactGA.event("view_item", {
                             currency: "INR", value: jersey.price,
                             items: [{ item_id: jersey.id, item_name: jersey.name, price: jersey.price, item_category: jersey.type }]
                           });
-                          setSelectedJersey(jersey); 
-                          setSelectedSize("M"); 
+                          setSelectedJersey(jersey);
+                          setSelectedSize("M");
                         }
                       }}
                     >

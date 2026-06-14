@@ -104,8 +104,52 @@ export const deleteUser = async (req, res) => {
 
     if (profileError) throw profileError;
 
-    res.json({ message: 'User deleted' });
+    res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('[deleteUser] Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getSettings = async (req, res) => {
+  try {
+    const { data, error } = await supabase.from('site_settings').select('*');
+    if (error) throw error;
+    
+    const settings = {};
+    if (data) {
+      data.forEach(item => {
+        settings[item.key] = item.value;
+      });
+    }
+    
+    res.json(settings);
+  } catch (error) {
+    console.error("Get Settings Error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const updateSettings = async (req, res) => {
+  try {
+    const settings = req.body;
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ success: false, error: 'Invalid settings payload' });
+    }
+    
+    const updates = Object.keys(settings).map(key => ({
+      key,
+      value: String(settings[key])
+    }));
+    
+    if (updates.length > 0) {
+      const { error } = await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
+      if (error) throw error;
+    }
+    
+    res.json({ success: true, message: 'Settings updated' });
+  } catch (error) {
+    console.error("Update Settings Error:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
