@@ -1020,18 +1020,24 @@ letter-spacing: 4px !important;
                           setShowSuggestions(false);
                         }}
                         style={{
-                          padding: '10px 16px',
+                          padding: '8px 12px',
                           cursor: 'pointer',
                           borderBottom: '1px solid #111',
                           transition: 'background 0.2s',
                           fontSize: '13px',
                           color: '#bbb',
-                          userSelect: 'none'
+                          userSelect: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px'
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = '#111'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
-                        {jersey.name}
+                        {jersey.image_url && (
+                          <img src={jersey.image_url} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
+                        )}
+                        <span>{jersey.name}</span>
                       </div>
                     ))}
                 </div>
@@ -1142,18 +1148,24 @@ letter-spacing: 4px !important;
                           setShowSuggestions(false);
                         }}
                         style={{
-                          padding: '10px 16px',
+                          padding: '8px 12px',
                           cursor: 'pointer',
                           borderBottom: '1px solid #111',
                           transition: 'background 0.2s',
                           fontSize: '13px',
                           color: '#bbb',
-                          userSelect: 'none'
+                          userSelect: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px'
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = '#111'}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
-                        {jersey.name}
+                        {jersey.image_url && (
+                          <img src={jersey.image_url} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
+                        )}
+                        <span>{jersey.name}</span>
                       </div>
                     ))}
                 </div>
