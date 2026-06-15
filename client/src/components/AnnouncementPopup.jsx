@@ -124,7 +124,7 @@ export default function AnnouncementPopup() {
         </button>
 
         {/* Image */}
-        <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a', borderRadius: '6px 6px 0 0' }}>
+        <div style={{ width: '100%', height: '360px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a', borderRadius: '6px 6px 0 0' }}>
           <img 
             src={POPUP_CONFIG.image} 
             alt={POPUP_CONFIG.title} 
