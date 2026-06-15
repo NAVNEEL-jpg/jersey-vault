@@ -801,7 +801,7 @@ letter-spacing: 4px !important;
 .card-img { height:200px; }
 .card-img-wrap { height:200px; }
 .card { height:400px; }
-.card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+.card-grid { grid-template-columns: repeat(4, 1fr) !important; }
 }
 
 @media(max-width:380px) {
@@ -813,7 +813,7 @@ letter-spacing: 4px !important;
     font-size: 16px;
   }
     .card { height:390px; }
-    .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .card-grid { grid-template-columns: repeat(4, 1fr) !important; }
 }
   /* ══════════════════════════════════════
      MODAL
@@ -886,7 +886,7 @@ letter-spacing: 4px !important;
   .card-img { height:180px; }
   .card-img-wrap { height:180px; }
   .card { height:400px; }
-  .card-grid { grid-template-columns:repeat(2, 1fr) !important; }
+  .card-grid { grid-template-columns:repeat(4, 1fr) !important; }
   .stats-grid { grid-template-columns:repeat(3,1fr); }
   .stat-cell { padding:14px 0; }
   .filter-btn { font-size:14px !important; padding:6px 12px; }
