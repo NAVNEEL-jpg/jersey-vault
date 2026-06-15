@@ -81,7 +81,7 @@ export default function AnnouncementPopup() {
       <div style={{
         position: 'relative',
         width: '100%',
-        maxWidth: '600px',
+        maxWidth: '420px',
         borderRadius: '12px',
         overflow: 'hidden',
         animation: 'popupFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -115,53 +115,25 @@ export default function AnnouncementPopup() {
           ✕
         </button>
 
-        {/* Image */}
-        <img
-          src={POPUP_CONFIG.image}
-          alt="World Cup 2026"
-          style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '12px' }}
-          onError={(e) => {
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-
-        {/* Overlay Button */}
+        {/* Image as NavLink */}
         <Link
           to={POPUP_CONFIG.redirectTo}
           onClick={handleLinkClick}
           style={{
-            position: 'absolute',
-            bottom: '24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: '#39ff14',
-            color: '#000',
-            border: 'none',
-            padding: '16px 40px',
-            fontWeight: 900,
-            fontSize: '16px',
-            letterSpacing: '3px',
-            fontFamily: "'Barlow Condensed', sans-serif",
-            cursor: 'pointer',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            boxShadow: '0 0 15px rgba(57,255,20,0.3)',
+            display: 'block',
             textDecoration: 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 5,
-            borderRadius: '4px'
+            position: 'relative'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateX(-50%) translateY(-3px)';
-            e.currentTarget.style.boxShadow = '0 0 25px rgba(57,255,20,0.5)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateX(-50%)';
-            e.currentTarget.style.boxShadow = '0 0 15px rgba(57,255,20,0.3)';
-          }}
+          aria-label="SHOP WORLD CUP KITS NOW"
         >
-          {POPUP_CONFIG.buttonText}
+          <img
+            src={POPUP_CONFIG.image}
+            alt="SHOP WORLD CUP KITS NOW"
+            style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '12px', cursor: 'pointer' }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
         </Link>
       </div>
     </div>
