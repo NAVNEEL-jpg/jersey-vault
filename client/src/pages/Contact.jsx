@@ -64,6 +64,24 @@ export default function Contact() {
         .legal-footer-copy { color:#333; font-size:12px; letter-spacing:2px; }
         .legal-footer-link { color:#666; font-size:12px; letter-spacing:2px; text-decoration:none; transition:color 0.2s; }
         .contact-hint { font-size:12px; font-family:'Barlow',sans-serif; color:#555; }
+
+@media (max-width: 600px) {
+  .legal-nav { padding: 0 12px; gap: 8px; }
+  .legal-nav > div { gap: 16px !important; }
+  .legal-nav span { display: none; }
+  .nav-link { font-size: 11px; letter-spacing: 1px; }
+  .contact-card { padding: 20px 16px; }
+  .number { font-size: 16px; letter-spacing: 1px; }
+  .contact-cta { display: block; text-align: center; }
+  .contact-row { gap: 10px; }
+  .contact-icon-circle { width: 44px; height: 44px; flex-shrink: 0; }
+}
+
+@media (max-width: 380px) {
+  .number { font-size: 14px; }
+  .legal-nav > div { gap: 10px !important; }
+  .nav-link { font-size: 10px; }
+}
       `}</style>
 
       {/* NAV */}
