@@ -126,10 +126,10 @@ export default function AnnouncementPopup() {
 
         {/* Image */}
         <div style={{ width: '100%', height: '360px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a', borderRadius: '6px 6px 0 0' }}>
-          <img 
-            src={POPUP_CONFIG.image} 
-            alt={POPUP_CONFIG.title} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          <img
+            src={POPUP_CONFIG.image}
+            alt={POPUP_CONFIG.title}
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             onError={(e) => {
               // Hide image container if image fails to load so it doesn't break layout
               e.currentTarget.parentElement.style.display = 'none';
