@@ -985,7 +985,7 @@ letter-spacing: 4px !important;
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
               />
               {showSuggestions && searchQuery.trim().length > 0 && (
                 <div style={{
@@ -1017,7 +1017,7 @@ letter-spacing: 4px !important;
       const y = shop.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
-  }, 50);
+  }, 150);
 }}
                         style={{
                           padding: '8px 12px',
@@ -1120,7 +1120,7 @@ letter-spacing: 4px !important;
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
               />
               {showSuggestions && searchQuery.trim().length > 0 && (
                 <div style={{
@@ -1152,7 +1152,7 @@ letter-spacing: 4px !important;
       const y = shop.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
-  }, 50);
+  }, 150);
 }}
                         style={{
                           padding: '8px 12px',
