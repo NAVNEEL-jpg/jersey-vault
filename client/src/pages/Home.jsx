@@ -932,8 +932,8 @@ letter-spacing: 4px !important;
   .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
   .icon-action-btn { background:transparent; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s; }
   .icon-action-btn:hover { color:#39ff14; }
-  .icon-cart-btn { gap:8px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:1px; }
-  .cart-count-inline { color:#39ff14; font-size:19px; font-weight:900; line-height:1; }
+  .icon-cart-btn { gap:0; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:1px; position:relative; }
+  .cart-count-inline { color:#000; background:#39ff14; font-size:11px; font-weight:900; line-height:1; padding:2px 5px; border-radius:10px; min-width:18px; text-align:center; }
   .mobile-search-gap { margin-bottom:8px; }
   .hero-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(7,7,7,0.99) 100%); pointer-events:none; }
   .hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
