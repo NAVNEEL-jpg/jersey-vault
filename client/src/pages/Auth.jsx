@@ -33,17 +33,19 @@ export default function AuthPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSent, setForgotSent] = useState(false);
 
-  // ── INJECT scoped styles on mount, REMOVE on unmount ──────────────────────
-  // Using a JS-injected <style> with a unique id so we can guarantee cleanup
-  // when navigate('/') unmounts this component. This prevents ANY style bleed
-  // into JerseyStore (the white ticker / broken button issue).
   useEffect(() => {
+    // Add viewport meta if not present
+    if (!document.querySelector('meta[name="viewport"]')) {
+      const meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, initial-scale=1.0';
+      document.head.appendChild(meta);
+    }
+
     const id = "jv-auth-styles";
     if (!document.getElementById(id)) {
       const el = document.createElement("style");
       el.id = id;
-      // ALL selectors are scoped to #jv-auth-root so nothing leaks globally.
-      // The only truly global rules are @keyframes (harmless) and @import.
       el.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         @keyframes auth-fadeUp  { from{opacity:0;transform:translateY(28px);} to{opacity:1;transform:translateY(0);} }
@@ -52,7 +54,6 @@ export default function AuthPage() {
         @keyframes auth-glow    { 0%,100%{box-shadow:0 0 10px #39ff1440;} 50%{box-shadow:0 0 30px #39ff1480;} }
         @keyframes auth-bgPulse { 0%,100%{opacity:0.06;} 50%{opacity:0.12;} }
 
-        /* ── all rules scoped to #jv-auth-root ── */
         #jv-auth-root *, #jv-auth-root *::before, #jv-auth-root *::after {
           box-sizing: border-box; margin: 0; padding: 0;
         }
@@ -70,20 +71,20 @@ export default function AuthPage() {
         #jv-auth-root .auth-panel {
           background: rgba(17,17,17,0.75); border: 1px solid rgba(255,255,255,0.06);
           backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-          padding: 32px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+          padding: 24px 20px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
         }
         #jv-auth-root .auth-field.err    { border-color: #ff4444; }
         #jv-auth-root .auth-field::placeholder { color: #52525b; }
 
         #jv-auth-root .auth-nav {
           background: rgba(10,10,10,0.95); border-bottom: 1px solid #1a1a1a;
-          padding: 0 24px; height: 60px; display: flex; align-items: center;
+          padding: 0 16px; height: 60px; display: flex; align-items: center;
           justify-content: space-between; position: sticky; top: 0; z-index: 50;
         }
         #jv-auth-root .auth-bg-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
         #jv-auth-root .auth-bg-blob { position: absolute; top: 10%; left: -10%; width: 500px; height: 500px; border-radius: 50%; background: #39ff14; filter: blur(120px); }
         #jv-auth-root .auth-bg-blob2 { position: absolute; bottom: 10%; right: -10%; width: 400px; height: 400px; border-radius: 50%; background: #00aaff; filter: blur(120px); }
-        #jv-auth-root .auth-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; position: relative; z-index: 1; }
+        #jv-auth-root .auth-main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 12px; position: relative; z-index: 1; }
         #jv-auth-root .auth-success-icon { width: 90px; height: 90px; border-radius: 50%; background: #39ff1420; border: 2px solid #39ff14; display: flex; align-items: center; justify-content: center; font-size: 42px; margin: 0 auto 24px; }
         #jv-auth-root .auth-back-btn { background: none; border: none; color: #555; cursor: pointer; font-size: 13px; letter-spacing: 2px; margin-bottom: 24px; display: flex; align-items: center; gap: 6px; }
         #jv-auth-root .auth-store-btn { margin-top: 28px; background: #39ff14; color: #000; border: none; padding: 14px 36px; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 14px; letter-spacing: 3px; cursor: pointer; }
@@ -144,12 +145,21 @@ export default function AuthPage() {
         #jv-auth-root .auth-spin     { animation: auth-spin   0.7s linear infinite; }
         #jv-auth-root .auth-bg-blob  { animation: auth-bgPulse 4s ease infinite; }
         #jv-auth-root .auth-bg-blob2 { animation: auth-bgPulse 5s ease infinite 1s; }
+
+        @media (max-width: 480px) {
+          #jv-auth-root .auth-panel { padding: 20px 14px; }
+          #jv-auth-root .auth-main { padding: 16px 10px; align-items: flex-start; padding-top: 24px; }
+          #jv-auth-root .auth-field { font-size: 14px; padding: 12px 12px; }
+          #jv-auth-root .auth-submit-btn { font-size: 14px; letter-spacing: 3px; padding: 14px; }
+          #jv-auth-root .auth-google-btn { font-size: 13px; letter-spacing: 2px; padding: 12px; }
+          #jv-auth-root .auth-tab { font-size: 12px; letter-spacing: 2px; padding: 12px; }
+          #jv-auth-root .auth-nav { padding: 0 12px; }
+        }
       `;
       document.head.appendChild(el);
       styleRef.current = el;
     }
 
-    // ── CRITICAL: remove styles when component unmounts (i.e. after navigate('/')) ──
     return () => {
       const el = document.getElementById("jv-auth-styles");
       if (el) el.remove();
@@ -263,7 +273,6 @@ export default function AuthPage() {
   };
 
   return (
-    // id="jv-auth-root" — all CSS is scoped to this, nothing leaks out
     <div id="jv-auth-root" style={{
       fontFamily: "'Barlow Condensed', sans-serif",
       background: "#0a0a0a", minHeight: "100vh", color: "#fff",
@@ -387,8 +396,8 @@ export default function AuthPage() {
                 {mode === "signup" && (
                   <div>
                     <label className="auth-label" htmlFor="auth-phone">PHONE NUMBER</label>
-                    <div className="auth-field-wrap" style={{ display: "flex", gap: 8 }}>
-                      <select id="auth-country-code" className="auth-field" style={{ width: "90px", padding: "14px 8px", fontSize: "14px" }} value={form.countryCode} onChange={e => update("countryCode", e.target.value)} aria-label="Country code">
+                    <div className="auth-field-wrap" style={{ display: "flex", gap: 6 }}>
+                      <select id="auth-country-code" className="auth-field" style={{ width: "80px", padding: "14px 4px", fontSize: "13px", flexShrink: 0 }} value={form.countryCode} onChange={e => update("countryCode", e.target.value)} aria-label="Country code">
                         {COUNTRY_CODES.map(c => <option key={c.code + c.country} value={c.code}>{c.country} {c.code}</option>)}
                       </select>
                       <input id="auth-phone" className={`auth-field${errors.phone ? " err" : ""}`} placeholder="9876543210" value={form.phone} onChange={e => update("phone", e.target.value)} inputMode="numeric" />
