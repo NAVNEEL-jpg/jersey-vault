@@ -29,7 +29,10 @@ const InstagramIcon = () => (
 export default function Contact() {
   return (
     <div style={{ fontFamily:"'Barlow Condensed', sans-serif", background:"#0a0a0a", minHeight:"100vh", color:"#fff" }}>
-      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/contact" /></Helmet>
+      <Helmet>
+  <link rel="canonical" href="https://www.thejerseyvault.in/contact" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
@@ -115,13 +118,21 @@ export default function Contact() {
             </div>
           </div>
 
-          <div className="number-row">
-            <div style={{ width:8, height:8, borderRadius:"50%", background:"#25D366", flexShrink:0 }} />
-            <div>
-              <div className="contact-region-label">INTERNATIONAL</div>
-              <div className="number">+1 (579) 475-9370</div>
-            </div>
-          </div>
+         <div className="number-row">
+  <div style={{ width:8, height:8, borderRadius:"50%", background:"#25D366", flexShrink:0 }} />
+  <div>
+    <div className="contact-region-label">INTERNATIONAL</div>
+    <div className="number">+1 (579) 475-9370</div>
+  </div>
+</div>
+
+<div className="number-row">
+  <div style={{ width:8, height:8, borderRadius:"50%", background:"#25D366", flexShrink:0 }} />
+  <div>
+    <div className="contact-region-label">INTERNATIONAL</div>
+    <div className="number">+1 (604) 200-9964</div>
+  </div>
+</div>
 
           <div className="contact-cta wa">CHAT ON WHATSAPP →</div>
         </a>
