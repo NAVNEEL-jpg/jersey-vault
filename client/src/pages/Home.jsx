@@ -182,10 +182,17 @@ export default function JerseyStore() {
     if (searchQuery.trim().length > 2) {
       const delayFn = setTimeout(() => {
         ReactGA.event("search", { search_term: searchQuery.trim() });
-        // Scroll to shop section to show search results
-        document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
       }, 1000);
-      return () => clearTimeout(delayFn);
+
+      // Scroll to shop section immediately to show search results
+      const scrollTimer = setTimeout(() => {
+        document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+
+      return () => {
+        clearTimeout(delayFn);
+        clearTimeout(scrollTimer);
+      };
     }
   }, [searchQuery]);
 
@@ -1011,7 +1018,6 @@ letter-spacing: 4px !important;
                         onClick={() => {
                           setSearchQuery(jersey.name);
                           setShowSuggestions(false);
-                          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
                         }}
                         style={{
                           padding: '10px 16px',
@@ -1134,7 +1140,6 @@ letter-spacing: 4px !important;
                         onClick={() => {
                           setSearchQuery(jersey.name);
                           setShowSuggestions(false);
-                          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
                         }}
                         style={{
                           padding: '10px 16px',
