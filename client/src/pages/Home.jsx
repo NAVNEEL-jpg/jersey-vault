@@ -188,9 +188,11 @@ export default function JerseyStore() {
       const scrollTimer = setTimeout(() => {
         const shopElement = document.getElementById('shop');
         if (shopElement) {
-          shopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Use window.scrollTo as fallback
+          const yOffset = shopElement.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: yOffset, behavior: 'smooth' });
         }
-      }, 500);
+      }, 800);
 
       return () => {
         clearTimeout(delayFn);
