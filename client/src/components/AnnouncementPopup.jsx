@@ -91,9 +91,10 @@ export default function AnnouncementPopup() {
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 0 20px rgba(57,255,20,0.5), 0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
         animation: 'popupFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        filter: 'drop-shadow(0 0 30px rgba(57,255,20,0.6))'
       }}>
         {/* Close Button */}
         <button 
