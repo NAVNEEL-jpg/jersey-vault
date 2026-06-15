@@ -1252,20 +1252,15 @@ letter-spacing: 4px !important;
               <div style={{ padding: "10px 24px 32px" }}>
                 <div className="size-label">SELECT SIZE</div>
                 <div className="size-grid">
-                  {sizes.map(s => {
-                    const sizeStock = getSizeStock(selectedJersey, s);
-                    const outOfStock = sizeStock === 0;
+                  {sizes.filter(s => getSizeStock(selectedJersey, s) > 0).map(s => {
                     return (
                       <button type="button"
                         key={s}
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
                         onClick={() => {
-                          if (!outOfStock) {
-                            setSelectedSize(s);
-                            ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
-                          }
+                          setSelectedSize(s);
+                          ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
                         }}
-                        disabled={outOfStock}
                       >
                         {s}
                       </button>
