@@ -184,15 +184,9 @@ export default function JerseyStore() {
         ReactGA.event("search", { search_term: searchQuery.trim() });
       }, 1000);
 
-      // Scroll to shop section after DOM renders filtered results
-      const scrollTimer = setTimeout(() => {
-        const shopElement = document.getElementById('shop');
-        if (shopElement) {
-          // Use window.scrollTo as fallback
-          const yOffset = shopElement.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top: yOffset, behavior: 'smooth' });
-        }
-      }, 800);
+     return () => {
+  clearTimeout(delayFn);
+};
 
       return () => {
         clearTimeout(delayFn);
@@ -1020,10 +1014,17 @@ letter-spacing: 4px !important;
                     .map(jersey => (
                       <div
                         key={jersey.id}
-                        onClick={() => {
-                          setSearchQuery(jersey.name);
-                          setShowSuggestions(false);
-                        }}
+                       onClick={() => {
+  setSearchQuery(jersey.name);
+  setShowSuggestions(false);
+  setTimeout(() => {
+    const shop = document.getElementById('shop');
+    if (shop) {
+      const y = shop.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, 50);
+}}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
@@ -1149,9 +1150,16 @@ letter-spacing: 4px !important;
                       <div
                         key={jersey.id}
                         onClick={() => {
-                          setSearchQuery(jersey.name);
-                          setShowSuggestions(false);
-                        }}
+  setSearchQuery(jersey.name);
+  setShowSuggestions(false);
+  setTimeout(() => {
+    const shop = document.getElementById('shop');
+    if (shop) {
+      const y = shop.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }, 50);
+}}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
