@@ -184,10 +184,12 @@ export default function JerseyStore() {
         ReactGA.event("search", { search_term: searchQuery.trim() });
       }, 1000);
 
-      // Scroll to shop section immediately to show search results
+      // Scroll to shop section after DOM renders filtered results
       const scrollTimer = setTimeout(() => {
-        document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+        requestAnimationFrame(() => {
+          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
+        });
+      }, 300);
 
       return () => {
         clearTimeout(delayFn);
