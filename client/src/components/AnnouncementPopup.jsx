@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const POPUP_CONFIG = {
   enabled: true,
@@ -24,7 +24,6 @@ const POPUP_CONFIG = {
 
 export default function AnnouncementPopup() {
   const [isVisible, setIsVisible] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!POPUP_CONFIG.enabled) return;
@@ -54,9 +53,8 @@ export default function AnnouncementPopup() {
     }
   };
 
-  const handleCTA = () => {
+  const handleLinkClick = () => {
     handleClose();
-    navigate(POPUP_CONFIG.redirectTo);
   };
 
   if (!isVisible) return null;
@@ -87,14 +85,15 @@ export default function AnnouncementPopup() {
       
       <div style={{
         background: '#111',
-        border: '1px solid #333',
+        border: '1.5px solid #39ff14',
         width: '100%',
         maxWidth: '480px',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-        animation: 'popupFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+        boxShadow: '0 0 20px rgba(57,255,20,0.5), 0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+        animation: 'popupFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        borderRadius: '8px'
       }}>
         {/* Close Button */}
         <button 
@@ -125,7 +124,7 @@ export default function AnnouncementPopup() {
         </button>
 
         {/* Image */}
-        <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a' }}>
+        <div style={{ width: '100%', height: '240px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a', borderRadius: '6px 6px 0 0' }}>
           <img 
             src={POPUP_CONFIG.image} 
             alt={POPUP_CONFIG.title} 
@@ -165,8 +164,9 @@ export default function AnnouncementPopup() {
             </p>
           )}
           
-          <button 
-            onClick={handleCTA}
+          <Link
+            to={POPUP_CONFIG.redirectTo}
+            onClick={handleLinkClick}
             style={{
               background: '#39ff14',
               color: '#000',
@@ -179,7 +179,10 @@ export default function AnnouncementPopup() {
               cursor: 'pointer',
               width: '100%',
               transition: 'transform 0.2s, box-shadow 0.2s',
-              boxShadow: '0 0 10px rgba(57,255,20,0.2)'
+              boxShadow: '0 0 10px rgba(57,255,20,0.2)',
+              display: 'block',
+              textAlign: 'center',
+              textDecoration: 'none'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -191,7 +194,7 @@ export default function AnnouncementPopup() {
             }}
           >
             {POPUP_CONFIG.buttonText}
-          </button>
+          </Link>
         </div>
       </div>
     </div>
