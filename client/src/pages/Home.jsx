@@ -178,19 +178,13 @@ export default function JerseyStore() {
       .catch(() => { setFeaturedCategoryName("FEATURED"); });
   }, []);
 
-  useEffect(() => {
+ useEffect(() => {
     if (searchQuery.trim().length > 2) {
       const delayFn = setTimeout(() => {
         ReactGA.event("search", { search_term: searchQuery.trim() });
       }, 1000);
-
-     return () => {
-  clearTimeout(delayFn);
-};
-
       return () => {
         clearTimeout(delayFn);
-        clearTimeout(scrollTimer);
       };
     }
   }, [searchQuery]);
