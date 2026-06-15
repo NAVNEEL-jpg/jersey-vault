@@ -181,6 +181,8 @@ export default function JerseyStore() {
     if (searchQuery.trim().length > 2) {
       const delayFn = setTimeout(() => {
         ReactGA.event("search", { search_term: searchQuery.trim() });
+        // Scroll to shop section to show search results
+        document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
       }, 1000);
       return () => clearTimeout(delayFn);
     }
