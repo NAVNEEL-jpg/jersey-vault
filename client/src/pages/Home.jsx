@@ -165,6 +165,7 @@ export default function JerseyStore() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [user, setUser] = useState(null);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -976,7 +977,60 @@ letter-spacing: 4px !important;
         <nav className="site-nav">
           <BrandLogo style={{ marginLeft: 0, paddingLeft: 0 }} />
           <div className="desktop-search">
-            <input className="search-input" placeholder="SEARCH JERSEYS..." aria-label="Search jerseys" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <div style={{ position: 'relative', width: '100%' }}>
+              <input
+                className="search-input"
+                placeholder="SEARCH JERSEYS..."
+                aria-label="Search jerseys"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              />
+              {showSuggestions && searchQuery.trim().length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#0a0a0a',
+                  border: '1px solid #2a2a2a',
+                  borderTop: 'none',
+                  borderRadius: '0 0 8px 8px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 100,
+                  marginTop: '-4px'
+                }}>
+                  {jerseys
+                    .filter(j => j.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                    .slice(0, 8)
+                    .map(jersey => (
+                      <div
+                        key={jersey.id}
+                        onClick={() => {
+                          setSearchQuery(jersey.name);
+                          setShowSuggestions(false);
+                          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #111',
+                          transition: 'background 0.2s',
+                          fontSize: '13px',
+                          color: '#bbb',
+                          userSelect: 'none'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#111'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {jersey.name}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
           </div>
           {/* FIX: NavLinks is now a proper component */}
           <div className="desktop-nav-links">
@@ -1046,7 +1100,60 @@ letter-spacing: 4px !important;
             </button>
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
-            <input className="search-input h-search-input mobile-search-gap" placeholder="SEARCH JERSEYS..." aria-label="Search jerseys" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <div style={{ position: 'relative', marginBottom: '8px' }}>
+              <input
+                className="search-input h-search-input mobile-search-gap"
+                placeholder="SEARCH JERSEYS..."
+                aria-label="Search jerseys"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              />
+              {showSuggestions && searchQuery.trim().length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#0a0a0a',
+                  border: '1px solid #2a2a2a',
+                  borderTop: 'none',
+                  borderRadius: '0 0 8px 8px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 100,
+                  marginTop: '-4px'
+                }}>
+                  {jerseys
+                    .filter(j => j.name.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+                    .slice(0, 8)
+                    .map(jersey => (
+                      <div
+                        key={jersey.id}
+                        onClick={() => {
+                          setSearchQuery(jersey.name);
+                          setShowSuggestions(false);
+                          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        style={{
+                          padding: '10px 16px',
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #111',
+                          transition: 'background 0.2s',
+                          fontSize: '13px',
+                          color: '#bbb',
+                          userSelect: 'none'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#111'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {jersey.name}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
             {/* FIX: NavLinks component used in mobile menu too */}
             <NavLinks
               user={user}
