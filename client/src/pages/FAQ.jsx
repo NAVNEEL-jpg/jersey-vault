@@ -114,7 +114,10 @@ export default function FAQ() {
 
   return (
     <div style={{ fontFamily:"'Barlow Condensed', sans-serif", background:"#0a0a0a", minHeight:"100vh", color:"#fff" }}>
-      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/faq" /></Helmet>
+      <Helmet>
+  <link rel="canonical" href="https://www.thejerseyvault.in/faq" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
@@ -140,6 +143,24 @@ export default function FAQ() {
         .faq-cta-instagram { background:transparent; color:#fff; border:1px solid #333; padding:12px 28px; font-weight:900; font-size:14px; letter-spacing:3px; text-decoration:none; display:inline-block; }
         .legal-footer-copy { color:#333; font-size:12px; letter-spacing:2px; }
         .legal-footer-link { color:#666; font-size:12px; letter-spacing:2px; text-decoration:none; transition:color 0.2s; }
+
+@media (max-width: 600px) {
+  .legal-nav { padding: 0 12px; }
+  .legal-nav > div { gap: 16px !important; }
+  .legal-nav span { display: none; }
+  .nav-link { font-size: 11px; letter-spacing: 1px; }
+  .faq-q { padding: 14px 14px; }
+  .faq-a { padding: 0 14px 14px; padding-top: 12px; font-size: 13px; }
+  .faq-item { margin-bottom: 4px; }
+  .cat-label { font-size: 11px; letter-spacing: 3px; margin: 20px 0 8px; }
+  .faq-cta-whatsapp, .faq-cta-instagram { padding: 12px 20px; font-size: 12px; letter-spacing: 2px; width: 100%; text-align: center; }
+}
+
+@media (max-width: 380px) {
+  .legal-nav > div { gap: 10px !important; }
+  .nav-link { font-size: 10px; }
+  .faq-q span { font-size: 14px !important; }
+}
       `}</style>
 
       {/* NAV */}
