@@ -186,10 +186,11 @@ export default function JerseyStore() {
 
       // Scroll to shop section after DOM renders filtered results
       const scrollTimer = setTimeout(() => {
-        requestAnimationFrame(() => {
-          document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' });
-        });
-      }, 300);
+        const shopElement = document.getElementById('shop');
+        if (shopElement) {
+          shopElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
 
       return () => {
         clearTimeout(delayFn);
