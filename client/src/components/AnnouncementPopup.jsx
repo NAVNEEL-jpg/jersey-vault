@@ -6,12 +6,7 @@ const POPUP_CONFIG = {
 
   image: "/announcements/a1.jpeg",
 
-  title: "FIFA WORLD CUP 2026",
-
-  description:
-    "Shop official World Cup jerseys before stock runs out.",
-
-  buttonText: "SHOP NOW",
+  buttonText: "SHOP WORLD CUP KITS NOW",
 
   redirectTo: "/?featured=true",
 
@@ -84,35 +79,31 @@ export default function AnnouncementPopup() {
       `}</style>
       
       <div style={{
-        background: '#111',
-        border: '1.5px solid #39ff14',
-        width: '100%',
-        maxWidth: '480px',
         position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+        width: '100%',
+        maxWidth: '600px',
+        borderRadius: '12px',
+        overflow: 'hidden',
         animation: 'popupFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-        borderRadius: '8px',
-        filter: 'drop-shadow(0 0 30px rgba(57,255,20,0.6))'
+        filter: 'drop-shadow(0 0 40px rgba(57,255,20,0.7))'
       }}>
         {/* Close Button */}
-        <button 
+        <button
           onClick={handleClose}
           style={{
             position: 'absolute',
-            top: '12px',
-            right: '12px',
+            top: '20px',
+            right: '20px',
             background: 'rgba(0,0,0,0.6)',
             border: 'none',
             color: '#fff',
-            width: '32px',
-            height: '32px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px',
+            fontSize: '20px',
             cursor: 'pointer',
             zIndex: 10,
             transition: 'background 0.2s',
@@ -125,78 +116,53 @@ export default function AnnouncementPopup() {
         </button>
 
         {/* Image */}
-        <div style={{ width: '100%', height: '360px', overflow: 'hidden', borderBottom: '1px solid #222', background: '#0a0a0a', borderRadius: '6px 6px 0 0' }}>
-          <img
-            src={POPUP_CONFIG.image}
-            alt={POPUP_CONFIG.title}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            onError={(e) => {
-              // Hide image container if image fails to load so it doesn't break layout
-              e.currentTarget.parentElement.style.display = 'none';
-            }}
-          />
-        </div>
+        <img
+          src={POPUP_CONFIG.image}
+          alt="World Cup 2026"
+          style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '12px' }}
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
 
-        {/* Content */}
-        <div style={{ padding: '32px 24px', textAlign: 'center' }}>
-          <h2 style={{
-            fontSize: 'clamp(28px, 6vw, 36px)',
+        {/* Overlay Button */}
+        <Link
+          to={POPUP_CONFIG.redirectTo}
+          onClick={handleLinkClick}
+          style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#39ff14',
+            color: '#000',
+            border: 'none',
+            padding: '16px 40px',
             fontWeight: 900,
-            fontStyle: 'italic',
-            letterSpacing: '2px',
-            color: '#fff',
-            margin: POPUP_CONFIG.description ? '0 0 12px 0' : '0 0 24px 0',
-            textTransform: 'uppercase',
-            lineHeight: 1.1
-          }}>
-            {POPUP_CONFIG.title}
-          </h2>
-
-          {POPUP_CONFIG.description && (
-            <p style={{
-              color: '#aaa',
-              fontSize: '15px',
-              fontFamily: "'Barlow', sans-serif",
-              letterSpacing: '1px',
-              marginBottom: '24px',
-              lineHeight: 1.5
-            }}>
-              {POPUP_CONFIG.description}
-            </p>
-          )}
-          
-          <Link
-            to={POPUP_CONFIG.redirectTo}
-            onClick={handleLinkClick}
-            style={{
-              background: '#39ff14',
-              color: '#000',
-              border: 'none',
-              padding: '16px 32px',
-              fontWeight: 900,
-              fontSize: '16px',
-              letterSpacing: '3px',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              cursor: 'pointer',
-              width: '100%',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-              boxShadow: '0 0 10px rgba(57,255,20,0.2)',
-              display: 'block',
-              textAlign: 'center',
-              textDecoration: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 0 20px rgba(57,255,20,0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 0 10px rgba(57,255,20,0.2)';
-            }}
-          >
-            {POPUP_CONFIG.buttonText}
-          </Link>
-        </div>
+            fontSize: '16px',
+            letterSpacing: '3px',
+            fontFamily: "'Barlow Condensed', sans-serif",
+            cursor: 'pointer',
+            transition: 'transform 0.2s, box-shadow 0.2s',
+            boxShadow: '0 0 15px rgba(57,255,20,0.3)',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 5,
+            borderRadius: '4px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateX(-50%) translateY(-3px)';
+            e.currentTarget.style.boxShadow = '0 0 25px rgba(57,255,20,0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateX(-50%)';
+            e.currentTarget.style.boxShadow = '0 0 15px rgba(57,255,20,0.3)';
+          }}
+        >
+          {POPUP_CONFIG.buttonText}
+        </Link>
       </div>
     </div>
   );
