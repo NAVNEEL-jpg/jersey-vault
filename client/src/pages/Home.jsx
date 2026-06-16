@@ -152,26 +152,6 @@ export default function JerseyStore() {
   const [cart, setCart] = useState(() => {
     try {
       const saved = sessionStorage.getItem("cart");
-     <button
-  type="button"
-  key={key}
-  className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
-  onClick={() => setActiveFilter(key)}
-  style={key === "FEATURED" ? {
-    "--wc26-bg": `url(${wc26Bg})`,
-    backgroundImage: `url(${wc26Bg})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundColor: "transparent",
-    border: "none",
-    color: "#fff",
-    textShadow: "0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6)"
-  } : undefined}
->
-  <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
-    {label}
-  </span>
-</button>
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
