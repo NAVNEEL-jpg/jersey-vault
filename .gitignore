@@ -17,4 +17,6 @@ graphify-out/
 
 .aider*
 
-.github/
+.github/playwright-report/
+test-results/
+tests/screenshots/
