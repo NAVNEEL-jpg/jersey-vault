@@ -494,6 +494,10 @@ export default function AdminPage() {
         .size-add-btn { width:100%; background:#39ff14; color:#000; border:none; padding:4px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; cursor:pointer; margin-top:3px; letter-spacing:1px; }
         .size-add-btn:hover { background:#fff; }
         .size-add-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .size-sub-btn { width:100%; background:transparent; color:#ff4444; border:1px solid #ff444450; padding:4px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; cursor:pointer; margin-top:3px; letter-spacing:1px; }
+        .size-sub-btn:hover { background:#ff444415; border-color:#ff4444; }
+        .size-sub-btn:disabled { opacity:0.4; cursor:not-allowed; }
+        .size-btn-row { display:flex; gap:4px; margin-top:3px; }
 
         /* TEAM SEARCH DROPDOWN */
         .team-search-wrap { position:relative; }
@@ -1151,17 +1155,19 @@ export default function AdminPage() {
 }
 
 // ── StockRow ──────────────────────────────────────────────
-// ── StockRow ──────────────────────────────────────────────
 // Drop-in replacement for the StockRow at the bottom of AdminPage.jsx
-
+// CHANGE: handleSizeRestock now takes a `delta` (+1 to add, -1 to subtract).
+// Two buttons (−SUB / +ADD) call the same handler with opposite signs.
+// Subtracting is blocked client-side (and the Supabase write is skipped)
+// if it would push stock below zero.
 
 function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
   const [sizeInputs, setSizeInputs]   = useState({});
-  // FIX 1: per-size saving state instead of one shared boolean
+  // per-size saving state instead of one shared boolean
   const [savingSize, setSavingSize]   = useState(null);
   const [saveError,  setSaveError]    = useState(null);
-  // FIX 2: local copy of size_stock so re-clicks within the same row
-  //        always use the latest value, not a stale prop
+  // local copy of size_stock so re-clicks within the same row
+  // always use the latest value, not a stale prop
   const [localSizeStock, setLocalSizeStock] = useState(
     () => ({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) })
   );
@@ -1174,24 +1180,33 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     setLocalFeatured(!!p.featured);
   }, [p.size_stock, p.featured]);
 
-  const handleSizeRestock = async (size) => {
+  // delta: +1 means add the typed qty, -1 means subtract the typed qty
+  const handleSizeRestock = async (size, delta) => {
     const qty = parseInt(sizeInputs[size] || 0);
     if (!qty || qty <= 0) return;
+
+    const change = delta < 0 ? -qty : qty;
+    const newQty = (localSizeStock[size] || 0) + change;
+
+    if (newQty < 0) {
+      setSaveError(`Cannot subtract ${qty} from ${size} — only ${localSizeStock[size] || 0} in stock.`);
+      return;
+    }
 
     setSavingSize(size);
     setSaveError(null);
 
-    // FIX 3: use localSizeStock (not p.size_stock) so sequential
-    //        updates within the same row don't lose previous changes
+    // use localSizeStock (not p.size_stock) so sequential
+    // updates within the same row don't lose previous changes
     const newSizeStock = {
       ...localSizeStock,
-      [size]: (localSizeStock[size] || 0) + qty,
+      [size]: newQty,
     };
 
-    // FIX 4: guard every value with || 0 so totalStock is never NaN
+    // guard every value with || 0 so totalStock is never NaN
     const totalStock = SIZES.reduce((s, sz) => s + (newSizeStock[sz] || 0), 0);
 
-    // FIX 5: check Supabase error and surface it to the admin
+    // check Supabase error and surface it to the admin
     const { error } = await supabase
       .from("products")
       .update({ size_stock: newSizeStock, stock: totalStock })
@@ -1232,8 +1247,8 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     p.type === "FAN VERSION"    ? "fan"    :
     p.type === "RETRO"          ? "retro"  : "";
 
-  // FIX 6: use localSizeStock for display so the number updates
-  //        immediately after save without waiting for a parent re-render
+  // use localSizeStock for display so the number updates
+  // immediately after save without waiting for a parent re-render
   const totalStock = SIZES.reduce((s, sz) => s + (localSizeStock[sz] || 0), 0);
 
   return (
@@ -1288,7 +1303,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
         </div>
       </div>
 
-      {/* FIX 7: show error banner if save failed */}
+      {/* show error banner if save failed */}
       {saveError && (
         <div style={{ background: "#ff444415", border: "1px solid #ff444440", color: "#ff4444", fontSize: 12, letterSpacing: 1, padding: "8px 12px", marginBottom: 10 }}>
           ⚠ {saveError}
@@ -1299,7 +1314,6 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
         {SIZES.map(size => {
           const stock      = localSizeStock[size] || 0;
           const isSaving   = savingSize === size;
-          const anyBusy    = savingSize !== null;       // FIX 1: only THIS size button spins
 
           return (
             <div key={size} style={{ background: "#0d0d0d", border: `1px solid ${stock === 0 ? "#ff444440" : "#1a1a1a"}`, padding: "8px", textAlign: "center" }}>
@@ -1307,28 +1321,40 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
               <div style={{ fontSize: 22, fontWeight: 900, color: stock === 0 ? "#ff4444" : stock <= 2 ? "#ff9900" : "#39ff14", marginBottom: 6 }}>
                 {stock}
               </div>
-              <label htmlFor={`stock-restock-${size}`} className="sr-only">Add stock for size {size}</label>
+              <label htmlFor={`stock-restock-${size}`} className="sr-only">Adjust stock for size {size}</label>
               <input
                 id={`stock-restock-${size}`}
                 type="number"
                 min="1"
-                placeholder="+"
+                placeholder="qty"
                 value={sizeInputs[size] || ""}
                 onChange={e => setSizeInputs(prev => ({ ...prev, [size]: e.target.value }))}
                 className="size-stock-input"
                 inputMode="numeric"
-                aria-label={`Add stock for size ${size}`}
+                aria-label={`Adjust stock for size ${size}`}
                 disabled={isSaving}
               />
-              <button
-                type="button"
-                className="size-add-btn"
-                onClick={() => handleSizeRestock(size)}
-                // FIX 1: only THIS size button shows "..." — others stay clickable
-                disabled={isSaving}
-              >
-                {isSaving ? "..." : "+ADD"}
-              </button>
+              <div className="size-btn-row">
+                <button
+                  type="button"
+                  className="size-sub-btn"
+                  onClick={() => handleSizeRestock(size, -1)}
+                  disabled={isSaving}
+                  aria-label={`Subtract stock for size ${size}`}
+                >
+                  {isSaving ? "..." : "−"}
+                </button>
+                <button
+                  type="button"
+                  className="size-add-btn"
+                  style={{ marginTop: 0 }}
+                  onClick={() => handleSizeRestock(size, 1)}
+                  disabled={isSaving}
+                  aria-label={`Add stock for size ${size}`}
+                >
+                  {isSaving ? "..." : "+"}
+                </button>
+              </div>
             </div>
           );
         })}
