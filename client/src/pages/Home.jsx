@@ -955,8 +955,8 @@ letter-spacing: 4px !important;
   .toast-banner { position:fixed; bottom:24px; right:24px; background:var(--green); color:#000; padding:13px 20px 13px 16px; font-weight:900; letter-spacing:2px; font-size:12px; z-index:999; animation:toastIn 0.35s cubic-bezier(0.23,1,0.32,1); max-width:calc(100vw - 48px); display:flex; align-items:center; gap:10px; border-radius:2px; box-shadow:0 8px 32px rgba(57,255,20,0.3); }
   .toast-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(0,0,0,0.2); border-radius:50%; font-size:12px; flex-shrink:0; }
   .site-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
-.wc26-video-wrap { display:flex; align-items:center; height:50px; width:168px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
-.wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.7); object-position:60% center; }
+.wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
+.wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.6); object-position:70% center; }
 @media(max-width:768px) { .wc26-video-wrap { display:none; } }
   .logo-title { font-weight:900; font-size:20px; letter-spacing:3px; color:#fff; }
   .logo-title-accent { color:#39ff14; }
