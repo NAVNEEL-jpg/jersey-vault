@@ -607,6 +607,18 @@ letter-spacing: 4px !important;
 }
 
 #jv-root .filter-btn.active::before { display: none; }
+#jv-root .filter-btn.wc26-btn,
+#jv-root .filter-btn.wc26-btn.active {
+  background-color: transparent !important;
+  background-image: var(--wc26-bg) !important;
+  background-size: 500% !important;
+  background-position: 22% 30% !important;
+  border: none !important;
+  color: transparent !important;
+  text-shadow: none !important;
+  height: 40px !important;
+  width: 80px !important;
+}
 
 
 /* ══════════════════════════════════════
@@ -1248,30 +1260,30 @@ letter-spacing: 4px !important;
               {filterButtons.slice(0, 3).concat(
                 { key: "FEATURED", label: featuredCategoryName.toUpperCase() },
                 filterButtons.slice(3)
-              ).map(({ key, label }) => (
-                <button
-                  type="button"
-                  key={key}
-                  className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
-                  onClick={() => setActiveFilter(key)}
-                 style={key === "FEATURED" ? {
-    "--wc26-bg": `url(${wc26Bg})`,
-    backgroundImage: `url(${wc26Bg})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    backgroundColor: "transparent",
-                    border: "none",
-                    color: "#fff",
-                    textShadow: "0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6)"
-                  } : undefined}
-                >
-                  <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+            ).map(({ key, label }) => (
+  <button
+    type="button"
+    key={key}
+    className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
+    onClick={() => setActiveFilter(key)}
+    style={key === "FEATURED" ? {
+      "--wc26-bg": `url(${wc26Bg})`,
+      backgroundImage: `url(${wc26Bg})`,
+      backgroundSize: "500%",
+      backgroundPosition: "22% 30%",
+      backgroundColor: "transparent",
+      border: "none",
+      color: "transparent",
+      textShadow: "none"
+    } : undefined}
+  >
+    <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
+      {label}
+    </span>
+  </button>
+))}
+</div>
+</div>
 
           {loadingProducts ? (
             <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6 }}>
