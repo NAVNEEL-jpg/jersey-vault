@@ -1084,7 +1084,7 @@ letter-spacing: 4px !important;
               setCartOpen={setCartOpen}
             />
           </div>
-          <div className="wc26-video-wrap">
+          <div className="wc26-video-wrap" onClick={() => { setActiveFilter("FEATURED"); setTimeout(() => { document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ cursor: 'pointer' }}>
   <video src={wc26Video} autoPlay loop muted playsInline />
 </div>
           <div className="nav-right">
