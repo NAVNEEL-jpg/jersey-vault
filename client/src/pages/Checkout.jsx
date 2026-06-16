@@ -130,27 +130,27 @@ export default function CheckoutPage() {
   };
 
   const handlePlace = async () => {
-  setLoading(true);
-  setPaymentStatus('idle');
-  try {
-    const razorpayReady = await loadRazorpayScript();
-    if (!razorpayReady) {
-      alert('Unable to load Razorpay. Please refresh and try again.');
+    setLoading(true);
+    setPaymentStatus('idle');
+    try {
+      const razorpayReady = await loadRazorpayScript();
+      if (!razorpayReady) {
+        alert('Unable to load Razorpay. Please refresh and try again.');
+        setLoading(false);
+        return;
+      }
+
+      const onStatusChange = (status) => setPaymentStatus(status);
+
+      if (payMethod === 'cod') {
+        initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true, onStatusChange);
+      } else {
+        initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false, onStatusChange);
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const onStatusChange = (status) => setPaymentStatus(status);
-
-    if (payMethod === 'cod') {
-      initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, true, onStatusChange);
-    } else {
-      initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, false, onStatusChange);
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
@@ -368,13 +368,13 @@ export default function CheckoutPage() {
                   { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
                   { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
                 ] : [
-                  { key: "name", label: "FULL NAME", placeholder: "Navneel Dutta", full: false },
+                  { key: "name", label: "FULL NAME", placeholder: "FULL NAME", full: false },
                   { key: "phone", label: "PHONE NUMBER", placeholder: "9876543210", full: false },
                   { key: "email", label: "EMAIL ADDRESS", placeholder: "you@email.com", full: true },
-                  { key: "address", label: "STREET ADDRESS", placeholder: "Flat 4B, Park Street", full: true },
-                  { key: "city", label: "CITY", placeholder: "Kolkata", full: false },
-                  { key: "state", label: "STATE", placeholder: "West Bengal", full: false },
-                  { key: "pincode", label: "PINCODE", placeholder: "700001", full: false },
+                  { key: "address", label: "STREET ADDRESS", placeholder: "ADDRESS", full: true },
+                  { key: "city", label: "CITY", placeholder: "CITY", full: false },
+                  { key: "state", label: "STATE", placeholder: "STATE", full: false },
+                  { key: "pincode", label: "PINCODE", placeholder: "123456", full: false },
                 ]).map(f => (
                   <div key={f.key} style={{ gridColumn: f.full ? "1/-1" : "auto" }}>
                     <label htmlFor={`field-${f.key}`} className="label">{f.label}</label>
@@ -384,10 +384,10 @@ export default function CheckoutPage() {
                       className={`field ${errors[f.key] ? "err" : ""}`}
                       placeholder={f.placeholder}
                       value={form[f.key]}
-                      onChange={e => { 
+                      onChange={e => {
                         const val = e.target.value;
-                        setForm(p => ({ ...p, [f.key]: val })); 
-                        setErrors(p => ({ ...p, [f.key]: "" })); 
+                        setForm(p => ({ ...p, [f.key]: val }));
+                        setErrors(p => ({ ...p, [f.key]: "" }));
                         if (f.key === 'email') {
                           setWarnings(p => ({ ...p, email: suggestEmailTypo(val) }));
                         }
