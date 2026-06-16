@@ -15,6 +15,7 @@ import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
+import wc26Bg from "../assets/WC26.jpeg";
 
 const FLAME_ID = "jv-flame";
 
@@ -596,6 +597,12 @@ letter-spacing: 4px !important;
 }
 
 #jv-root .filter-btn.active::before { display: none; }
+#jv-root .filter-btn.wc26-btn,
+#jv-root .filter-btn.wc26-btn.active {
+  background-color: transparent !important;
+  border: none !important;
+  color: #fff !important;
+}
 
 /* ══════════════════════════════════════
    SIZE BUTTONS
@@ -1237,7 +1244,21 @@ letter-spacing: 4px !important;
                 { key: "FEATURED", label: featuredCategoryName.toUpperCase() },
                 filterButtons.slice(3)
               ).map(({ key, label }) => (
-                <button type="button" key={key} className={`filter-btn${activeFilter === key ? " active" : ""}`} onClick={() => setActiveFilter(key)}>
+                <button
+                  type="button"
+                  key={key}
+                  className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
+                  onClick={() => setActiveFilter(key)}
+                  style={key === "FEATURED" ? {
+                    backgroundImage: `url(${wc26Bg})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundColor: "transparent",
+                    border: "none",
+                    color: "#fff",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6)"
+                  } : undefined}
+                >
                   <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
                     {label}
                   </span>
