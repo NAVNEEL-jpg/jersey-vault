@@ -66,7 +66,7 @@ export const createRazorpayOrder = async (req, res) => {
     });
   } catch (err) {
     console.error('create-order error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Unable to create payment.' });
   }
 };
 
@@ -138,7 +138,7 @@ Match: ${isMatch ? 'YES' : 'NO'}`);
     res.json({ success: true, payment_id: razorpay_payment_id });
   } catch (err) {
     console.error('verify error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Unable to verify payment.' });
   }
 };
 
@@ -197,7 +197,7 @@ export const razorpayWebhook = async (req, res) => {
     res.json({ received: true });
   } catch (err) {
     console.error('Webhook error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Unable to process payment webhook.' });
   }
 };
 
@@ -253,7 +253,7 @@ export const checkPaymentStatus = async (req, res) => {
     });
   } catch (err) {
     console.error('checkPaymentStatus error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Unable to load payment status.' });
   } 
 };
 
@@ -301,7 +301,7 @@ export const reconcilePayment = async (req, res) => {
     });
   } catch (err) {
     console.error('reconcile error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Unable to reconcile payment.' });
   }
 };
 

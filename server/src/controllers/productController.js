@@ -15,7 +15,8 @@ export const getProducts = async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('productController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -39,7 +40,8 @@ export const getProductById = async (req, res) => {
     }
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('productController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -78,7 +80,8 @@ export const createProduct = async (req, res) => {
     if (error) throw error;
     res.status(201).json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('productController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -115,7 +118,8 @@ export const updateProduct = async (req, res) => {
     }
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('productController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -138,6 +142,7 @@ export const deleteProduct = async (req, res) => {
     res.json({ message: 'Product removed' });
   } catch (error) {
     console.error("DELETE CONTROLLER ERROR:", error);
-    res.status(500).json({ message: error.message });
+    console.error('productController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };

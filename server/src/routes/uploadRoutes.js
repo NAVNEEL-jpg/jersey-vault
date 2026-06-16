@@ -36,7 +36,8 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
     res.json({ url: publicUrl });
   } catch (error) {
     console.error('Upload Error:', error);
-    res.status(500).json({ message: error.message || 'Failed to upload image' });
+    console.error('uploadRoutes.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 });
 

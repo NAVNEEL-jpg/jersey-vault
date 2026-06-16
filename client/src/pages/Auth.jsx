@@ -4,6 +4,7 @@ import { supabase } from '../supabase';
 import { API_BASE } from '../config/api';
 import ReactGA from "react-ga4";
 import BrandLogo from "../components/BrandLogo";
+import { suggestEmailTypo } from "../utils/emailValidation";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function AuthPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", countryCode: "+91", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
+  const [warnings, setWarnings] = useState({});
 
   const COUNTRY_CODES = [
     { code: "+91", country: "IN" },
@@ -166,9 +168,25 @@ export default function AuthPage() {
     };
   }, []);
 
+  const [otp, setOtp] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+
   const update = (k, v) => {
     setForm(p => ({ ...p, [k]: v }));
     setErrors(p => ({ ...p, [k]: "" }));
+    if (k === 'email') {
+      setWarnings(p => ({ ...p, email: suggestEmailTypo(v) }));
+    }
   };
 
   useEffect(() => {
@@ -194,7 +212,17 @@ export default function AuthPage() {
     const normalizedEmail = form.email.trim().toLowerCase();
     if (mode === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: form.password });
-      if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+      if (error) { 
+        if (error.message.toLowerCase().includes("email not confirmed")) {
+           setErrors({ email: "Please verify your email before signing in." });
+           setMode("otp");
+           setLoading(false);
+           return;
+        }
+        setErrors({ email: error.message }); 
+        setLoading(false); 
+        return; 
+      }
       ReactGA.event("login", { method: "Email" });
       setLoading(false);
       navigate(redirectUrl, { replace: true });
@@ -206,38 +234,49 @@ export default function AuthPage() {
       });
       if (error) { setErrors({ email: error.message }); setLoading(false); return; }
 
-      const token = data?.session?.access_token;
-      if (token) {
-        try {
-          const response = await fetch(`${API_BASE}/api/users/save`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              name: form.name.trim(),
-              full_name: form.name.trim(),
-              phone: `${form.countryCode}${form.phone}`,
-            }),
-          });
-
-          if (!response.ok) {
-            const result = await response.json().catch(() => ({}));
-            throw new Error(result.message || "Profile creation failed");
-          }
-        } catch (profileError) {
-          setErrors({ email: profileError.message });
-          setLoading(false);
-          return;
-        }
-      }
-
       ReactGA.event("sign_up", { method: "Email" });
       setLoading(false);
-      setSuccess(true);
+      setMode("otp");
     }
   };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      setErrors({ otp: "Please enter a 6-digit code" });
+      return;
+    }
+    setOtpLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email: form.email.trim().toLowerCase(),
+      token: otp,
+      type: "signup"
+    });
+    
+    if (error) {
+      setErrors({ otp: error.message });
+      setOtpLoading(false);
+      return;
+    }
+    setOtpLoading(false);
+    setSuccess(true);
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    setOtpLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: form.email.trim().toLowerCase(),
+    });
+    setOtpLoading(false);
+    if (error) {
+      setErrors({ otp: error.message });
+    } else {
+      setResendCooldown(60);
+      setErrors({ otp: "Code resent successfully" });
+    }
+  };
+
 
   const handleForgot = async () => {
     const normalizedEmail = forgotEmail.trim().toLowerCase();
@@ -258,7 +297,7 @@ export default function AuthPage() {
   };
 
   const switchMode = (m) => {
-    setMode(m); setErrors({}); setSuccess(false);
+    setMode(m); setErrors({}); setSuccess(false); setOtp("");
     setForm({ name: "", email: "", phone: "", countryCode: "+91", password: "", confirm: "" });
   };
 
@@ -300,9 +339,12 @@ export default function AuthPage() {
           {success ? (
             <div style={{ textAlign: "center" }} className="auth-fade-up">
               <div className="auth-pop-in auth-success-icon">✓</div>
-              <h2 style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>ACCOUNT CREATED!</h2>
+              <h2 style={{ fontSize: 36, fontWeight: 800, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>EMAIL VERIFIED!</h2>
               <p style={{ color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400 }}>
-                Welcome to JerseyVault, {form.name}!
+                WELCOME TO JERSEY VAULT
+              </p>
+              <p style={{ color: "#a1a1aa", marginTop: 8, letterSpacing: 1, fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginBottom: 24 }}>
+                Your account has been activated.
               </p>
               <button type="button" className="auth-store-btn" onClick={() => navigate(redirectUrl, { replace: true })}>
                 CONTINUE →
@@ -324,9 +366,18 @@ export default function AuthPage() {
                 <>
                   <label className="auth-label" htmlFor="auth-forgot-email">EMAIL ADDRESS</label>
                   <div className="auth-field-wrap">
-                    <input id="auth-forgot-email" className={`auth-field${errors.forgot ? " err" : ""}`} placeholder="you@email.com" value={forgotEmail} onChange={e => { setForgotEmail(e.target.value); setErrors({}); }} />
+                    <input id="auth-forgot-email" className={`auth-field${errors.forgot ? " err" : ""}`} placeholder="you@email.com" value={forgotEmail} onChange={e => { 
+                      const val = e.target.value;
+                      setForgotEmail(val); 
+                      setErrors({}); 
+                      setWarnings(p => ({...p, forgot: suggestEmailTypo(val)}));
+                    }} />
                   </div>
-                  {errors.forgot && <div className="auth-error mb">{errors.forgot}</div>}
+                  {errors.forgot ? (
+                    <div className="auth-error mb">{errors.forgot}</div>
+                  ) : warnings.forgot ? (
+                    <div className="auth-error mb" style={{ color: "#fbbf24" }}>{warnings.forgot}</div>
+                  ) : null}
                   <button type="button" className="auth-submit-btn" style={{ marginTop: 16 }} onClick={handleForgot}>
                     {loading
                       ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}><span style={spinnerStyle} />SENDING...</span>
@@ -334,6 +385,60 @@ export default function AuthPage() {
                   </button>
                 </>
               )}
+            </div>
+
+          ) : mode === "otp" ? (
+            <div className="auth-fade-up">
+              <button type="button" className="auth-back-btn" onClick={() => switchMode("login")}>← BACK TO LOGIN</button>
+              <h2 style={{ fontSize: 34, fontWeight: 800, marginBottom: 6, fontFamily: "'Barlow', sans-serif", fontStyle: "normal", letterSpacing: "0.04em", textTransform: "uppercase" }}>VERIFY YOUR <span style={{ color: "#39ff14" }}>EMAIL</span></h2>
+              <p style={{ color: "#71717a", fontSize: 13, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginBottom: 28, lineHeight: 1.5 }}>We sent a 6-digit code to:<br/><strong style={{color:"#fff"}}>{form.email}</strong></p>
+              
+              <label className="auth-label" htmlFor="auth-otp">6-DIGIT CODE</label>
+              <div className="auth-field-wrap">
+                <input 
+                  id="auth-otp" 
+                  autoFocus
+                  maxLength={6}
+                  className={`auth-field${errors.otp ? " err" : ""}`} 
+                  placeholder="123456" 
+                  value={otp} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtp(val);
+                    setErrors({});
+                  }} 
+                />
+              </div>
+              {errors.otp && <div className="auth-error mb">{errors.otp}</div>}
+              
+              <button type="button" className="auth-submit-btn" style={{ marginTop: 16 }} onClick={handleVerifyOtp}>
+                {otpLoading
+                  ? <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}><span style={spinnerStyle} />VERIFYING...</span>
+                  : "VERIFY →"}
+              </button>
+
+              <div style={{ marginTop: 24, textAlign: "center" }}>
+                <p style={{ color: "#71717a", fontSize: 13, fontFamily: "'Barlow', sans-serif" }}>Didn't receive a code?</p>
+                <button 
+                  type="button" 
+                  onClick={handleResendOtp}
+                  disabled={resendCooldown > 0 || otpLoading}
+                  style={{ 
+                    background: "none", 
+                    border: "none", 
+                    color: resendCooldown > 0 ? "#555" : "#39ff14", 
+                    cursor: resendCooldown > 0 ? "not-allowed" : "pointer",
+                    fontSize: 13,
+                    fontFamily: "'Barlow', sans-serif",
+                    fontWeight: 600,
+                    letterSpacing: 1,
+                    marginTop: 8,
+                    textDecoration: resendCooldown > 0 ? "none" : "underline"
+                  }}
+                >
+                  {resendCooldown > 0 ? `Resend available in ${resendCooldown}s` : "RESEND OTP"}
+                </button>
+              </div>
             </div>
 
           ) : (
@@ -390,7 +495,11 @@ export default function AuthPage() {
                   <div className="auth-field-wrap">
                     <input id="auth-email" className={`auth-field${errors.email ? " err" : ""}`} placeholder="you@email.com" value={form.email} onChange={e => update("email", e.target.value)} />
                   </div>
-                  {errors.email && <div className="auth-error mt">{errors.email}</div>}
+                  {errors.email ? (
+                    <div className="auth-error mt">{errors.email}</div>
+                  ) : warnings.email ? (
+                    <div className="auth-error mt" style={{ color: "#fbbf24" }}>{warnings.email}</div>
+                  ) : null}
                 </div>
 
                 {mode === "signup" && (

@@ -7,7 +7,8 @@ export const getSubcategories = async (req, res) => {
     const list = await Subcategory.find(q).populate('parentCategory', 'name').sort({ name: 1 });
     res.json(list);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('subcategoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -27,7 +28,8 @@ export const createSubcategory = async (req, res) => {
     const populated = await Subcategory.findById(created._id).populate('parentCategory', 'name');
     res.status(201).json(populated);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('subcategoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -40,6 +42,7 @@ export const deleteSubcategory = async (req, res) => {
     await sub.deleteOne();
     res.json({ message: 'Subcategory removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('subcategoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };

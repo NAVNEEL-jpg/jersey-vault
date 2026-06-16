@@ -4,6 +4,7 @@ import { initiatePayment, checkAndRecoverPayment } from '../razorpay';
 import { supabase } from '../supabase';
 import { calcOrderTotals, FREE_SHIPPING_MIN } from "../utils/shipping";
 import { API_BASE } from "../config/api";
+import { suggestEmailTypo } from "../utils/emailValidation";
 import ReactGA from "react-ga4";
 import BrandLogo from "../components/BrandLogo";
 
@@ -61,6 +62,7 @@ export default function CheckoutPage() {
   // idle | processing | verifying | success | failed | dismissed | error | recovering
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", city: "", state: "", pincode: "" });
   const [errors, setErrors] = useState({});
+  const [warnings, setWarnings] = useState({});
 
   const { subtotal, shipping, total, freeShippingGap } = calcOrderTotals(cart);
 
@@ -117,28 +119,6 @@ export default function CheckoutPage() {
         if (signUpError) {
           setErrors({ email: signUpError.message });
           return;
-        }
-
-        const token = signUpData?.session?.access_token;
-        if (token) {
-          const response = await fetch(`${API_BASE}/api/users/save`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              name: form.name.trim(),
-              full_name: form.name.trim(),
-              phone: form.phone,
-            }),
-          });
-
-          if (!response.ok) {
-            const result = await response.json().catch(() => ({}));
-            setErrors({ email: result.message || "Account profile could not be saved" });
-            return;
-          }
         }
       }
     }
@@ -404,7 +384,14 @@ export default function CheckoutPage() {
                       className={`field ${errors[f.key] ? "err" : ""}`}
                       placeholder={f.placeholder}
                       value={form[f.key]}
-                      onChange={e => { setForm(p => ({ ...p, [f.key]: e.target.value })); setErrors(p => ({ ...p, [f.key]: "" })); }}
+                      onChange={e => { 
+                        const val = e.target.value;
+                        setForm(p => ({ ...p, [f.key]: val })); 
+                        setErrors(p => ({ ...p, [f.key]: "" })); 
+                        if (f.key === 'email') {
+                          setWarnings(p => ({ ...p, email: suggestEmailTypo(val) }));
+                        }
+                      }}
                       // Correct input modes for mobile keyboards
                       inputMode={f.key === "phone" || f.key === "pincode" ? "numeric" : f.key === "email" ? "email" : "text"}
                       autoComplete={
@@ -417,7 +404,11 @@ export default function CheckoutPage() {
                                     f.key === "pincode" ? "postal-code" : "off"
                       }
                     />
-                    {errors[f.key] && <div className="checkout-field-error">{errors[f.key]}</div>}
+                    {errors[f.key] ? (
+                      <div className="checkout-field-error">{errors[f.key]}</div>
+                    ) : f.key === "email" && warnings.email ? (
+                      <div className="checkout-field-error" style={{ color: "#fbbf24" }}>{warnings.email}</div>
+                    ) : null}
                   </div>
                 ))}
               </div>

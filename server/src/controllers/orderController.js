@@ -110,7 +110,8 @@ export const createOrder = async (req, res) => {
 
     res.status(201).json(createdOrder);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('createOrder Error:', error);
+    res.status(500).json({ message: 'Unable to create order.' });
   }
 };
 
@@ -131,7 +132,8 @@ export const getUserOrders = async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getUserOrders Error:', error);
+    res.status(500).json({ message: 'Unable to load orders.' });
   }
 };
 
@@ -143,14 +145,15 @@ export const getOrders = async (req, res) => {
       .from('orders')
       .select(`
         *,
-        profiles:user_id (name, email, phone)
+        profiles:user_id (full_name, email, phone)
       `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getOrders Error:', error);
+    res.status(500).json({ message: 'Unable to load order information.' });
   }
 };
 
@@ -177,6 +180,7 @@ export const updateOrderStatus = async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('updateOrderStatus Error:', error);
+    res.status(500).json({ message: 'Unable to update order status.' });
   }
 };

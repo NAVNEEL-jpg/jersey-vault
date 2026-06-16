@@ -7,7 +7,8 @@ export const getCategories = async (req, res) => {
     const categories = await Category.find({});
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('categoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -26,7 +27,8 @@ export const createCategory = async (req, res) => {
     const created = await category.save();
     res.status(201).json(created);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('categoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -43,7 +45,8 @@ export const updateCategory = async (req, res) => {
       res.status(404).json({ message: 'Category not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('categoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
@@ -59,6 +62,7 @@ export const deleteCategory = async (req, res) => {
       res.status(404).json({ message: 'Category not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('categoryController.js Error:', error);
+    res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };

@@ -39,8 +39,8 @@ export const getStats = async (req, res) => {
     console.error(error?.stack);
     res.status(500).json({
       success: false,
-      error: error.message
-    });
+      error: 'An internal server error occurred.'
+ });
   }
 };
 
@@ -77,7 +77,7 @@ export const getAllUsers = async (req, res) => {
     
     res.status(500).json({ 
       success: false, 
-      error: error.message || 'Internal server error occurred while fetching users.' 
+      error: 'An internal server error occurred.' 
     });
   }
 };
@@ -94,9 +94,6 @@ export const deleteUser = async (req, res) => {
       return res.status(400).json({ message: 'Admins cannot delete their own account here' });
     }
 
-    const { error: authError } = await supabase.auth.admin.deleteUser(id);
-    if (authError) throw authError;
-
     const { error: profileError } = await supabase
       .from('profiles')
       .delete()
@@ -104,10 +101,14 @@ export const deleteUser = async (req, res) => {
 
     if (profileError) throw profileError;
 
+    const { error: authError } = await supabase.auth.admin.deleteUser(id);
+    if (authError) throw authError;
+
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.error('[deleteUser] Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error('adminController.js Error:', error);
+    res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };
 
@@ -126,7 +127,8 @@ export const getSettings = async (req, res) => {
     res.json(settings);
   } catch (error) {
     console.error("Get Settings Error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('adminController.js Error:', error);
+    res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };
 
@@ -150,6 +152,7 @@ export const updateSettings = async (req, res) => {
     res.json({ success: true, message: 'Settings updated' });
   } catch (error) {
     console.error("Update Settings Error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('adminController.js Error:', error);
+    res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };

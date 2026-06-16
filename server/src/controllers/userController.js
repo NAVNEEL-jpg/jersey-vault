@@ -4,8 +4,8 @@ const canAccessUser = (req, userId) => req.user?.id === userId || req.user?.role
 const normalizeEmail = (email = '') => email.trim().toLowerCase();
 const pickProfileFields = (profile = {}) => ({
   id: profile.id,
-  name: profile.name || profile.full_name || '',
-  full_name: profile.full_name || profile.name || '',
+  name: profile.full_name || '',
+  full_name: profile.full_name || '',
   email: profile.email || '',
   phone: profile.phone || '',
   photo: profile.photo || '',
@@ -36,7 +36,6 @@ export const saveUser = async (req, res) => {
       const { data: updatedProfile, error: updateError } = await supabase
         .from('profiles')
         .update({
-          name: displayName || existingProfile.name,
           full_name: displayName || existingProfile.full_name,
           email: normEmail || existingProfile.email,
           phone: phone || existingProfile.phone,
@@ -56,7 +55,6 @@ export const saveUser = async (req, res) => {
       .from('profiles')
       .insert([{
         id,
-        name: displayName || normEmail.split('@')[0] || 'Player',
         full_name: displayName || normEmail.split('@')[0] || 'Player',
         email: normEmail,
         phone: phone || '',
@@ -70,7 +68,8 @@ export const saveUser = async (req, res) => {
     if (insertError) throw insertError;
     res.status(201).json(pickProfileFields(newProfile));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('saveUser Error:', error);
+    res.status(500).json({ message: 'Unable to save user profile.' });
   }
 };
 
@@ -85,7 +84,7 @@ export const updateProfile = async (req, res) => {
     
     const { data, error } = await supabase
       .from('profiles')
-      .update({ name, full_name: name, phone, photo, address })
+      .update({ full_name: name, phone, photo, address })
       .eq('id', req.params.id)
       .select()
       .single();
@@ -96,7 +95,8 @@ export const updateProfile = async (req, res) => {
     }
     res.json(pickProfileFields(data));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('updateProfile Error:', error);
+    res.status(500).json({ message: 'Unable to update profile.' });
   }
 };
 
@@ -120,7 +120,8 @@ export const getUserProfile = async (req, res) => {
     }
     res.json(pickProfileFields(data));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getUserProfile Error:', error);
+    res.status(500).json({ message: 'Unable to load profile information.' });
   }
 };
 
@@ -154,7 +155,8 @@ export const addToWishlist = async (req, res) => {
     
     res.json({ message: 'Added to wishlist', wishlist });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('addToWishlist Error:', error);
+    res.status(500).json({ message: 'Unable to update wishlist.' });
   }
 };
 
@@ -181,6 +183,7 @@ export const removeFromWishlist = async (req, res) => {
     if (error) throw error;
     res.json({ message: 'Removed from wishlist', wishlist });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('removeFromWishlist Error:', error);
+    res.status(500).json({ message: 'Unable to update wishlist.' });
   }
 };
