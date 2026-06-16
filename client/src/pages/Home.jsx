@@ -611,8 +611,8 @@ letter-spacing: 4px !important;
 #jv-root .filter-btn.wc26-btn.active {
   background-color: transparent !important;
   background-image: var(--wc26-bg) !important;
-  background-size: 500% !important;
-  background-position: 22% 30% !important;
+  background-size: 400% !important;
+  background-position: 50% 50% !important;
   border: none !important;
   color: transparent !important;
   text-shadow: none !important;
@@ -1269,8 +1269,8 @@ letter-spacing: 4px !important;
     style={key === "FEATURED" ? {
       "--wc26-bg": `url(${wc26Bg})`,
       backgroundImage: `url(${wc26Bg})`,
-      backgroundSize: "500%",
-      backgroundPosition: "22% 30%",
+      backgroundSize: "400%",
+      backgroundPosition: "50% 50%",
       backgroundColor: "transparent",
       border: "none",
       color: "transparent",
