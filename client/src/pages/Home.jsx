@@ -1193,8 +1193,11 @@ letter-spacing: 4px !important;
 
   .flame-text-wrap { position:relative; display:inline-block; line-height:0.9; }
   .flame-text-main { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#fff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
-  .toast-banner { position:fixed; bottom:24px; right:24px; background:var(--green); color:#000; padding:13px 20px 13px 16px; font-weight:900; letter-spacing:2px; font-size:12px; z-index:999; animation:toastIn 0.35s cubic-bezier(0.23,1,0.32,1); max-width:calc(100vw - 48px); display:flex; align-items:center; gap:10px; border-radius:2px; box-shadow:0 8px 32px rgba(57,255,20,0.3); }
-  .toast-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:rgba(0,0,0,0.2); border-radius:50%; font-size:12px; flex-shrink:0; }
+  .toast-banner { position:fixed; bottom:96px; right:24px; background:#0d0d0d; color:#fff; padding:14px 18px; font-weight:700; letter-spacing:1px; font-size:13px; z-index:9999; animation:toastIn 0.35s cubic-bezier(0.23,1,0.32,1); max-width:calc(100vw - 48px); display:flex; align-items:center; gap:12px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5); border:1px solid rgba(57,255,20,0.35); min-width:230px; }
+  .toast-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; background:rgba(57,255,20,0.12); border-radius:8px; font-size:18px; flex-shrink:0; border:1px solid rgba(57,255,20,0.25); }
+  .toast-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .toast-label { font-size:10px; font-weight:700; letter-spacing:2px; color:#39ff14; text-transform:uppercase; }
+  .toast-msg { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
   .site-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
 .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
 .wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.6); object-position:70% center; }
@@ -1305,11 +1308,14 @@ letter-spacing: 4px !important;
 
 `}</style>
 
-        {/* TOAST */}
+        {/* TOAST NOTIFICATION */}
         {toast && (
           <div className="toast-banner">
-            <span className="toast-icon">✓</span>
-            {toast}
+            <span className="toast-icon">🛒</span>
+            <div className="toast-body">
+              <span className="toast-label">Added to Cart</span>
+              <span className="toast-msg">{toast.replace(" added to cart!", "")}</span>
+            </div>
           </div>
         )}
 
