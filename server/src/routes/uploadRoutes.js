@@ -18,7 +18,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('jersey-vault')
+      .from('Jersey image')
       .upload(filePath, file.buffer, {
         contentType: file.mimetype,
         upsert: false
@@ -30,7 +30,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('jersey-vault')
+      .from('Jersey image')
       .getPublicUrl(filePath);
 
     res.json({ url: publicUrl });

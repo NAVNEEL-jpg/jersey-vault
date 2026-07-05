@@ -12,6 +12,7 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Teams from "./pages/Teams";
+import SupportChat from "./components/SupportChat";
 
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Admin = lazy(() => import("./pages/AdminPage"));
@@ -108,6 +109,7 @@ function AppContent() {
           <Route path="/teams" element={<Teams />} />
         </Routes>
       </Suspense>
+      <SupportChat />
     </>
   );
 }

@@ -4,6 +4,8 @@ import { supabase } from "../supabase";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
+import { getProductImages, getFirstImage } from "../utils/imageHelpers";
+
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
 const statusColors = {
@@ -18,6 +20,16 @@ const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const SPORTS = ["FOOTBALL", "CRICKET", "BASKETBALL"];
 const sportIcon = { FOOTBALL: "⚽", CRICKET: "🏏", BASKETBALL: "🏀" };
 const sportColor = { FOOTBALL: "#39ff14", CRICKET: "#00aaff", BASKETBALL: "#ff9900" };
+
+const uploadProductImageAndGetUrl = async (file) => {
+  const ext = file.name.split(".").pop();
+  const fileName = `products/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+  const { error: uploadError } = await supabase.storage.from("Jersey image").upload(fileName, file, { upsert: true });
+  if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
+  const { data: urlData } = supabase.storage.from("Jersey image").getPublicUrl(fileName);
+  return urlData.publicUrl;
+};
+
 
 const EMPTY_FORM = {
   name: "",
@@ -58,6 +70,10 @@ export default function AdminPage() {
   const [formSaving, setFormSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [tempUrlInput, setTempUrlInput] = useState("");
+  const [uploadingNewProductImage, setUploadingNewProductImage] = useState(false);
+
 
   // Team search in product form
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
@@ -291,7 +307,7 @@ export default function AdminPage() {
       stock: totalStock,
       size_stock: formData.size_stock,
       status: formData.status,
-      image_url: formData.image_url.trim() || null,
+      image_url: uploadedImages.join(",") || null,
       type: formData.type,
       team_id: formData.team_id || null,
       featured: formData.featured || false,
@@ -299,6 +315,8 @@ export default function AdminPage() {
     const { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
     if (error) { setFormError("Failed to add product: " + error.message); setFormSaving(false); return; }
     setProducts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+    setUploadedImages([]);
+
     setFormData(EMPTY_FORM);
     setSelectedTeamForProduct(null);
     setTeamSearchQuery("");
@@ -329,6 +347,9 @@ export default function AdminPage() {
     const { data: urlData } = supabase.storage.from("team-logos").getPublicUrl(fileName);
     return urlData.publicUrl;
   };
+
+
+
 
   // ── Inline team creation (inside product form) ──
   const handleInlineTeamLogoChange = (e) => {
@@ -421,6 +442,8 @@ export default function AdminPage() {
     setInlineTeamForm(EMPTY_TEAM_FORM);
     setInlineTeamLogoFile(null);
     setInlineTeamLogoPreview("");
+    setUploadedImages([]);
+    setTempUrlInput("");
   };
 
   if (checking) return (
@@ -551,6 +574,30 @@ export default function AdminPage() {
           .add-product-form { padding:18px; }
           .form-actions { flex-direction:column; }
           .form-actions .btn-primary, .form-actions .btn-ghost { width:100%; text-align:center; padding:14px; }
+          
+          /* Responsive StockRow top section */
+          .stock-row-top {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 12px;
+          }
+          .stock-row-actions {
+            width: 100% !important;
+            margin-left: 0 !important;
+            align-items: flex-start !important;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 12px;
+          }
+          .stock-row-actions > div {
+            width: 100% !important;
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+          }
+          .stock-row-actions button {
+            flex: 1;
+            text-align: center;
+          }
         }
         .size-grid-add { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
         .size-grid-stock { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; }
@@ -563,6 +610,21 @@ export default function AdminPage() {
           .stock-row-item { padding:12px; }
           .teams-grid { grid-template-columns:repeat(2,1fr); }
           .inline-team-form { padding:14px; }
+          
+          /* Stack url inputs on mobile */
+          .image-url-row-wrapper {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 8px !important;
+          }
+          .image-url-row-wrapper > div {
+            width: 100% !important;
+            min-width: 100% !important;
+          }
+          .image-url-row-wrapper button {
+            width: 100% !important;
+            text-align: center !important;
+          }
         }
         .image-url-row { display:flex; gap:10px; align-items:center; }
         .admin-content { max-width:1100px; margin:0 auto; padding:32px 24px; }
@@ -919,10 +981,86 @@ export default function AdminPage() {
                   </div>
 
                   <div className="form-field">
-                    <label className="form-label" htmlFor="admin-product-image-url">IMAGE URL</label>
-                    <div className="image-url-row">
-                      <input id="admin-product-image-url" className="form-input" type="url" placeholder="https://..." value={formData.image_url} onChange={e => handleFormChange("image_url", e.target.value)} />
-                      {formData.image_url && <img src={formData.image_url} alt="preview" className="image-preview" onError={e => { e.target.style.display = "none"; }} />}
+                    <label className="form-label" style={{ marginBottom: 6, display: "block" }}>PRODUCT IMAGES</label>
+                    
+                    {/* Thumbnails of currently added images */}
+                    {uploadedImages.length > 0 && (
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+                        {uploadedImages.map((img, idx) => (
+                          <div key={idx} style={{ position: "relative", width: 60, height: 60, border: "1px solid #222", background: "#0d0d0d" }}>
+                            <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            {idx === 0 && (
+                              <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 8, fontWeight: 900, textAlign: "center" }}>PRIMARY</span>
+                            )}
+                            <button type="button" onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} style={{ position: "absolute", top: -5, right: -5, width: 14, height: 14, borderRadius: "50%", background: "#ff4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, cursor: "pointer" }}>✕</button>
+                            {idx > 0 && (
+                              <button type="button" onClick={() => {
+                                setUploadedImages(prev => {
+                                  const next = [...prev];
+                                  const t = next[idx]; next[idx] = next[idx-1]; next[idx-1] = t;
+                                  return next;
+                                });
+                              }} style={{ position: "absolute", bottom: 2, left: 2, width: 12, height: 12, background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, cursor: "pointer" }}>◀</button>
+                            )}
+                            {idx < uploadedImages.length - 1 && (
+                              <button type="button" onClick={() => {
+                                setUploadedImages(prev => {
+                                  const next = [...prev];
+                                  const t = next[idx]; next[idx] = next[idx+1]; next[idx+1] = t;
+                                  return next;
+                                });
+                              }} style={{ position: "absolute", bottom: 2, right: 2, width: 12, height: 12, background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 7, cursor: "pointer" }}>▶</button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="image-url-row-wrapper" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 200 }}>
+                        <input 
+                          className="form-input" 
+                          type="url" 
+                          placeholder="Paste Image URL..." 
+                          value={tempUrlInput} 
+                          onChange={(e) => setTempUrlInput(e.target.value)} 
+                          style={{ flex: 1 }} 
+                        />
+                        <button type="button" className="btn-primary" onClick={() => {
+                          if (tempUrlInput.trim()) {
+                            setUploadedImages(prev => [...prev, tempUrlInput.trim()]);
+                            setTempUrlInput("");
+                          }
+                        }} style={{ padding: "0 14px", height: 40, fontSize: 12 }}>ADD URL</button>
+                      </div>
+                      
+                      <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
+                        <button type="button" className="btn-ghost" style={{ padding: "0 14px", height: 40, fontSize: 12, border: "1px dashed #39ff14", color: "#39ff14" }} disabled={uploadingNewProductImage}>
+                          {uploadingNewProductImage ? "UPLOADING..." : "📁 UPLOAD IMAGE"}
+                        </button>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          multiple
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (files.length === 0) return;
+                            setUploadingNewProductImage(true);
+                            try {
+                              const uploadPromises = files.map(file => uploadProductImageAndGetUrl(file));
+                              const urls = await Promise.all(uploadPromises);
+                              setUploadedImages(prev => [...prev, ...urls]);
+                            } catch (err) {
+                              setFormError(err.message);
+                            } finally {
+                              setUploadingNewProductImage(false);
+                              e.target.value = "";
+                            }
+                          }} 
+                          style={{ position: "absolute", left: 0, top: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }} 
+                          disabled={uploadingNewProductImage}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -944,7 +1082,7 @@ export default function AdminPage() {
                 </div>
               ) : products.map(p => (
                 <StockRow key={p.id} product={p} deletingId={deletingId} confirmDeleteId={confirmDeleteId} setConfirmDeleteId={setConfirmDeleteId} onDelete={handleDeleteProduct}
-                  onUpdate={(id, newSizeStock, newFeatured) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured } : x))} />
+                  onUpdate={(id, newSizeStock, newFeatured, newImageUrl, newName, newPrice) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured, image_url: newImageUrl !== undefined ? newImageUrl : x.image_url, name: newName !== undefined ? newName : x.name, price: newPrice !== undefined ? newPrice : x.price } : x))} />
               ))}
             </div>
           </div>
@@ -1163,16 +1301,35 @@ export default function AdminPage() {
 
 function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
   const [sizeInputs, setSizeInputs]   = useState({});
-  // per-size saving state instead of one shared boolean
   const [savingSize, setSavingSize]   = useState(null);
   const [saveError,  setSaveError]    = useState(null);
-  // local copy of size_stock so re-clicks within the same row
-  // always use the latest value, not a stale prop
+  
+  const [showImageManager, setShowImageManager] = useState(false);
+  const [localImages, setLocalImages] = useState(() => getProductImages(p.image_url));
+  const [newUrlInput, setNewUrlInput] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [tempName, setTempName] = useState(p.name);
+  const [tempPrice, setTempPrice] = useState(p.price);
+  const [savingDetails, setSavingDetails] = useState(false);
+  
   const [localSizeStock, setLocalSizeStock] = useState(
     () => ({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) })
   );
   const [localFeatured, setLocalFeatured] = useState(!!p.featured);
   const [savingFeatured, setSavingFeatured] = useState(false);
+
+  useEffect(() => {
+    setLocalImages(getProductImages(p.image_url));
+  }, [p.image_url]);
+
+  useEffect(() => {
+    setTempName(p.name);
+    setTempPrice(p.price);
+  }, [p.name, p.price]);
+
+
 
   // Keep local copy in sync when parent refreshes the product
   useEffect(() => {
@@ -1239,6 +1396,53 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     setSavingFeatured(false);
   };
 
+  const updateProductImagesInDb = async (updatedImages) => {
+    const imageUrlString = updatedImages.join(",");
+    const { error } = await supabase
+      .from("products")
+      .update({ image_url: imageUrlString || null })
+      .eq("id", p.id);
+
+    if (error) {
+      setSaveError(`Failed to update images: ${error.message}`);
+      return false;
+    }
+    setLocalImages(updatedImages);
+    onUpdate(p.id, localSizeStock, localFeatured, imageUrlString || null);
+    return true;
+  };
+
+  const handleSaveDetails = async () => {
+    if (!tempName.trim()) {
+      setSaveError("Product name cannot be empty.");
+      return;
+    }
+    const parsedPrice = Number(tempPrice);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      setSaveError("Price must be a valid number greater than 0.");
+      return;
+    }
+
+    setSavingDetails(true);
+    setSaveError(null);
+
+    const { error } = await supabase
+      .from("products")
+      .update({ name: tempName.trim(), price: parsedPrice })
+      .eq("id", p.id);
+
+    if (error) {
+      setSaveError(`Failed to update details: ${error.message}`);
+      setSavingDetails(false);
+      return;
+    }
+
+    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, tempName.trim(), parsedPrice);
+    setIsEditingDetails(false);
+    setSavingDetails(false);
+  };
+
+
   const isConfirming = confirmDeleteId === p.id;
   const isDeleting   = deletingId      === p.id;
 
@@ -1255,14 +1459,49 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     <div className="stock-row-item">
       <div className="stock-row-top">
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
-          {p.image_url
-            ? <img src={p.image_url} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
+          {getFirstImage(p.image_url)
+            ? <img src={getFirstImage(p.image_url)} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
             : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
           }
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            {isEditingDetails ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 4 }}>
+                <input
+                  className="form-input"
+                  style={{ fontSize: 14, padding: "4px 8px", height: 32, width: "100%", maxWidth: "100%", background: "#111", border: "1px solid #333", color: "#fff" }}
+                  value={tempName}
+                  onChange={e => setTempName(e.target.value)}
+                  placeholder="Product name"
+                  aria-label="Edit product name"
+                />
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: "#555", fontSize: 12 }}>₹</span>
+                  <input
+                    className="form-input"
+                    type="number"
+                    style={{ fontSize: 12, padding: "4px 8px", height: 26, width: "80px", background: "#111", border: "1px solid #333", color: "#fff" }}
+                    value={tempPrice}
+                    onChange={e => setTempPrice(e.target.value)}
+                    placeholder="Price"
+                    aria-label="Edit product price"
+                  />
+                  <button type="button" className="btn-primary" style={{ padding: "2px 8px", fontSize: 10, height: 26 }} onClick={handleSaveDetails} disabled={savingDetails}>
+                    {savingDetails ? "..." : "SAVE"}
+                  </button>
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 10, height: 26, border: "1px solid #333", color: "#aaa" }} onClick={() => { setIsEditingDetails(false); setTempName(p.name); setTempPrice(p.price); }}>
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "280px" }}>{p.name}</div>
+                <button type="button" onClick={() => setIsEditingDetails(true)} style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 12, padding: 0 }} aria-label="Edit name and price">✏️</button>
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-              <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>
+              {!isEditingDetails && <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>}
+
               {p.type && <span className={`type-badge ${typeClass}`}>{p.type}</span>}
               <span style={{ fontSize: 12, fontWeight: 900, color: totalStock === 0 ? "#ff4444" : totalStock <= 10 ? "#ff9900" : "#39ff14" }}>
                 TOTAL: {totalStock}
@@ -1280,28 +1519,138 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
           </div>
         </div>
 
-        <div style={{ flexShrink: 0, marginLeft: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+        <div className="stock-row-actions" style={{ flexShrink: 0, marginLeft: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
           <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, fontWeight: 900, color: localFeatured ? "#39ff14" : "#555", letterSpacing: 1 }}>
             <input type="checkbox" checked={localFeatured} onChange={handleToggleFeatured} disabled={savingFeatured} style={{ width: 14, height: 14, accentColor: "#39ff14", cursor: "pointer" }} />
             FEATURED
           </label>
-          {!isConfirming ? (
-            <button type="button" className="btn-danger" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
-              🗑 REMOVE
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "4px 8px", border: "1px solid #333", color: "#aaa" }} onClick={() => setShowImageManager(!showImageManager)}>
+              📷 IMAGES ({localImages.length})
             </button>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
-              <div style={{ fontSize: 12, letterSpacing: 1, color: "#ff4444", marginBottom: 2 }}>CONFIRM DELETE?</div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button type="button" className="btn-cancel-sm" onClick={() => setConfirmDeleteId(null)}>NO</button>
-                <button type="button" className="btn-danger-confirm" onClick={() => onDelete(p.id)} disabled={isDeleting}>
-                  {isDeleting ? "..." : "YES, DELETE"}
-                </button>
+            {!isConfirming ? (
+              <button type="button" className="btn-danger" style={{ fontSize: 11, padding: "4px 8px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>
+                🗑 REMOVE
+              </button>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-end" }}>
+                <div style={{ fontSize: 11, letterSpacing: 1, color: "#ff4444" }}>CONFIRM?</div>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button type="button" className="btn-cancel-sm" style={{ padding: "2px 6px", fontSize: 10 }} onClick={() => setConfirmDeleteId(null)}>NO</button>
+                  <button type="button" className="btn-danger-confirm" style={{ padding: "2px 6px", fontSize: 10 }} onClick={() => onDelete(p.id)} disabled={isDeleting}>
+                    {isDeleting ? "..." : "YES"}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      {showImageManager && (
+        <div className="image-manager-collapsible" style={{ background: "#0a0a0a", border: "1px dashed #222", padding: 12, margin: "10px 0 16px 0", borderRadius: 2 }}>
+          <div style={{ fontSize: 12, fontWeight: 900, color: "#39ff14", letterSpacing: 2, marginBottom: 10 }}>MANAGE PRODUCT IMAGES</div>
+          
+          {/* List thumbnails */}
+          {localImages.length > 0 ? (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+              {localImages.map((img, idx) => (
+                <div key={idx} style={{ position: "relative", width: 64, height: 64, border: "1px solid #222", background: "#0d0d0d" }}>
+                  <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {idx === 0 && (
+                    <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 9, fontWeight: 900, textAlign: "center", padding: "1px 0" }}>PRIMARY</span>
+                  )}
+                  <button type="button" onClick={async () => {
+                    const updated = localImages.filter((_, i) => i !== idx);
+                    await updateProductImagesInDb(updated);
+                  }} style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, borderRadius: "50%", background: "#ff4444", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, cursor: "pointer", fontWeight: "bold" }}>✕</button>
+                  
+                  {idx > 0 && (
+                    <button type="button" onClick={async () => {
+                      const updated = [...localImages];
+                      const temp = updated[idx];
+                      updated[idx] = updated[idx - 1];
+                      updated[idx - 1] = temp;
+                      await updateProductImagesInDb(updated);
+                    }} style={{ position: "absolute", bottom: 2, left: 2, width: 14, height: 14, background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, cursor: "pointer" }}>◀</button>
+                  )}
+                  {idx < localImages.length - 1 && (
+                    <button type="button" onClick={async () => {
+                      const updated = [...localImages];
+                      const temp = updated[idx];
+                      updated[idx] = updated[idx + 1];
+                      updated[idx + 1] = temp;
+                      await updateProductImagesInDb(updated);
+                    }} style={{ position: "absolute", bottom: 2, right: 2, width: 14, height: 14, background: "rgba(0,0,0,0.7)", color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, cursor: "pointer" }}>▶</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: "#555", fontSize: 12, letterSpacing: 2, marginBottom: 12 }}>NO IMAGES — ADD OR UPLOAD BELOW</div>
+          )}
+
+          {/* Add URL and Upload file */}
+          <div className="image-url-row-wrapper" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 200 }}>
+              <input 
+                className="form-input" 
+                type="url" 
+                placeholder="Paste Image URL..." 
+                value={newUrlInput} 
+                onChange={(e) => setNewUrlInput(e.target.value)} 
+                style={{ flex: 1, padding: "6px 10px", fontSize: 12, height: 32 }} 
+              />
+              <button type="button" className="btn-primary" onClick={async () => {
+                if (!newUrlInput.trim()) return;
+                const updated = [...localImages, newUrlInput.trim()];
+                const success = await updateProductImagesInDb(updated);
+                if (success) {
+                  setNewUrlInput("");
+                }
+              }} style={{ padding: "0 12px", fontSize: 11, height: 32 }}>ADD URL</button>
+            </div>
+            
+            <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
+              <button type="button" className="btn-ghost" style={{ padding: "0 12px", fontSize: 11, height: 32, border: "1px dashed #39ff14", color: "#39ff14" }} disabled={uploadingImage}>
+                {uploadingImage ? "UPLOADING..." : "📁 UPLOAD IMAGE"}
+              </button>
+              <input 
+                type="file" 
+                accept="image/*" 
+                multiple
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (files.length === 0) return;
+                  setUploadingImage(true);
+                  setSaveError(null);
+                  try {
+                    const uploadPromises = files.map(file => uploadProductImageAndGetUrl(file));
+                    const urls = await Promise.all(uploadPromises);
+                    const updated = [...localImages, ...urls];
+                    await updateProductImagesInDb(updated);
+                  } catch (err) {
+                    setSaveError(err.message);
+                  } finally {
+                    setUploadingImage(false);
+                    e.target.value = "";
+                  }
+                }} 
+                style={{ position: "absolute", left: 0, top: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }} 
+                disabled={uploadingImage}
+              />
+            </div>
+          </div>
+
+          {/* Database update method */}
+          {(() => {
+            window.uploadProductImageAndGetUrl = uploadProductImageAndGetUrl;
+            window.updateProductImagesInDb = updateProductImagesInDb;
+            return null;
+          })()}
+        </div>
+      )}
+
 
       {/* show error banner if save failed */}
       {saveError && (

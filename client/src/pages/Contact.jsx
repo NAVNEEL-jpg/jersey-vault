@@ -190,7 +190,7 @@ export default function Contact() {
         {/* EMAIL */}
         <div style={{ background:"#111", border:"1px solid #1a1a1a", padding:"24px 32px", animation:"fadeUp 0.4s ease 0.3s both", borderLeft:"3px solid #39ff14" }}>
           <div className="sublabel">EMAIL</div>
-          <a href="mailto:navneeldutta@gmail.com" style={{ fontSize:18, fontWeight:900, letterSpacing:2, color:"#39ff14", textDecoration:"none", cursor:"pointer", display:"inline-block", transition:"color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color="#39ff14"} onMouseLeave={(e) => e.currentTarget.style.color="#39ff14"}>support@thejerseyvault.in</a>
+          <a href="mailto:support.jerseyvault@gmail.com" style={{ fontSize:18, fontWeight:900, letterSpacing:2, color:"#39ff14", textDecoration:"none", cursor:"pointer", display:"inline-block", transition:"color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color="#39ff14"} onMouseLeave={(e) => e.currentTarget.style.color="#39ff14"}>support.jerseyvault@gmail.com</a>
           <div style={{ fontFamily:"'Barlow',sans-serif", fontSize:13, color:"#555", marginTop:6 }}>We respond within 24 hours on business days.</div>
         </div>
 

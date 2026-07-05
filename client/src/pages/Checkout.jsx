@@ -7,6 +7,7 @@ import { API_BASE } from "../config/api";
 import { suggestEmailTypo } from "../utils/emailValidation";
 import ReactGA from "react-ga4";
 import BrandLogo from "../components/BrandLogo";
+import { getFirstImage } from "../utils/imageHelpers";
 
 const steps = ["DELIVERY", "PAYMENT", "CONFIRM"];
 
@@ -514,8 +515,8 @@ export default function CheckoutPage() {
                 <div className="checkout-section-label">YOUR ITEMS</div>
                 {cart.map((item) => (
                   <div key={cartLineKey(item)} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: "1px solid #1a1a1a" }}>
-                    {item.image_url
-                      ? <img src={item.image_url} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", flexShrink: 0 }} />
+                    {getFirstImage(item.image_url)
+                      ? <img src={getFirstImage(item.image_url)} alt={item.name} style={{ width: 48, height: 48, objectFit: "cover", flexShrink: 0 }} />
                       : <span style={{ fontSize: 32 }}>👕</span>
                     }
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -610,8 +611,8 @@ export default function CheckoutPage() {
             {cart.map((item) => (
               <div key={cartLineKey(item)} style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
                 <div className="checkout-summary-thumb">
-                  {item.image_url
-                    ? <img src={item.image_url} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {getFirstImage(item.image_url)
+                    ? <img src={getFirstImage(item.image_url)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : <span style={{ fontSize: 24 }}>👕</span>
                   }
                   <div className="checkout-qty-badge">{item.qty}</div>

@@ -2,6 +2,8 @@ import BrandLogo from "../components/BrandLogo";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { getFirstImage } from "../utils/imageHelpers";
+
 
 const statusColors = {
   pending: "#ff9900",
@@ -211,10 +213,10 @@ export default function MyOrders() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       {order.items?.map((item, j) => (
                         <div key={j} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                          {item.image_url
-                            ? <img src={item.image_url} alt={item.name} style={{ width: 44, height: 44, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
-                            : <div className="orders-item-placeholder">👕</div>
-                          }
+                           {getFirstImage(item.image_url)
+                             ? <img src={getFirstImage(item.image_url)} alt={item.name} style={{ width: 44, height: 44, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
+                             : <div className="orders-item-placeholder">👕</div>
+                           }
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 900, fontSize: 14, letterSpacing: 1 }}>{item.name}</div>
                             <div className="orders-item-meta">Size {item.size} · Qty {item.qty}</div>

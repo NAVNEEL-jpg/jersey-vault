@@ -17,14 +17,240 @@ import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
 import wc26Video from "../assets/WC26(1).mp4";
+import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 
-const FLAME_ID = "jv-flame";
+const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "24px" }) {
+  const images = getProductImages(imageUrl);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-const CartoonFlameText = memo(function CartoonFlameText({ text }) {
+  if (images.length === 0) {
+    return (
+      <div style={{ ...style, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }} className={className} onClick={onClick}>
+        👕
+      </div>
+    );
+  }
+
+  if (images.length === 1) {
+    return (
+      <img
+        src={images[0]}
+        alt={alt}
+        className={className}
+        style={{ ...style, cursor: onClick ? "pointer" : "default" }}
+        onClick={onClick}
+      />
+    );
+  }
+
+  const handleDotClick = (e, index) => {
+    e.stopPropagation();
+    setActiveIndex(index);
+    const container = e.currentTarget.parentElement.previousSibling;
+    if (container) {
+      const width = container.offsetWidth;
+      container.scrollTo({
+        left: index * width,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleArrowClick = (e, dir) => {
+    e.stopPropagation();
+    const container = e.currentTarget.parentElement.querySelector('.image-slider-container');
+    if (container) {
+      const width = container.offsetWidth;
+      const totalScroll = container.scrollWidth;
+      let newLeft = container.scrollLeft + dir * width;
+      if (newLeft < 0) {
+        newLeft = totalScroll - width;
+      } else if (newLeft >= totalScroll) {
+        newLeft = 0;
+      }
+      container.scrollTo({
+        left: newLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleScroll = (e) => {
+    const container = e.currentTarget;
+    const width = container.offsetWidth;
+    if (width > 0) {
+      const newIndex = Math.round(container.scrollLeft / width);
+      if (newIndex !== activeIndex) {
+        setActiveIndex(newIndex);
+      }
+    }
+  };
+
+  return (
+    <div className="product-carousel-wrapper" style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}>
+      <div 
+        className="image-slider-container"
+        onScroll={handleScroll}
+        onClick={onClick}
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          cursor: onClick ? "pointer" : "default"
+        }}
+      >
+        {images.map((img, idx) => (
+          <div 
+            key={idx}
+            className="image-slider-item"
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              height: "100%",
+              scrollSnapAlign: "start"
+            }}
+          >
+            <img 
+              src={img} 
+              alt={`${alt} - ${idx + 1}`} 
+              className={className}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {activeIndex > 0 && (
+        <button
+          type="button"
+          className="carousel-arrow carousel-arrow-left"
+          onClick={(e) => handleArrowClick(e, -1)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "8px",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            color: "#39ff14",
+            textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            fontSize: "var(--arrow-fs, 20px)",
+            fontWeight: "bold",
+            opacity: 0.5,
+            transition: "opacity 0.2s ease, transform 0.2s, color 0.2s",
+            padding: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1.2)";
+            e.currentTarget.style.color = "#00ff33";
+            e.currentTarget.style.opacity = 1;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            e.currentTarget.style.color = "#39ff14";
+            e.currentTarget.style.opacity = 0.5;
+          }}
+        >
+          ◀
+        </button>
+      )}
+      {activeIndex < images.length - 1 && (
+        <button
+          type="button"
+          className="carousel-arrow carousel-arrow-right"
+          onClick={(e) => handleArrowClick(e, 1)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "8px",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            color: "#39ff14",
+            textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            fontSize: "var(--arrow-fs, 20px)",
+            fontWeight: "bold",
+            opacity: 0.5,
+            transition: "opacity 0.2s ease, transform 0.2s, color 0.2s",
+            padding: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1.2)";
+            e.currentTarget.style.color = "#00ff33";
+            e.currentTarget.style.opacity = 1;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            e.currentTarget.style.color = "#39ff14";
+            e.currentTarget.style.opacity = 0.5;
+          }}
+        >
+          ▶
+        </button>
+      )}
+
+      <div 
+        className="carousel-dots"
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: "6px",
+          zIndex: 2,
+          padding: "4px 8px",
+          background: "rgba(0,0,0,0.4)",
+          borderRadius: "10px"
+        }}
+      >
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={(e) => handleDotClick(e, idx)}
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              background: activeIndex === idx ? "#39ff14" : "rgba(255,255,255,0.4)",
+              transition: "background 0.2s, transform 0.2s",
+              transform: activeIndex === idx ? "scale(1.2)" : "scale(1)"
+            }}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+});
+
+
+const CartoonFlameText = memo(function CartoonFlameText({ text, fontSize }) {
+  const clipId = `jv-flame-${text.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+  const sizeStyle = fontSize ? { fontSize } : {};
   return (
     <div className="flame-text-wrap">
       <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/" /></Helmet>
-      <span className="flame-text-main">
+      <span className="flame-text-main" style={sizeStyle}>
         {text}
       </span>
       <svg
@@ -32,31 +258,31 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
         aria-hidden="true"
       >
         <defs>
-          <clipPath id={FLAME_ID}>
-            <text x="0" y="90%" fontSize="clamp(40px,8vw,100px)" fontWeight="900" fontStyle="italic" fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
+          <clipPath id={clipId}>
+            <text x="0" y="90%" fontSize={fontSize || "clamp(40px,8vw,100px)"} fontWeight="900" fontStyle="italic" fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
           </clipPath>
-          <linearGradient id={`${FLAME_ID}-g1`} x1="0" y1="1" x2="0" y2="0">
+          <linearGradient id={`${clipId}-g1`} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%" stopColor="#FFE000" /><stop offset="22%" stopColor="#FF8C00" />
             <stop offset="48%" stopColor="#E8000A" /><stop offset="78%" stopColor="#B20000" />
             <stop offset="100%" stopColor="#3a0000" />
           </linearGradient>
-          <linearGradient id={`${FLAME_ID}-g2`} x1="0" y1="1" x2="0" y2="0">
+          <linearGradient id={`${clipId}-g2`} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%" stopColor="#FFF176" /><stop offset="18%" stopColor="#FFB300" />
             <stop offset="45%" stopColor="#FF3D00" /><stop offset="75%" stopColor="#C62828" />
             <stop offset="100%" stopColor="#4a0000" />
           </linearGradient>
-          <filter id={`${FLAME_ID}-wobble`} x="-20%" y="-40%" width="140%" height="180%">
+          <filter id={`${clipId}-wobble`} x="-20%" y="-40%" width="140%" height="180%">
             <feTurbulence type="turbulence" baseFrequency="0.025 0.06" numOctaves="3" seed="2" result="noise">
               <animate attributeName="baseFrequency" values="0.025 0.06; 0.03 0.08; 0.022 0.055; 0.025 0.06" dur="0.9s" repeatCount="indefinite" />
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
-        <g clipPath={`url(#${FLAME_ID})`} filter={`url(#${FLAME_ID}-wobble)`}>
-          <rect x="-5%" y="-80%" width="110%" height="200%" fill={`url(#${FLAME_ID}-g1)`}>
+        <g clipPath={`url(#${clipId})`} filter={`url(#${clipId}-wobble)`}>
+          <rect x="-5%" y="-80%" width="110%" height="200%" fill={`url(#${clipId}-g1)`}>
             <animateTransform attributeName="transform" type="translate" values="0,0; 2,-6; -3,-10; 1,-5; 0,0" dur="0.55s" repeatCount="indefinite" />
           </rect>
-          <rect x="-5%" y="-60%" width="110%" height="180%" fill={`url(#${FLAME_ID}-g2)`} opacity="0.65">
+          <rect x="-5%" y="-60%" width="110%" height="180%" fill={`url(#${clipId}-g2)`} opacity="0.65">
             <animateTransform attributeName="transform" type="translate" values="0,0; -2,-8; 3,-4; -1,-9; 0,0" dur="0.42s" repeatCount="indefinite" />
             <animate attributeName="opacity" values="0.65; 0.85; 0.5; 0.75; 0.65" dur="0.7s" repeatCount="indefinite" />
           </rect>
@@ -159,6 +385,7 @@ export default function JerseyStore() {
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
+  const [showSizeChart, setShowSizeChart] = useState(false);
   const [toast, setToast] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heroVisible, setHeroVisible] = useState(() => {
@@ -178,6 +405,20 @@ export default function JerseyStore() {
     supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
       .then(({ data }) => { if (data && data.value) setFeaturedCategoryName(data.value); })
       .catch(() => { setFeaturedCategoryName("FEATURED"); });
+  }, []);
+
+  useEffect(() => {
+    const handleOpenCart = () => setCartOpen(true);
+    window.addEventListener('open-cart', handleOpenCart);
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openCart') === 'true') {
+      setCartOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    return () => window.removeEventListener('open-cart', handleOpenCart);
   }, []);
 
  useEffect(() => {
@@ -991,6 +1232,77 @@ letter-spacing: 4px !important;
   .cart-remove-btn:hover { border-color:#c0392b; color:#c0392b; background:rgba(192,57,43,0.08); }
   .cart-shipping-note { font-size:12px; color:#888; margin-top:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; }
   .cart-secure-note { text-align:center; color:#1a1a1a; font-size:12px; letter-spacing:3px; padding-bottom:16px; font-weight:700; }
+  .size-chart-btn {
+    margin-left: auto !important;
+    background: transparent;
+    border: 1px dashed #39ff14 !important;
+    color: #39ff14 !important;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    font-style: italic;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .size-chart-btn:hover {
+    background: #39ff14 !important;
+    color: #000 !important;
+    border-style: solid !important;
+  }
+  .modal-price {
+    font-size: 28px;
+    font-weight: 900;
+    color: #39ff14;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+  }
+  @media(max-width: 480px) {
+    .size-chart-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      letter-spacing: 1px;
+      gap: 4px;
+    }
+    .modal-price {
+      font-size: 22px;
+    }
+    .modal-type-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      letter-spacing: 2px;
+    }
+  }
+
+  .product-carousel-wrapper:hover .carousel-arrow {
+    opacity: 1 !important;
+  }
+  .image-slider-container::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Responsive Carousel Arrow Sizes */
+  .card .carousel-arrow {
+    --arrow-fs: 16px;
+  }
+  .modal .carousel-arrow {
+    --arrow-fs: 28px;
+  }
+  @media(min-width: 769px) {
+    .card .carousel-arrow {
+      --arrow-fs: 13px;
+    }
+    .modal .carousel-arrow {
+      --arrow-fs: 20px;
+    }
+  }
+
+
 `}</style>
 
         {/* TOAST */}
@@ -1063,7 +1375,7 @@ letter-spacing: 4px !important;
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         {jersey.image_url && (
-                          <img src={jersey.image_url} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
+                          <img src={getFirstImage(jersey.image_url)} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
                         )}
                         <span>{jersey.name}</span>
                       </div>
@@ -1201,7 +1513,7 @@ letter-spacing: 4px !important;
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         {jersey.image_url && (
-                          <img src={jersey.image_url} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
+                          <img src={getFirstImage(jersey.image_url)} alt={jersey.name} style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '2px', flexShrink: 0 }} />
                         )}
                         <span>{jersey.name}</span>
                       </div>
@@ -1315,16 +1627,22 @@ letter-spacing: 4px !important;
                 <div
                   key={`${activeFilter}-${jersey.id}`}
                   className="card"
-                  style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both` }}
+                  style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both`, cursor: jersey.stock > 0 ? "pointer" : "default" }}
+                  onClick={() => {
+                    if (jersey.stock > 0) {
+                      ReactGA.event("view_item", {
+                        currency: "INR", value: jersey.price,
+                        items: [{ item_id: jersey.id, item_name: jersey.name, price: jersey.price, item_category: jersey.type }]
+                      });
+                      setSelectedJersey(jersey);
+                      setSelectedSize("M");
+                    }
+                  }}
                 >
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
                   {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
                   <div className="card-img-wrap">
-                    {jersey.image_url ? (
-                      <img src={jersey.image_url} alt={jersey.name} className="card-img" />
-                    ) : (
-                      <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }}>👕</div>
-                    )}
+                    <ProductCarousel imageUrl={jersey.image_url} alt={jersey.name} className="card-img" arrowSize="16px" />
                     <div className="card-overlay" />
                   </div>
                   <div className="card-body">
@@ -1398,15 +1716,16 @@ letter-spacing: 4px !important;
         {/* SIZE PICKER MODAL */}
         {selectedJersey && (
           <div className="modal-bg">
-            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => setSelectedJersey(null)} />
-            <div className="modal">
+            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }} />
+            <div className="modal" style={{ position: "relative" }}>
+              <button type="button" className="modal-close-btn" style={{ right: "12px", left: "auto", zIndex: 10 }} onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }}>✕</button>
               <div style={{ position: "relative" }}>
-                <button type="button" className="modal-close-btn" onClick={() => setSelectedJersey(null)}>✕</button>
-                {selectedJersey.image_url ? (
-                  <img src={selectedJersey.image_url} alt={selectedJersey.name} className="modal-img" />
-                ) : (
-                  <div className="modal-img-placeholder">👕</div>
-                )}
+                <ProductCarousel
+                  imageUrl={selectedJersey.image_url}
+                  alt={selectedJersey.name}
+                  className="modal-img"
+                  arrowSize="28px"
+                />
                 <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
                   <div style={{ position: "absolute", left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, rgba(57,255,20,0.3), transparent)", animation: "scanline 2.5s linear infinite" }} />
                 </div>
@@ -1415,11 +1734,25 @@ letter-spacing: 4px !important;
 
               <div style={{ padding: "16px 24px 6px" }}>
                 <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, width: "100%" }}>
                   {selectedJersey.type && (
                     <span className="modal-type-badge">{selectedJersey.type}</span>
                   )}
-                  <span style={{ fontSize: 28, fontWeight: 900, color: "#39ff14", fontFamily: "'Bebas Neue',sans-serif", letterSpacing: 2 }}>₹{selectedJersey.price}</span>
+                  <span className="modal-price">₹{selectedJersey.price}</span>
+                  <button
+                    type="button"
+                    className="size-chart-btn"
+                    onClick={() => setShowSizeChart(true)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 9h20v6H2z"/>
+                      <path d="M6 9v3"/>
+                      <path d="M10 9v2"/>
+                      <path d="M14 9v3"/>
+                      <path d="M18 9v2"/>
+                    </svg>
+                    SIZE CHART
+                  </button>
                 </div>
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
                   <div className="stock-warning" style={{ marginTop: 8 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
@@ -1458,6 +1791,114 @@ letter-spacing: 4px !important;
           </div>
         )}
 
+        {/* SIZE CHART MODAL POPUP */}
+        {showSizeChart && (
+          <div className="modal-bg" style={{ zIndex: 110 }}>
+            <button type="button" className="modal-bg-dismiss" aria-label="Close size chart" onClick={() => setShowSizeChart(false)} />
+            <div className="modal" style={{ maxWidth: "520px", border: "1px solid #39ff14", position: "relative" }}>
+              <button type="button" className="modal-close-btn" style={{ right: "12px", left: "auto", zIndex: 10 }} onClick={() => setShowSizeChart(false)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </button>
+              <div style={{ position: "relative", background: "#0a0a0a" }}>
+                
+                {/* Header (Neon Green Bar) */}
+                <div style={{
+                  background: "#39ff14",
+                  color: "#000",
+                  padding: "14px 20px",
+                  textAlign: "center",
+                  fontWeight: "900",
+                  fontSize: "24px",
+                  fontFamily: "'Bebas Neue', 'Barlow Condensed', sans-serif",
+                  letterSpacing: "3px",
+                  textTransform: "uppercase"
+                }}>
+                  SIZE CHART
+                </div>
+
+                {/* Table Container */}
+                <div style={{ padding: "24px 20px 16px" }}>
+                  <table style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    color: "#fff",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: "14px",
+                    textAlign: "center",
+                    border: "1px solid #222"
+                  }}>
+                    <thead>
+                      <tr style={{ background: "#111", borderBottom: "2px solid #39ff14" }}>
+                        <th style={{ padding: "12px 8px", fontWeight: "900", letterSpacing: "1px", border: "1px solid #222" }}>SIZE</th>
+                        <th style={{ padding: "12px 8px", fontWeight: "900", letterSpacing: "1px", border: "1px solid #222", color: "#ccc" }}>
+                          CHEST <span style={{ color: "#39ff14", fontSize: "11px", display: "block" }}>(FAN VERSION) (in.")</span>
+                        </th>
+                        <th style={{ padding: "12px 8px", fontWeight: "900", letterSpacing: "1px", border: "1px solid #222", color: "#ccc" }}>
+                          CHEST <span style={{ color: "#39ff14", fontSize: "11px", display: "block" }}>(PLAYER VERSION) (in.")</span>
+                        </th>
+                        <th style={{ padding: "12px 8px", fontWeight: "900", letterSpacing: "1px", border: "1px solid #222", color: "#ccc" }}>
+                          LENGTH <span style={{ color: "#aaa", fontSize: "11px", display: "block" }}>(SAME FOR ALL) (in.")</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { size: "S", fan: "38", player: "36", len: "27" },
+                        { size: "M", fan: "40", player: "38", len: "28" },
+                        { size: "L", fan: "42", player: "40", len: "29" },
+                        { size: "XL", fan: "44", player: "42", len: "30" },
+                        { size: "XXL", fan: "46", player: "44", len: "31" }
+                      ].map((row, idx) => (
+                        <tr key={row.size} style={{
+                          background: idx % 2 === 0 ? "#070707" : "#0c0c0c",
+                          borderBottom: "1px solid #222",
+                          transition: "background 0.2s"
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(57,255,20,0.05)"}
+                        onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#070707" : "#0c0c0c"}
+                        >
+                          <td style={{ padding: "12px 8px", fontWeight: "900", color: "#39ff14", fontSize: "16px", border: "1px solid #222" }}>{row.size}</td>
+                          <td style={{ padding: "12px 8px", fontWeight: "700", border: "1px solid #222" }}>{row.fan}</td>
+                          <td style={{ padding: "12px 8px", fontWeight: "700", border: "1px solid #222" }}>{row.player}</td>
+                          <td style={{ padding: "12px 8px", fontWeight: "700", border: "1px solid #222" }}>{row.len}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer Section */}
+                <div style={{
+                  padding: "0 20px 24px",
+                  textAlign: "center",
+                  background: "#0a0a0a"
+                }}>
+                  {/* WEAR YOUR LEGEND flame text */}
+                  <div style={{ display: "block", marginBottom: 4 }}>
+                    <CartoonFlameText text="WEAR YOUR LEGEND" fontSize="clamp(20px, 6vw, 32px)" />
+                  </div>
+                  {/* website link */}
+                  <div style={{
+                    color: "#39ff14",
+                    fontSize: "12px",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    letterSpacing: "3px",
+                    marginTop: "6px",
+                    textTransform: "uppercase",
+                    fontWeight: "700"
+                  }}>
+                    thejerseyvault.in
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CART PANEL */}
         {cartOpen && (
           <div className="cart-overlay">
@@ -1486,7 +1927,7 @@ letter-spacing: 4px !important;
                   cart.map((item, idx) => (
                     <div key={`${item.id}-${item.size}`} className="cart-item" style={{ animationDelay: `${idx * 0.05}s` }}>
                       {item.image_url ? (
-                        <img src={item.image_url} alt={item.name} className="cart-item-img" />
+                        <img src={getFirstImage(item.image_url)} alt={item.name} className="cart-item-img" />
                       ) : (
                         <div style={{ width: 56, height: 56, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: "1px solid #1a1a1a", borderRadius: 2 }}>👕</div>
                       )}
