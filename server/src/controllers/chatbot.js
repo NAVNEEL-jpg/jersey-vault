@@ -1,6 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
+// Admin panel stores status as strings: pending, preparing, shipped, delivered
+const statusLabels = {
+  pending:   "ORDER PLACED",
+  preparing: "PACKED & PREPARING",
+  shipped:   "SHIPPED",
+  delivered: "DELIVERED",
+};
 
 // Initialize Supabase Client
 const supabaseUrl = process.env.SUPABASE_URL || 'https://clytujskrmcnstzuvuaf.supabase.co';
@@ -128,18 +134,30 @@ function getLocalResponse(message, orderDetails, matchedJerseys, searchTerms) {
       .join('\n');
     
     let additionalInfo = '';
-    if (orderDetails.status === 3) { // SHIPPED
-      const trkId = orderDetails.tracking_id || orderDetails.id;
-      additionalInfo = `\n\n🚚 **Delhivery Tracking:** You can track your shipment on the Delhivery website using this link:\n[Track on Delhivery](https://www.delhivery.com/track/package/${trkId})`;
-    } else if (orderDetails.status === 5) { // DELIVERED
+    const orderStatus = (orderDetails.status || '').toLowerCase();
+
+    if (orderStatus === 'shipped') { // Shipped — show Delhivery tracking
+      additionalInfo =
+        `\n\n🚚 **Your order has been shipped!**\n\n` +
+        `The order ID sent to the invoice in your mail can be used to track the shipment on the Delhivery track website.\n\n` +
+        `👉 **[Track your shipment on Delhivery](https://www.delhivery.com/track/package/)**\n\n` +
+        `Simply enter your Order ID / AWB number on the Delhivery tracking page to see live delivery updates.`;
+    } else if (orderStatus === 'delivered') { // Delivered
       additionalInfo = `\n\n✅ **Delivered:** This order has been successfully delivered. Thank you for shopping with JerseyVault! If you have any sizing or return queries, feel free to contact us.`;
+    } else { // pending or preparing — not yet shipped
+      additionalInfo =
+        `\n\n📦 **Not yet shipped.** Your order is currently being **${statusText}**. ` +
+        `Once it is dispatched, you will receive a shipping confirmation email with your invoice and Order ID, ` +
+        `which you can use to track the shipment on the Delhivery track website.\n\n` +
+        `👉 **[Delhivery Tracking Website](https://www.delhivery.com/track/package/)**`;
     }
 
-    return `I found order details for **${orderDetails.tracking_id || orderDetails.id}**:\n\n` +
-           `📦 **Status:** ${statusText} (Step ${orderDetails.status}/5)\n` +
+    const stepMap = { pending: '1/4', preparing: '2/4', shipped: '3/4', delivered: '4/4' };
+    return `I found your order **${orderDetails.tracking_id || orderDetails.id}**:\n\n` +
+           `📦 **Status:** ${statusText} (Step ${stepMap[orderStatus] || '?/4'})\n` +
            `📅 **Ordered On:** ${new Date(orderDetails.created_at).toLocaleDateString()}\n\n` +
            `**Items:**\n${itemsList || 'None'}${additionalInfo}\n\n` +
-           `Please note that standard delivery takes 5-8 business days. If you need any assistance with returns or modifications, feel free to WhatsApp our team!`;
+           `Please note that standard delivery takes 5–8 business days. If you need any assistance, feel free to WhatsApp our team at **+91 70297 86817**!`;
   }
 
   // 2. Specific FAQ checks (High Priority to prevent keyword collision)
@@ -235,9 +253,11 @@ function getLocalResponse(message, orderDetails, matchedJerseys, searchTerms) {
     return `You can read our formal terms of service on the **[Terms & Conditions Page](/terms)**.`;
   }
 
-  // 4. Generic tracking query
-  if (msg.includes('track') || msg.includes('order') || msg.includes('status') || msg.includes('delivery')) {
-    return `To track your order, please paste the **Order ID** sent to your email (starts with \`pay_\`, \`order_\`, or \`COD-\`) to specify the product in the order list. Once you provide it, I will fetch the live tracking details for you!\n\nYou can also check your status directly on our **[Order Tracking Page](/tracking)**.`;
+  // 4. Generic tracking query (where is my order, etc.)
+  if (msg.includes('where') || msg.includes('track') || msg.includes('order') || msg.includes('status') || msg.includes('delivery') || msg.includes('shipped') || msg.includes('dispatch')) {
+    return `To check your shipment status, please share your **Order ID** (found in the invoice email sent to you — starts with \`pay_\`, \`order_\`, or \`COD-\`).\n\n` +
+           `Once you provide the Order ID, I\'ll instantly fetch your order status. If it has been shipped, I will share the **Delhivery tracking link** so you can track it live.\n\n` +
+           `You can also track directly on our **[Order Tracking Page](/tracking)** or visit the **[Delhivery tracking website](https://www.delhivery.com/track/package/)**.`;
   }
 
   // 5. If a jersey search was executed and we have matching/empty results (Fallback check)
