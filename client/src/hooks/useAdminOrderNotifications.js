@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '../supabase';
 
 const ADMIN_EMAIL = 'navneeldutta@gmail.com';
@@ -6,95 +6,114 @@ const ADMIN_EMAIL = 'navneeldutta@gmail.com';
 /**
  * useAdminOrderNotifications
  *
- * Runs globally in AppContent. When the logged-in user is the admin,
- * this hook:
- *   1. Requests browser Notification permission (once).
- *   2. Registers a Supabase Realtime subscription on `orders` INSERT events.
- *   3. On each new order, fires a Service-Worker-backed OS notification.
- *
- * Works across all devices / tabs where the admin is logged in.
+ * Returns:
+ *   - permissionStatus: 'default' | 'granted' | 'denied' | 'unsupported'
+ *   - isSubscribed: boolean — true when Realtime channel is active
+ *   - isAdmin: boolean
+ *   - enableNotifications: async function — call on a button click to request permission + subscribe
  */
 export function useAdminOrderNotifications() {
   const channelRef = useRef(null);
-  const swRegRef = useRef(null);
+  const [permissionStatus, setPermissionStatus] = useState(() => {
+    if (!('Notification' in window)) return 'unsupported';
+    return Notification.permission; // 'default' | 'granted' | 'denied'
+  });
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdminRef = useRef(false);
 
+  // ── Check if logged-in user is admin (on mount) ───────────────
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
-      // ── 1. Check if Notification API is supported ──────────────────
-      if (!('Notification' in window)) return;
-
-      // ── 2. Verify the logged-in user is admin ──────────────────────
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) return;
+    async function checkAdmin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || cancelled) return;
 
       const userEmail = session.user.email;
-
-      // Check role in profiles table
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
 
-      const isAdmin =
-        userEmail === ADMIN_EMAIL && profile?.role === 'admin';
-
-      if (!isAdmin || cancelled) return;
-
-      // ── 3. Request / confirm Notification permission ────────────────
-      let permission = Notification.permission;
-      if (permission === 'default') {
-        permission = await Notification.requestPermission();
-      }
-      if (permission !== 'granted') return;
-
-      // ── 4. Register Service Worker (if not already registered) ──────
-      if ('serviceWorker' in navigator) {
-        try {
-          const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-          swRegRef.current = reg;
-          // Ensure SW is active
-          await navigator.serviceWorker.ready;
-        } catch (err) {
-          console.warn('[AdminNotif] SW registration failed:', err);
-        }
+      const admin = userEmail === ADMIN_EMAIL && profile?.role === 'admin';
+      if (!cancelled) {
+        setIsAdmin(admin);
+        isAdminRef.current = admin;
       }
 
-      // ── 5. Subscribe to Supabase Realtime orders INSERT ─────────────
-      const channel = supabase
-        .channel('admin-order-notifications')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'orders' },
-          (payload) => {
-            if (cancelled) return;
-            handleNewOrder(payload.new);
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('[AdminNotif] ✅ Realtime order notifications active');
-          }
-        });
-
-      channelRef.current = channel;
+      // If permission already granted, auto-subscribe (no click needed)
+      if (admin && !cancelled && Notification.permission === 'granted') {
+        subscribeRealtime();
+      }
     }
 
-    init().catch((err) => console.error('[AdminNotif] init error:', err));
+    checkAdmin().catch(console.error);
+    return () => { cancelled = true; };
+  }, []);
 
+  // ── Register Service Worker ───────────────────────────────────
+  async function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      await navigator.serviceWorker.ready;
+    } catch (err) {
+      console.warn('[AdminNotif] SW registration failed:', err);
+    }
+  }
+
+  // ── Subscribe to Supabase Realtime ────────────────────────────
+  function subscribeRealtime() {
+    if (channelRef.current) return; // already subscribed
+
+    registerSW();
+
+    const channel = supabase
+      .channel('admin-order-notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          handleNewOrder(payload.new);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[AdminNotif] ✅ Realtime order notifications active');
+          setIsSubscribed(true);
+        }
+      });
+
+    channelRef.current = channel;
+  }
+
+  // ── Called when admin clicks "Enable Notifications" button ────
+  const enableNotifications = useCallback(async () => {
+    if (!('Notification' in window)) return;
+    if (!isAdminRef.current) return;
+
+    // This MUST be called from a user gesture (button click) for Chrome to show the popup
+    const result = await Notification.requestPermission();
+    setPermissionStatus(result);
+
+    if (result === 'granted') {
+      subscribeRealtime();
+    }
+  }, []);
+
+  // ── Cleanup on unmount ────────────────────────────────────────
+  useEffect(() => {
     return () => {
-      cancelled = true;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, []); // run once on mount
+  }, []);
+
+  return { permissionStatus, isSubscribed, isAdmin, enableNotifications };
 }
 
 // ── Helper: dispatch notification via SW or fallback ─────────────
@@ -116,16 +135,15 @@ function handleNewOrder(order) {
     payMethod,
   };
 
-  // Prefer Service Worker notification (works when tab is in background)
+  // Prefer Service Worker (works when tab is in background)
   if (navigator.serviceWorker?.controller) {
     navigator.serviceWorker.controller.postMessage(payload);
   } else if (navigator.serviceWorker) {
-    // SW registered but not yet controlling — use ready registration
     navigator.serviceWorker.ready.then((reg) => {
       reg.active?.postMessage(payload);
     });
   } else {
-    // Final fallback: direct Notification API
+    // Fallback: direct Notification API
     try {
       const n = new Notification('🛍️ New Order Received!', {
         body: `Order #${String(orderId).slice(-8).toUpperCase()}\n₹${total} · ${customerName} · ${payMethod}`,

@@ -5,6 +5,7 @@ import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
+import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications";
 
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
@@ -56,6 +57,9 @@ export default function AdminPage() {
   const [products, setProducts] = useState([]);
   const [activeTab, setActiveTab] = useState("orders");
   const [updatingId, setUpdatingId] = useState(null);
+
+  // ── Order notifications ──
+  const { permissionStatus, isSubscribed, isAdmin: isNotifAdmin, enableNotifications } = useAdminOrderNotifications();
 
   // Settings
   const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
@@ -658,6 +662,62 @@ export default function AdminPage() {
           </button>
         </div>
       </nav>
+
+      {/* ── Notification Permission Banner ── */}
+      {isNotifAdmin && permissionStatus !== 'unsupported' && (
+        <div style={{
+          background: permissionStatus === 'granted' ? 'rgba(57,255,20,0.08)' : 'rgba(255,153,0,0.1)',
+          borderBottom: permissionStatus === 'granted' ? '1px solid #39ff1430' : '1px solid #ff990040',
+          padding: '10px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>{permissionStatus === 'granted' ? '🔔' : '🔕'}</span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, letterSpacing: 2, color: permissionStatus === 'granted' ? '#39ff14' : '#ff9900' }}>
+              {permissionStatus === 'granted'
+                ? isSubscribed ? 'ORDER NOTIFICATIONS ACTIVE' : 'NOTIFICATIONS ENABLED — CONNECTING…'
+                : permissionStatus === 'denied'
+                ? 'NOTIFICATIONS BLOCKED — ENABLE IN BROWSER SETTINGS'
+                : 'ENABLE ORDER NOTIFICATIONS TO GET ALERTS ON NEW ORDERS'}
+            </span>
+          </div>
+          {permissionStatus !== 'granted' && permissionStatus !== 'denied' && (
+            <button
+              type="button"
+              onClick={enableNotifications}
+              style={{
+                background: '#ff9900',
+                border: 'none',
+                color: '#000',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 900,
+                fontSize: 13,
+                letterSpacing: 2,
+                padding: '8px 20px',
+                cursor: 'pointer',
+              }}
+            >
+              ENABLE NOTIFICATIONS
+            </button>
+          )}
+          {permissionStatus === 'denied' && (
+            <a
+              href="chrome://settings/content/notifications"
+              style={{ color: '#ff9900', fontSize: 12, letterSpacing: 1 }}
+              onClick={(e) => {
+                e.preventDefault();
+                alert('Go to Chrome → Address bar → 🔒 Lock icon → Site settings → Notifications → Allow');
+              }}
+            >
+              HOW TO FIX →
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="admin-content">
 
