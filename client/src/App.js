@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from "react";
+import { useAdminOrderNotifications } from "./hooks/useAdminOrderNotifications";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import ReactGA from "react-ga4";
 import clarity from "@microsoft/clarity";
@@ -53,6 +54,9 @@ function PageTracker() {
 
 function AppContent() {
   const location = useLocation();
+
+  // Global admin order notification listener
+  useAdminOrderNotifications();
 
   React.useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
