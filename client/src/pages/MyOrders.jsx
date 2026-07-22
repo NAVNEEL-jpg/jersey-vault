@@ -60,7 +60,7 @@ export default function MyOrders() {
         .nav-link:hover::after { width:100%; }
         button.nav-link { background:none; border:none; padding:0; font-family:inherit; cursor:pointer; }
         .skeleton { background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-        .order-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; margin-bottom: 12px; animation: fadeUp 0.4s ease; border-left: 3px solid #1a1a1a; transition: border-color 0.25s, transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s; }
+        .order-card { background: #111; border: 1px solid #1a1a1a; padding: 24px; margin-bottom: 12px; animation: fadeUp 0.4s ease; border-left: 3px solid #1a1a1a; transition: border-color 0.25s, transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s; user-select: text; -webkit-user-select: text; }
         .order-card:hover { border-left-color: #39ff14; transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
         .track-btn { display:inline-block; background:transparent; border:1px solid #39ff14; color:#39ff14; padding:8px 20px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:3px; text-decoration:none; transition:all 0.2s; }
         .track-btn:hover { background:#39ff14; color:#000; }

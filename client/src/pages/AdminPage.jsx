@@ -467,10 +467,11 @@ export default function AdminPage() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
         @keyframes slideDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
 
+        .admin-root { user-select: text; -webkit-user-select: text; }
         .tab-btn { background:transparent; border:none; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:3px; cursor:pointer; padding:14px 28px; border-bottom:2px solid transparent; color:#444; transition:all 0.2s; white-space:nowrap; }
         .tab-btn.active { color:#39ff14; border-bottom-color:#39ff14; }
         .status-select { background:#1a1a1a; border:1px solid #333; color:#fff; padding:6px 10px; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:1px; cursor:pointer; outline:none; }
-        .order-card { background:#111; border:1px solid #1a1a1a; padding:20px; margin-bottom:12px; animation:fadeUp 0.4s ease; transition:border-color 0.2s; }
+        .order-card { background:#111; border:1px solid #1a1a1a; padding:20px; margin-bottom:12px; animation:fadeUp 0.4s ease; transition:border-color 0.2s; user-select: text; -webkit-user-select: text; }
         .order-card:hover { border-color:#2a2a2a; }
         .stat-card { background:#111; border:1px solid #1a1a1a; padding:24px; text-align:center; border-left:3px solid #39ff14; }
         .add-product-form { background:#0d0d0d; border:1px solid #39ff1430; padding:28px; margin-bottom:20px; animation:slideDown 0.3s ease; }
