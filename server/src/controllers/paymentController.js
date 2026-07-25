@@ -5,13 +5,22 @@ import { generatePDFBuffer } from '../utils/pdfGenerator.js';
 
 // ─── POST /api/payment/create-order ────────────────────────────────────────
 export const ENFORCE_SECURITY = true;
-export const FREE_SHIPPING_MIN = 1999;
+export const FREE_SHIPPING_MIN = 1099;
+export const PREPAID_SHIPPING_FEE = 99;
+export const COD_SHIPPING_FEE = 149;
+export const PARTIAL_COD_SHIPPING_FEE = 99;
 export const SHIPPING_FEE = 99;
-export const COD_DEPOSIT = 99;
+export const COD_DEPOSIT = 149;
 
-const calcShipping = (subtotal) => subtotal >= FREE_SHIPPING_MIN ? 0 : SHIPPING_FEE;
+const calcShipping = (subtotal, payMethod = 'razorpay') => {
+  if (subtotal > FREE_SHIPPING_MIN) return 0;
+  const m = String(payMethod).toLowerCase();
+  if (m === 'cod') return COD_SHIPPING_FEE;
+  if (m === 'partial_cod') return PARTIAL_COD_SHIPPING_FEE;
+  return PREPAID_SHIPPING_FEE;
+};
 
-async function recalculateCart(items) {
+async function recalculateCart(items, payMethod = 'razorpay') {
   let subtotal = 0;
   const verifiedItems = [];
 
@@ -36,7 +45,7 @@ async function recalculateCart(items) {
     }
   }
 
-  const shipping = calcShipping(subtotal);
+  const shipping = calcShipping(subtotal, payMethod);
   const total = subtotal + shipping;
 
   return { subtotal, shipping, total, verifiedItems };
@@ -100,8 +109,15 @@ export const verifyPayment = async (req, res) => {
         let isMatch = false;
         let expectedPayment = 0;
         
-        if (order_data.pay_method === 'COD') {
-          expectedPayment = COD_DEPOSIT;
+        if (order_data.pay_method === 'Partial_COD') {
+          // Partial COD: upfront = shipping fee + half jersey price
+          const deliveryFee = subtotal > FREE_SHIPPING_MIN ? 0 : PARTIAL_COD_SHIPPING_FEE;
+          const halfJerseyPrice = Math.ceil(subtotal / 2);
+          expectedPayment = deliveryFee === 0 ? halfJerseyPrice : (deliveryFee + halfJerseyPrice);
+          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
+        } else if (order_data.pay_method === 'COD' || order_data.pay_method === 'Hybrid_COD') {
+          // Full COD: upfront = delivery fee only
+          expectedPayment = Number(order_data.upfront_shipping || order_data.shipping || shipping || COD_DEPOSIT);
           isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
         } else {
           expectedPayment = total;
@@ -109,10 +125,11 @@ export const verifyPayment = async (req, res) => {
         }
 
         console.log(`PAYMENT_SECURITY_AUDIT:
+Pay Method: ${order_data.pay_method}
 Client Total: ₹${clientTotal}
-Client Amount Paid: ₹${amountPaid}
-Server Total: ₹${total}
-Expected Payment: ₹${expectedPayment}
+Client Upfront Amount Paid: ₹${amountPaid}
+Server Cart Total: ₹${total}
+Expected Upfront Payment: ₹${expectedPayment}
 Match: ${isMatch ? 'YES' : 'NO'}`);
 
         if (ENFORCE_SECURITY && !isMatch) {
@@ -123,8 +140,8 @@ Match: ${isMatch ? 'YES' : 'NO'}`);
           ...order_data,
           items: verifiedItems,
           subtotal,
-          shipping,
-          total,
+          shipping: expectedPayment,
+          total: subtotal + expectedPayment,
           razorpay_order_id,
           razorpay_payment_id,
           paymentStatus: 'captured',

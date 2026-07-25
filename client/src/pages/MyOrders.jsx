@@ -207,6 +207,25 @@ export default function MyOrders() {
                     </div>
                   </div>
 
+                  {(() => {
+                    const payMethodStr = String(order.pay_method || '').toUpperCase();
+                    const isPartialCod = payMethodStr.includes('PARTIAL');
+                    if (!isPartialCod) return null;
+                    const subtotal = order.subtotal || (Array.isArray(order.items) ? order.items.reduce((s, i) => s + (i.price * i.qty), 0) : order.total);
+                    const halfJerseyPrice = Math.ceil(subtotal / 2);
+                    const shippingFee = order.shipping !== undefined ? order.shipping : (subtotal > 1099 ? 0 : 99);
+                    const calculatedUpfront = shippingFee + halfJerseyPrice;
+                    const upfrontPaid = Number(order.amount_paid || order.upfront_shipping || calculatedUpfront);
+                    const doorstepRemaining = Math.max(0, (order.total || (subtotal + shippingFee)) - upfrontPaid);
+                    return (
+                      <div style={{ background: "rgba(57, 255, 20, 0.06)", border: "1px solid rgba(57, 255, 20, 0.2)", padding: "8px 12px", marginTop: 10, borderRadius: 3, fontSize: 12 }}>
+                        <div style={{ color: "#39ff14", fontWeight: 800 }}>🤝 PARTIAL COD PAYMENT SUMMARY</div>
+                        <div style={{ color: "#aaa", marginTop: 2 }}>Paid Online Upfront: <strong style={{ color: "#fff" }}>₹{upfrontPaid.toLocaleString()}</strong></div>
+                        <div style={{ color: "#ffea00", fontWeight: 800, marginTop: 2 }}>Pay in Cash at Doorstep: ₹{doorstepRemaining.toLocaleString()}</div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Items */}
                   <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 14 }}>
                     <div className="orders-items-label">ITEMS</div>

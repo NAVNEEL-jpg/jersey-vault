@@ -15,6 +15,7 @@ async function finalizeOrder({
   form,
   user,
   isCOD,
+  isCODMode,
   amountPaid,
   razorpayOrderId = null,
   razorpayPaymentId = null,
@@ -29,7 +30,7 @@ async function finalizeOrder({
     amountPaid,
     date: new Date().toLocaleDateString(),
     customer: { name, email: customerEmail, phone },
-    payMethod: isCOD ? 'COD' : 'Online',
+    payMethod: isCODMode === 'partial_cod' ? 'Partial_COD' : isCOD ? 'COD' : 'Online',
     subtotal,
     shipping,
     razorpayOrderId,
@@ -57,11 +58,12 @@ export const initiatePayment = async (
   decrementStock,
   form,
   user,
-  isCOD,
+  isCODMode, // 'online' | 'cod' | 'partial_cod'
   onStatusChange = () => {}
 ) => {
   const { shipping, total } = calcOrderTotals(cart);
   const customerEmail = email || user?.email || '';
+  const isCOD = isCODMode === 'cod' || isCODMode === 'partial_cod';
 
   onStatusChange('processing');
 
@@ -101,10 +103,11 @@ export const initiatePayment = async (
     amount: Math.round(amountToPayNow) * 100,
     currency: 'INR',
     name: 'JerseyVault',
-    description: isCOD
+    description: isCODMode === 'partial_cod'
+      ? `Partial COD: ₹${shipping} delivery + ₹${Math.ceil(calcOrderTotals(cart).subtotal / 2)} (half jersey price)`
+      : isCOD
       ? (shipping > 0 ? `Shipping fee (₹${shipping}) — COD order` : 'Jersey Purchase')
       : `Order total (₹${total})`,
-
     // Step 2 — Success: verify signature on backend
     handler: async function (response) {
       onStatusChange('verifying');
@@ -122,7 +125,8 @@ export const initiatePayment = async (
         shipping: calcOrderTotals(cart).shipping,
         total: calcOrderTotals(cart).total,
         amount_paid: amountToPayNow,
-        pay_method: isCOD ? 'COD' : 'Online',
+        upfront_shipping: amountToPayNow,
+        pay_method: isCODMode === 'partial_cod' ? 'Partial_COD' : isCOD ? 'COD' : 'Online',
       };
 
       try {
@@ -161,6 +165,7 @@ export const initiatePayment = async (
         form,
         user,
         isCOD,
+        isCODMode,
         amountPaid: amountToPayNow,
         razorpayOrderId: response.razorpay_order_id,
         razorpayPaymentId: response.razorpay_payment_id,

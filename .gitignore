@@ -20,3 +20,4 @@ graphify-out/
 .github/playwright-report/
 test-results/
 tests/screenshots/
+supabase/.temp/

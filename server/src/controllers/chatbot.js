@@ -189,7 +189,7 @@ function getLocalResponse(message, orderDetails, matchedJerseys, searchTerms) {
   if (msg.includes('shipping') || msg.includes('charge') || msg.includes('cost') || msg.includes('free')) {
     return `🚚 **Shipping Information:**\n` +
            `- **Delivery Time:** Standard shipping takes 5–8 business days across India. Metro cities (like Mumbai, Delhi, bandwidth, Kolkata) typically arrive within 3–5 business days.\n` +
-           `- **Shipping Fee:** Free shipping on orders above ₹1,999! For orders below ₹1,999, there is a flat shipping fee of ₹99.\n` +
+           `- **Shipping Fee:** Free shipping on orders above ₹1,099! For orders below ₹1,099, there is a flat shipping fee of ₹99.\n` +
            `- **International:** We currently only ship within India, but international shipping is in the works!\n\n` +
            `You can view our shipping FAQs on the **[FAQ Page](/faq)**.`;
   }

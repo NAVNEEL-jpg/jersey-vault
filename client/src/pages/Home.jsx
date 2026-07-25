@@ -1279,8 +1279,8 @@ letter-spacing: 4px !important;
   .cart-item-name { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:17px; letter-spacing:1px; color:#eee; line-height:1.1; }
   .cart-item-meta { font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:3px; color:#333; margin-top:3px; font-weight:700; }
   .cart-item-price { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:900; color:#39ff14; margin-top:6px; letter-spacing:1px; animation: priceReveal 0.3s ease; }
-  .cart-tag { display:inline-flex; align-items:center; gap:6px; margin-top:5px; }
-  .cart-tag-size { background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:3px 8px; border-radius:2px; }
+  .cart-tag { display:inline-flex; align-items:center; gap:8px; margin-top:6px; }
+  .cart-tag-size { background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:14px; letter-spacing:1px; padding:0 10px; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; height:32px; min-width:32px; }
   .cart-tag-qty { color:#333; font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; }
 
   .cart-total-row { display:flex; justify-content:space-between; align-items:center; padding:16px 20px 8px; background:#050505; border-top:1px solid #141414; }
@@ -1447,13 +1447,13 @@ letter-spacing: 4px !important;
   .cart-count-badge { display:inline-block; margin-left:10px; background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:2px 8px; vertical-align:middle; border-radius:2px; }
   .cart-close-btn { background:none; border:1px solid #1a1a1a; color:#444; font-size:14px; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; transition:border-color 0.2s, color 0.2s; border-radius:2px; }
   .cart-close-btn:hover { border-color:#39ff14; color:#39ff14; }
-  .cart-remove-btn { background:none; border:1px solid #222; color:#888; cursor:pointer; font-size:12px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:2px; }
+  .cart-remove-btn { background:none; border:1px solid #333; color:#aaa; cursor:pointer; font-size:16px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:3px; }
   .cart-remove-btn:hover { border-color:#c0392b; color:#ff4d4d; background:rgba(192,57,43,0.15); }
-  .cart-qty-control { display:inline-flex; align-items:center; background:#111; border:1px solid #222; border-radius:2px; margin-left:6px; }
-  .cart-qty-btn { background:none; border:none; color:#888; cursor:pointer; font-size:14px; font-weight:900; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; transition:color 0.15s, background 0.15s, transform 0.15s; line-height:1; }
+  .cart-qty-control { display:inline-flex; align-items:center; gap:6px; background:#121214; border:1px solid #333; border-radius:4px; margin-left:8px; height:34px; padding:0 6px; }
+  .cart-qty-btn { background:none; border:none; color:#ffffff; cursor:pointer; font-size:18px; font-weight:900; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; transition:color 0.15s ease, transform 0.15s ease, text-shadow 0.15s ease; line-height:1; outline:none; }
   .cart-qty-btn:not(:disabled):hover,
   .cart-qty-btn:not(:disabled):focus,
-  .cart-qty-btn:not(:disabled):active { color:#39ff14 !important; background:rgba(57,255,20,0.2) !important; box-shadow:0 0 8px rgba(57,255,20,0.4) !important; }
+  .cart-qty-btn:not(:disabled):active { color:#39ff14 !important; background:none !important; box-shadow:none !important; transform:scale(1.25); text-shadow:0 0 10px rgba(57,255,20,0.8); }
   
   .modal-qty-control button:not(:disabled) { transition: color 0.15s ease, transform 0.15s ease, text-shadow 0.15s ease; color: #ffffff; }
   @media (hover: hover) {
@@ -2540,7 +2540,7 @@ letter-spacing: 4px !important;
                             >
                               −
                             </button>
-                            <span style={{ color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, fontWeight: 900, padding: "0 6px", minWidth: 16, textAlign: "center" }}>
+                            <span style={{ color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16, fontWeight: 900, padding: "0 10px", minWidth: 24, textAlign: "center" }}>
                               {item.qty}
                             </span>
                             <button

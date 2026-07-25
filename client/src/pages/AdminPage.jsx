@@ -819,7 +819,46 @@ export default function AdminPage() {
                       <div>📧 {order.customer_email}</div>
                       <div>📞 {order.customer_phone}</div>
                       <div>📍 {order.address}, {order.city}, {order.state} — {order.pincode}</div>
-                      <div>💳 {order.pay_method?.toUpperCase()}</div>
+                      {(() => {
+                        const payMethodStr = String(order.pay_method || '').toUpperCase();
+                        const isPartialCod = payMethodStr.includes('PARTIAL');
+                        const isCod = payMethodStr === 'COD' || payMethodStr.includes('HYBRID');
+                        
+                        const subtotal = order.subtotal || (Array.isArray(order.items) ? order.items.reduce((s, i) => s + (i.price * i.qty), 0) : order.total);
+                        const halfJerseyPrice = Math.ceil(subtotal / 2);
+                        const shippingFee = order.shipping !== undefined ? order.shipping : (subtotal > 1099 ? 0 : 99);
+                        const calculatedUpfront = isPartialCod ? (shippingFee + halfJerseyPrice) : (isCod ? shippingFee : order.total);
+                        const upfrontPaid = Number(order.amount_paid || order.upfront_shipping || calculatedUpfront);
+                        const doorstepRemaining = Math.max(0, (order.total || (subtotal + shippingFee)) - upfrontPaid);
+
+                        return (
+                          <>
+                            <div>💳 PAYMENT: <strong style={{ color: isPartialCod ? "#39ff14" : "#fff" }}>{isPartialCod ? "🤝 PARTIAL COD" : isCod ? "💵 CASH ON DELIVERY" : "💳 ONLINE PAYMENT"}</strong></div>
+                            {isPartialCod && (
+                              <div style={{ background: "rgba(57, 255, 20, 0.08)", border: "1px solid rgba(57, 255, 20, 0.25)", padding: "8px 12px", marginTop: 8, borderRadius: 3 }}>
+                                <div style={{ color: "#39ff14", fontWeight: 800, fontSize: 12, letterSpacing: 1 }}>🤝 PARTIAL COD DETAILS</div>
+                                <div style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}>
+                                  Paid Upfront Online: <strong style={{ color: "#00ff44" }}>₹{upfrontPaid.toLocaleString()}</strong> ({shippingFee === 0 ? "Free Shipping" : `₹${shippingFee} shipping`} + ₹{halfJerseyPrice.toLocaleString()} 50% jersey)
+                                </div>
+                                <div style={{ color: "#ffea00", fontWeight: 800, fontSize: 13, marginTop: 4 }}>
+                                  💵 REMAINING TO COLLECT AT DOORSTEP: ₹{doorstepRemaining.toLocaleString()}
+                                </div>
+                              </div>
+                            )}
+                            {isCod && !isPartialCod && (
+                              <div style={{ background: "rgba(255, 255, 255, 0.04)", border: "1px solid #333", padding: "8px 12px", marginTop: 8, borderRadius: 3 }}>
+                                <div style={{ color: "#aaa", fontWeight: 700, fontSize: 12, letterSpacing: 1 }}>💵 FULL COD DETAILS</div>
+                                <div style={{ color: "#aaa", fontSize: 12, marginTop: 4 }}>
+                                  Paid Upfront Online (Shipping): <strong style={{ color: "#00ff44" }}>₹{upfrontPaid.toLocaleString()}</strong>
+                                </div>
+                                <div style={{ color: "#ffea00", fontWeight: 800, fontSize: 13, marginTop: 4 }}>
+                                  💵 REMAINING TO COLLECT AT DOORSTEP: ₹{doorstepRemaining.toLocaleString()}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                       <div>🕐 {new Date(order.created_at).toLocaleString()}</div>
                     </div>
                   </div>
