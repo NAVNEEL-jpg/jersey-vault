@@ -16,7 +16,7 @@ const statusColors = {
   delivered: "#39ff14",
 };
 
-const JERSEY_TYPES = ["PLAYER VERSION", "FAN VERSION", "RETRO"];
+const JERSEY_TYPES = ["FAN VERSION", "PLAYER VERSION", "RETRO"];
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const SPORTS = ["FOOTBALL", "CRICKET", "BASKETBALL"];
 const sportIcon = { FOOTBALL: "⚽", CRICKET: "🏏", BASKETBALL: "🏀" };
@@ -41,6 +41,8 @@ const EMPTY_FORM = {
   team_id: "",
   size_stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
   featured: false,
+  is_26_27: false,
+  is_clearance: false,
 };
 
 const EMPTY_TEAM_FORM = {
@@ -55,6 +57,7 @@ export default function AdminPage() {
   const [checking, setChecking] = useState(true);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [adminProductSearch, setAdminProductSearch] = useState("");
   const [activeTab, setActiveTab] = useState("orders");
   const [updatingId, setUpdatingId] = useState(null);
 
@@ -74,6 +77,7 @@ export default function AdminPage() {
   const [formSaving, setFormSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [cloningId, setCloningId] = useState(null);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [tempUrlInput, setTempUrlInput] = useState("");
   const [uploadingNewProductImage, setUploadingNewProductImage] = useState(false);
@@ -315,8 +319,18 @@ export default function AdminPage() {
       type: formData.type,
       team_id: formData.team_id || null,
       featured: formData.featured || false,
+      is_26_27: formData.is_26_27 || false,
+      is_clearance: formData.is_clearance || false,
     };
-    const { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
+    let { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
+    if (error && (error.message?.includes("is_26_27") || error.message?.includes("is_clearance"))) {
+      const { is_26_27, is_clearance, ...fallbackPayload } = payload;
+      if (formData.is_clearance) fallbackPayload.type = "CLEARANCE SALE";
+      else if (formData.is_26_27) fallbackPayload.type = "26/27 KITS";
+      const res = await supabase.from("products").insert([fallbackPayload]).select("*, teams(id, name, logo_url, sport)").single();
+      data = res.data;
+      error = res.error;
+    }
     if (error) { setFormError("Failed to add product: " + error.message); setFormSaving(false); return; }
     setProducts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     setUploadedImages([]);
@@ -340,6 +354,39 @@ export default function AdminPage() {
       else { const e = await response.json(); alert("Failed to delete: " + (e.message || response.statusText)); }
     } catch { alert("Error connecting to server."); }
     finally { setDeletingId(null); setConfirmDeleteId(null); }
+  };
+
+  const handleCloneProduct = async (productToClone) => {
+    setCloningId(productToClone.id);
+    const clonedPayload = {
+      name: `${productToClone.name} (Copy)`,
+      price: Number(productToClone.price) || 0,
+      type: productToClone.type || "FAN VERSION",
+      status: "active",
+      team_id: productToClone.team_id || null,
+      image_url: productToClone.image_url || null,
+      featured: !!productToClone.featured,
+      is_26_27: !!productToClone.is_26_27,
+      is_clearance: !!productToClone.is_clearance,
+      size_stock: productToClone.size_stock || { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 },
+      stock: SIZES.reduce((sum, sz) => sum + (productToClone.size_stock?.[sz] || 0), 0)
+    };
+
+    let { data, error } = await supabase.from("products").insert([clonedPayload]).select("*, teams(id, name, logo_url, sport)").single();
+
+    if (error && (error.message?.includes("is_clearance") || error.message?.includes("is_26_27"))) {
+      const { is_clearance, is_26_27, ...fallbackPayload } = clonedPayload;
+      const res = await supabase.from("products").insert([fallbackPayload]).select("*, teams(id, name, logo_url, sport)").single();
+      data = res.data;
+      error = res.error;
+    }
+
+    if (error) {
+      alert("Failed to clone product: " + error.message);
+    } else if (data) {
+      setProducts(prev => [data, ...prev]);
+    }
+    setCloningId(null);
   };
 
   // ── Upload team logo helper ──
@@ -510,6 +557,9 @@ export default function AdminPage() {
         .stock-row-item:hover { background:#0a0a0a; }
         .add-product-toggle { background:transparent; border:1px dashed #39ff1440; color:#39ff14; padding:12px 24px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:13px; letter-spacing:3px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
         .add-product-toggle:hover { background:#39ff1410; border-color:#39ff14; }
+        .admin-search-input { width:100%; background:#0a0a0a; border:1px solid #2a2a2a; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:2px; padding:10px 32px 10px 34px; outline:none; transition:border 0.2s, box-shadow 0.2s; border-radius:0; }
+        .admin-search-input::placeholder { color:#444; letter-spacing:2px; }
+        .admin-search-input:focus { border-color:#39ff14; box-shadow:0 0 8px rgba(57,255,20,0.2); }
         .form-error { color:#ff4444; font-size:12px; letter-spacing:1px; background:#ff444410; border:1px solid #ff444430; padding:10px 14px; margin-top:4px; }
         .form-success { color:#39ff14; font-size:12px; letter-spacing:1px; background:#39ff1410; border:1px solid #39ff1430; padding:10px 14px; margin-top:4px; }
         .image-preview { width:48px; height:48px; object-fit:cover; background:#0d0d0d; border:1px solid #1a1a1a; }
@@ -517,6 +567,7 @@ export default function AdminPage() {
         .type-badge.player { background:#00aaff22; border:1px solid #00aaff44; color:#00aaff; }
         .type-badge.fan { background:#39ff1422; border:1px solid #39ff1444; color:#39ff14; }
         .type-badge.retro { background:#ff990022; border:1px solid #ff990044; color:#ff9900; }
+        .type-badge.kits2627 { background:#ff007f22; border:1px solid #ff007f44; color:#ff007f; }
         .size-stock-input { width:100%; background:#111; border:1px solid #333; color:#fff; padding:4px; font-family:'Barlow Condensed',sans-serif; font-size:13px; text-align:center; outline:none; }
         .size-stock-input:focus { border-color:#39ff14; }
         .size-add-btn { width:100%; background:#39ff14; color:#000; border:none; padding:4px; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; cursor:pointer; margin-top:3px; letter-spacing:1px; }
@@ -820,11 +871,37 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Toolbar: Add Product + Add Team (shortcut) */}
-            <div className="product-toolbar">
+            {/* Toolbar: Add Product + Search + Teams shortcut */}
+            <div className="product-toolbar" style={{ flexWrap: "wrap", gap: 10 }}>
               <button type="button" className="add-product-toggle" onClick={() => { setShowAddForm(f => !f); if (showAddForm) resetProductForm(); }}>
                 {showAddForm ? "✕ CANCEL" : "+ ADD NEW PRODUCT"}
               </button>
+
+              {/* Product Search */}
+              <div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 180, maxWidth: 340, position: "relative" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="2.5" strokeLinecap="round" style={{ position: "absolute", left: 10, pointerEvents: "none", flexShrink: 0 }}>
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  id="admin-product-search"
+                  className="admin-search-input"
+                  type="text"
+                  placeholder="SEARCH PRODUCTS..."
+                  value={adminProductSearch}
+                  onChange={e => setAdminProductSearch(e.target.value)}
+                  autoComplete="off"
+                />
+                {adminProductSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setAdminProductSearch("")}
+                    style={{ position: "absolute", right: 8, background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}
+                    aria-label="Clear search"
+                  >✕</button>
+                )}
+              </div>
+
               {/* Quick link to Teams tab */}
               <button type="button" className="btn-ghost green" style={{ padding: "12px 20px", fontSize: 12, letterSpacing: 2, display: "flex", alignItems: "center", gap: 6 }}
                 onClick={() => setActiveTab("teams")}>
@@ -863,9 +940,93 @@ export default function AdminPage() {
                         <option value="draft">DRAFT</option>
                       </select>
                     </div>
-                    <div className="form-field" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10, marginTop: 24 }}>
-                      <input id="admin-product-featured" type="checkbox" checked={formData.featured || false} onChange={e => handleFormChange("featured", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#39ff14" }} />
-                      <label className="form-label" htmlFor="admin-product-featured" style={{ marginBottom: 0, cursor: "pointer", color: formData.featured ? "#39ff14" : "#555" }}>☑ FEATURED PRODUCT</label>
+                    <div className="form-field" style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24, flexWrap: "wrap" }}>
+                      <label
+                        htmlFor="admin-product-featured"
+                        style={{
+                          padding: "8px 14px",
+                          minHeight: 40,
+                          background: formData.featured ? "rgba(57, 255, 20, 0.15)" : "#111",
+                          border: formData.featured ? "1px solid #39ff14" : "1px solid #333",
+                          color: formData.featured ? "#39ff14" : "#888",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          letterSpacing: 1,
+                          cursor: "pointer",
+                          borderRadius: 4,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          userSelect: "none"
+                        }}
+                      >
+                        <input
+                          id="admin-product-featured"
+                          type="checkbox"
+                          checked={!!formData.featured}
+                          onChange={e => handleFormChange("featured", e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: "#39ff14", cursor: "pointer" }}
+                        />
+                        {formData.featured ? "✅ WC26" : "WC26"}
+                      </label>
+
+                      <label
+                        htmlFor="admin-product-is2627"
+                        style={{
+                          padding: "8px 14px",
+                          minHeight: 40,
+                          background: formData.is_26_27 ? "rgba(57, 255, 20, 0.15)" : "#111",
+                          border: formData.is_26_27 ? "1px solid #39ff14" : "1px solid #333",
+                          color: formData.is_26_27 ? "#39ff14" : "#888",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          letterSpacing: 1,
+                          cursor: "pointer",
+                          borderRadius: 4,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          userSelect: "none"
+                        }}
+                      >
+                        <input
+                          id="admin-product-is2627"
+                          type="checkbox"
+                          checked={!!formData.is_26_27}
+                          onChange={e => handleFormChange("is_26_27", e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: "#39ff14", cursor: "pointer" }}
+                        />
+                        {formData.is_26_27 ? "✅ 26/27 KITS" : "26/27 KITS"}
+                      </label>
+
+                      <label
+                        htmlFor="admin-product-isclearance"
+                        style={{
+                          padding: "8px 14px",
+                          minHeight: 40,
+                          background: formData.is_clearance ? "rgba(57, 255, 20, 0.15)" : "#111",
+                          border: formData.is_clearance ? "1px solid #39ff14" : "1px solid #333",
+                          color: formData.is_clearance ? "#39ff14" : "#888",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          letterSpacing: 1,
+                          cursor: "pointer",
+                          borderRadius: 4,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          userSelect: "none"
+                        }}
+                      >
+                        <input
+                          id="admin-product-isclearance"
+                          type="checkbox"
+                          checked={!!formData.is_clearance}
+                          onChange={e => handleFormChange("is_clearance", e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: "#39ff14", cursor: "pointer" }}
+                        />
+                        {formData.is_clearance ? "✅ CLEARANCE" : "CLEARANCE"}
+                      </label>
                     </div>
                   </div>
 
@@ -1136,15 +1297,32 @@ export default function AdminPage() {
             )}
 
             <div style={{ background: "#111", border: "1px solid #1a1a1a" }}>
-              {products.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "80px 0", color: "#333" }}>
-                  <div style={{ fontSize: 60 }}>📊</div>
-                  <p style={{ marginTop: 16, letterSpacing: 3, fontSize: 14 }}>NO PRODUCTS — ADD ONE ABOVE</p>
-                </div>
-              ) : products.map(p => (
-                <StockRow key={p.id} product={p} deletingId={deletingId} confirmDeleteId={confirmDeleteId} setConfirmDeleteId={setConfirmDeleteId} onDelete={handleDeleteProduct}
-                  onUpdate={(id, newSizeStock, newFeatured, newImageUrl, newName, newPrice) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured, image_url: newImageUrl !== undefined ? newImageUrl : x.image_url, name: newName !== undefined ? newName : x.name, price: newPrice !== undefined ? newPrice : x.price } : x))} />
-              ))}
+              {(() => {
+                const searchTerm = adminProductSearch.trim().toLowerCase();
+                const filtered = searchTerm
+                  ? products.filter(p =>
+                      (p.name || "").toLowerCase().includes(searchTerm) ||
+                      (p.type || "").toLowerCase().includes(searchTerm)
+                    )
+                  : products;
+                if (products.length === 0) return (
+                  <div style={{ textAlign: "center", padding: "80px 0", color: "#333" }}>
+                    <div style={{ fontSize: 60 }}>📊</div>
+                    <p style={{ marginTop: 16, letterSpacing: 3, fontSize: 14 }}>NO PRODUCTS — ADD ONE ABOVE</p>
+                  </div>
+                );
+                if (filtered.length === 0) return (
+                  <div style={{ textAlign: "center", padding: "60px 0", color: "#333" }}>
+                    <div style={{ fontSize: 48 }}>🔍</div>
+                    <p style={{ marginTop: 12, letterSpacing: 3, fontSize: 13 }}>NO PRODUCTS MATCH "{adminProductSearch.toUpperCase()}"</p>
+                    <button type="button" onClick={() => setAdminProductSearch("")} style={{ marginTop: 12, background: "none", border: "1px solid #333", color: "#666", padding: "6px 16px", cursor: "pointer", letterSpacing: 2, fontSize: 11 }}>CLEAR SEARCH</button>
+                  </div>
+                );
+                return filtered.map(p => (
+                  <StockRow key={p.id} product={p} deletingId={deletingId} confirmDeleteId={confirmDeleteId} setConfirmDeleteId={setConfirmDeleteId} onDelete={handleDeleteProduct} cloningId={cloningId} onClone={handleCloneProduct}
+                    onUpdate={(id, newSizeStock, newFeatured, newImageUrl, newName, newPrice, newIs2627, newType, newIsClearance) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured, is_26_27: newIs2627 !== undefined ? newIs2627 : x.is_26_27, is_clearance: newIsClearance !== undefined ? newIsClearance : x.is_clearance, type: newType !== undefined ? newType : x.type, image_url: newImageUrl !== undefined ? newImageUrl : x.image_url, name: newName !== undefined ? newName : x.name, price: newPrice !== undefined ? newPrice : x.price } : x))} />
+                ));
+              })()}
             </div>
           </div>
         )}
@@ -1360,7 +1538,7 @@ export default function AdminPage() {
 // Subtracting is blocked client-side (and the Supabase write is skipped)
 // if it would push stock below zero.
 
-function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate }) {
+function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate, cloningId, onClone }) {
   const [sizeInputs, setSizeInputs]   = useState({});
   const [savingSize, setSavingSize]   = useState(null);
   const [saveError,  setSaveError]    = useState(null);
@@ -1373,6 +1551,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   const [isEditingDetails, setIsEditingDetails] = useState(false);
   const [tempName, setTempName] = useState(p.name);
   const [tempPrice, setTempPrice] = useState(p.price);
+  const [tempType, setTempType] = useState(p.type || "FAN VERSION");
   const [savingDetails, setSavingDetails] = useState(false);
   
   const [localSizeStock, setLocalSizeStock] = useState(
@@ -1380,6 +1559,15 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   );
   const [localFeatured, setLocalFeatured] = useState(!!p.featured);
   const [savingFeatured, setSavingFeatured] = useState(false);
+  const [localIs2627, setLocalIs2627] = useState(
+    () => !!(p.is_26_27 === true || (p.type === "26/27 KITS" && p.is_26_27 !== false))
+  );
+  const [savingIs2627, setSavingIs2627] = useState(false);
+
+  const [localIsClearance, setLocalIsClearance] = useState(
+    () => !!(p.is_clearance === true || p.type === "CLEARANCE SALE")
+  );
+  const [savingIsClearance, setSavingIsClearance] = useState(false);
 
   useEffect(() => {
     setLocalImages(getProductImages(p.image_url));
@@ -1388,7 +1576,38 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   useEffect(() => {
     setTempName(p.name);
     setTempPrice(p.price);
-  }, [p.name, p.price]);
+    setTempType(p.type || "FAN VERSION");
+  }, [p.name, p.price, p.type]);
+
+  const handleSaveDetails = async () => {
+    if (!tempName.trim()) {
+      setSaveError("Product name cannot be empty.");
+      return;
+    }
+    const parsedPrice = Number(tempPrice);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      setSaveError("Price must be a valid number greater than 0.");
+      return;
+    }
+
+    setSavingDetails(true);
+    setSaveError(null);
+
+    const { error } = await supabase
+      .from("products")
+      .update({ name: tempName.trim(), price: parsedPrice, type: tempType })
+      .eq("id", p.id);
+
+    if (error) {
+      setSaveError(`Failed to update details: ${error.message}`);
+      setSavingDetails(false);
+      return;
+    }
+
+    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, tempName.trim(), parsedPrice, localIs2627, tempType, localIsClearance);
+    setIsEditingDetails(false);
+    setSavingDetails(false);
+  };
 
 
 
@@ -1396,7 +1615,9 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   useEffect(() => {
     setLocalSizeStock({ XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, ...(p.size_stock || {}) });
     setLocalFeatured(!!p.featured);
-  }, [p.size_stock, p.featured]);
+    setLocalIs2627(!!(p.is_26_27 === true || (p.type === "26/27 KITS" && p.is_26_27 !== false)));
+    setLocalIsClearance(!!(p.is_clearance === true || p.type === "CLEARANCE SALE"));
+  }, [p.size_stock, p.featured, p.is_26_27, p.is_clearance, p.type]);
 
   // delta: +1 means add the typed qty, -1 means subtract the typed qty
   const handleSizeRestock = async (size, delta) => {
@@ -1443,18 +1664,77 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     setSavingSize(null);
   };
 
-  const handleToggleFeatured = async () => {
+  const handleToggleFeatured = async (e) => {
+    const newFeatured = e ? e.target.checked : !localFeatured;
+    setLocalFeatured(newFeatured);
+    onUpdate(p.id, localSizeStock, newFeatured, p.image_url, p.name, p.price, localIs2627, p.type, localIsClearance);
+
     setSavingFeatured(true);
     setSaveError(null);
-    const newFeatured = !localFeatured;
     const { error } = await supabase.from("products").update({ featured: newFeatured }).eq("id", p.id);
     if (error) {
       setSaveError(`Failed to update featured status: ${error.message}`);
-    } else {
-      setLocalFeatured(newFeatured);
-      onUpdate(p.id, localSizeStock, newFeatured);
+      setLocalFeatured(!newFeatured);
+      onUpdate(p.id, localSizeStock, !newFeatured, p.image_url, p.name, p.price, localIs2627, p.type, localIsClearance);
     }
     setSavingFeatured(false);
+  };
+
+  const handleToggleIs2627 = async (e) => {
+    const newIs2627 = e ? e.target.checked : !localIs2627;
+    setLocalIs2627(newIs2627);
+    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, p.name, p.price, newIs2627, p.type, localIsClearance);
+
+    setSavingIs2627(true);
+    setSaveError(null);
+
+    const updatePayload = { is_26_27: newIs2627 };
+    if (p.type === "26/27 KITS" && !newIs2627) {
+      updatePayload.type = "FAN VERSION";
+    }
+
+    let { error } = await supabase.from("products").update(updatePayload).eq("id", p.id);
+    if (error) {
+      const fallbackType = newIs2627 ? "26/27 KITS" : "FAN VERSION";
+      const res = await supabase.from("products").update({ type: fallbackType }).eq("id", p.id);
+      error = res.error;
+    }
+    if (error) {
+      setSaveError(`Failed to update 26/27 Kits status: ${error.message}`);
+      setLocalIs2627(!newIs2627);
+      onUpdate(p.id, localSizeStock, localFeatured, p.image_url, p.name, p.price, !newIs2627, p.type, localIsClearance);
+    }
+    setSavingIs2627(false);
+  };
+
+  const handleToggleIsClearance = async (e) => {
+    const newIsClearance = e ? e.target.checked : !localIsClearance;
+    setLocalIsClearance(newIsClearance);
+    const updatedType = newIsClearance && p.type !== "26/27 KITS" ? "CLEARANCE SALE" : (!newIsClearance && p.type === "CLEARANCE SALE" ? "FAN VERSION" : p.type);
+    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, p.name, p.price, localIs2627, updatedType, newIsClearance);
+
+    setSavingIsClearance(true);
+    setSaveError(null);
+
+    const updatePayload = { is_clearance: newIsClearance };
+    if (newIsClearance && p.type !== "26/27 KITS") {
+      updatePayload.type = "CLEARANCE SALE";
+    } else if (!newIsClearance && p.type === "CLEARANCE SALE") {
+      updatePayload.type = "FAN VERSION";
+    }
+
+    let { error } = await supabase.from("products").update(updatePayload).eq("id", p.id);
+    if (error && error.message?.includes("is_clearance")) {
+      const fallbackType = newIsClearance ? "CLEARANCE SALE" : "FAN VERSION";
+      const res = await supabase.from("products").update({ type: fallbackType }).eq("id", p.id);
+      error = res.error;
+    }
+    if (error) {
+      setSaveError(`Failed to update Clearance Sale status: ${error.message}`);
+      setLocalIsClearance(!newIsClearance);
+      onUpdate(p.id, localSizeStock, localFeatured, p.image_url, p.name, p.price, localIs2627, p.type, !newIsClearance);
+    }
+    setSavingIsClearance(false);
   };
 
   const updateProductImagesInDb = async (updatedImages) => {
@@ -1473,35 +1753,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     return true;
   };
 
-  const handleSaveDetails = async () => {
-    if (!tempName.trim()) {
-      setSaveError("Product name cannot be empty.");
-      return;
-    }
-    const parsedPrice = Number(tempPrice);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      setSaveError("Price must be a valid number greater than 0.");
-      return;
-    }
 
-    setSavingDetails(true);
-    setSaveError(null);
-
-    const { error } = await supabase
-      .from("products")
-      .update({ name: tempName.trim(), price: parsedPrice })
-      .eq("id", p.id);
-
-    if (error) {
-      setSaveError(`Failed to update details: ${error.message}`);
-      setSavingDetails(false);
-      return;
-    }
-
-    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, tempName.trim(), parsedPrice);
-    setIsEditingDetails(false);
-    setSavingDetails(false);
-  };
 
 
   const isConfirming = confirmDeleteId === p.id;
@@ -1510,7 +1762,8 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   const typeClass =
     p.type === "PLAYER VERSION" ? "player" :
     p.type === "FAN VERSION"    ? "fan"    :
-    p.type === "RETRO"          ? "retro"  : "";
+    p.type === "RETRO"          ? "retro"  :
+    p.type === "26/27 KITS"     ? "kits2627" : "";
 
   // use localSizeStock for display so the number updates
   // immediately after save without waiting for a parent re-render
@@ -1535,7 +1788,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
                   placeholder="Product name"
                   aria-label="Edit product name"
                 />
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ color: "#555", fontSize: 12 }}>₹</span>
                   <input
                     className="form-input"
@@ -1546,10 +1799,18 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
                     placeholder="Price"
                     aria-label="Edit product price"
                   />
+                  <select
+                    className="form-select"
+                    style={{ fontSize: 11, padding: "2px 6px", height: 26, width: "auto", background: "#111", border: "1px solid #333", color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900 }}
+                    value={tempType}
+                    onChange={e => setTempType(e.target.value)}
+                  >
+                    {JERSEY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                   <button type="button" className="btn-primary" style={{ padding: "2px 8px", fontSize: 10, height: 26 }} onClick={handleSaveDetails} disabled={savingDetails}>
                     {savingDetails ? "..." : "SAVE"}
                   </button>
-                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 10, height: 26, border: "1px solid #333", color: "#aaa" }} onClick={() => { setIsEditingDetails(false); setTempName(p.name); setTempPrice(p.price); }}>
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 10, height: 26, border: "1px solid #333", color: "#aaa" }} onClick={() => { setIsEditingDetails(false); setTempName(p.name); setTempPrice(p.price); setTempType(p.type || "FAN VERSION"); }}>
                     CANCEL
                   </button>
                 </div>
@@ -1564,6 +1825,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
               {!isEditingDetails && <span style={{ color: "#555", fontSize: 12 }}>₹{p.price} · {p.status?.toUpperCase()}</span>}
 
               {p.type && <span className={`type-badge ${typeClass}`}>{p.type}</span>}
+              {localIs2627 && <span className="type-badge kits2627">26/27 KITS</span>}
               <span style={{ fontSize: 12, fontWeight: 900, color: totalStock === 0 ? "#ff4444" : totalStock <= 10 ? "#ff9900" : "#39ff14" }}>
                 TOTAL: {totalStock}
               </span>
@@ -1580,12 +1842,106 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
           </div>
         </div>
 
-        <div className="stock-row-actions" style={{ flexShrink: 0, marginLeft: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12, fontWeight: 900, color: localFeatured ? "#39ff14" : "#555", letterSpacing: 1 }}>
-            <input type="checkbox" checked={localFeatured} onChange={handleToggleFeatured} disabled={savingFeatured} style={{ width: 14, height: 14, accentColor: "#39ff14", cursor: "pointer" }} />
-            FEATURED
-          </label>
+        <div className="stock-row-actions" style={{ flexShrink: 0, marginLeft: 12, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <label
+              htmlFor={`admin-row-featured-${p.id}`}
+              style={{
+                padding: "4px 8px",
+                minHeight: 34,
+                background: localFeatured ? "rgba(57, 255, 20, 0.15)" : "#111",
+                border: localFeatured ? "1px solid #39ff14" : "1px solid #333",
+                color: localFeatured ? "#39ff14" : "#777",
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 1,
+                cursor: "pointer",
+                borderRadius: 4,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                userSelect: "none"
+              }}
+            >
+              <input
+                id={`admin-row-featured-${p.id}`}
+                type="checkbox"
+                checked={!!localFeatured}
+                onChange={handleToggleFeatured}
+                disabled={savingFeatured}
+                style={{ width: 13, height: 13, accentColor: "#39ff14", cursor: "pointer" }}
+              />
+              {localFeatured ? "✅ WC26" : "WC26"}
+            </label>
+            <label
+              htmlFor={`admin-row-is2627-${p.id}`}
+              style={{
+                padding: "4px 8px",
+                minHeight: 34,
+                background: localIs2627 ? "rgba(57, 255, 20, 0.15)" : "#111",
+                border: localIs2627 ? "1px solid #39ff14" : "1px solid #333",
+                color: localIs2627 ? "#39ff14" : "#777",
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 1,
+                cursor: "pointer",
+                borderRadius: 4,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                userSelect: "none"
+              }}
+            >
+              <input
+                id={`admin-row-is2627-${p.id}`}
+                type="checkbox"
+                checked={!!localIs2627}
+                onChange={handleToggleIs2627}
+                disabled={savingIs2627}
+                style={{ width: 13, height: 13, accentColor: "#39ff14", cursor: "pointer" }}
+              />
+              {localIs2627 ? "✅ 26/27 KITS" : "26/27 KITS"}
+            </label>
+            <label
+              htmlFor={`admin-row-isclearance-${p.id}`}
+              style={{
+                padding: "4px 8px",
+                minHeight: 34,
+                background: localIsClearance ? "rgba(57, 255, 20, 0.15)" : "#111",
+                border: localIsClearance ? "1px solid #39ff14" : "1px solid #333",
+                color: localIsClearance ? "#39ff14" : "#777",
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: 1,
+                cursor: "pointer",
+                borderRadius: 4,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                userSelect: "none"
+              }}
+            >
+              <input
+                id={`admin-row-isclearance-${p.id}`}
+                type="checkbox"
+                checked={!!localIsClearance}
+                onChange={handleToggleIsClearance}
+                disabled={savingIsClearance}
+                style={{ width: 13, height: 13, accentColor: "#39ff14", cursor: "pointer" }}
+              />
+              {localIsClearance ? "✅ CLEARANCE" : "CLEARANCE"}
+            </label>
+          </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 11, padding: "4px 8px", border: "1px solid #2a3a2a", color: "#39ff14", fontWeight: 700 }}
+              onClick={() => onClone && onClone(p)}
+              disabled={cloningId === p.id}
+            >
+              {cloningId === p.id ? "📋 CLONING..." : "📋 CLONE"}
+            </button>
             <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "4px 8px", border: "1px solid #333", color: "#aaa" }} onClick={() => setShowImageManager(!showImageManager)}>
               📷 IMAGES ({localImages.length})
             </button>

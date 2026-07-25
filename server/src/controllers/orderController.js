@@ -1,17 +1,30 @@
 import { supabase } from '../config/supabase.js';
+import { calculateDelhiveryRate, calculateLiveDeliveryRate, trackDelhiveryShipment } from '../services/delhivery.service.js';
 
-// Zone-based shipping
-const SELLER_CITY = 'KOLKATA';
-const SELLER_STATE = 'WEST BENGAL';
+// Fallback COD Fee
 const COD_FEE = 30;
 
-const calculateShipping = (address) => {
-  const buyerCity = (address.city || '').toUpperCase().trim();
-  const buyerState = (address.state || '').toUpperCase().trim();
+const calculateShipping = async (address, paymentType = 'PREPAID', itemsCount = 1, subtotal = 0) => {
+  const pincode = address?.pincode || address?.postalCode;
+  if (pincode && /^\d{6}$/.test(String(pincode).trim())) {
+    try {
+      const qty = Math.max(1, Number(itemsCount) || 1);
+      const res = await calculateLiveDeliveryRate({
+        destination_pincode: pincode,
+        payment_mode: paymentType,
+        jersey_count: qty,
+        subtotal: Number(subtotal) || 0
+      });
+      if (res && res.success) {
+        return res.delivery_fee;
+      }
+    } catch (err) {
+      console.warn('Delhivery rate calculation error:', err.message);
+    }
+  }
 
-  if (buyerCity === SELLER_CITY) return 50;
-  if (buyerState === SELLER_STATE) return 80;
-  return 120;
+  // Dynamic fallback: subtotal > 1099 -> 0, else ₹99 minimum floor
+  return Number(subtotal) > 1099 ? 0 : 99;
 };
 
 // @desc    Track an order by ID or Tracking ID
@@ -28,7 +41,17 @@ export const trackOrder = async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Order not found' });
 
-    res.json(data);
+    let delhiveryLive = null;
+    const waybillToTrack = data.tracking_id || (trackId.length >= 8 ? trackId : null);
+
+    if (waybillToTrack) {
+      delhiveryLive = await trackDelhiveryShipment(waybillToTrack);
+    }
+
+    res.json({
+      ...data,
+      delhiveryLive: delhiveryLive && delhiveryLive.success ? delhiveryLive : null
+    });
   } catch (err) {
     console.error('Track order error:', err);
     res.status(500).json({ message: 'Server error tracking order' });
@@ -68,7 +91,9 @@ export const createOrder = async (req, res) => {
       if ((p.stock || 0) < (it.qty || 0)) return res.status(400).json({ message: `Insufficient stock for ${p.name}` });
     }
 
-    const shippingPrice = req.body.shippingPrice || calculateShipping(shippingAddress);
+    const shippingPrice = req.body.shippingPrice !== undefined 
+      ? Number(req.body.shippingPrice) 
+      : await calculateShipping(shippingAddress, paymentType, orderItems?.length || 1, itemsPrice || 0);
     const codFee = paymentType === 'COD' ? COD_FEE : 0;
     const calculatedTotal = paymentType === 'COD'
       ? (itemsPrice || 0) + shippingPrice + codFee
