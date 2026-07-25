@@ -148,7 +148,7 @@ export default function MyOrders() {
             </div>
 
             {/* STATS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 32, animation: "fadeUp 0.4s ease 0.1s both" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 12, marginBottom: 32, animation: "fadeUp 0.4s ease 0.1s both" }}>
               {[
                 ["TOTAL ORDERS", orders.length, "#39ff14"],
                 ["DELIVERED", orders.filter(o => o.status === "delivered").length, "#39ff14"],

@@ -48,7 +48,7 @@ const faqs = [
       },
       {
         q: "Do you offer free shipping?",
-        a: "Yes! Orders above ₹1,999 qualify for free shipping. Orders below ₹1,999 attract a flat shipping fee of ₹99.",
+        a: "Yes! Orders above ₹1,099 qualify for free shipping. Orders below ₹1,099 attract a flat shipping fee of ₹99.",
       },
       {
         q: "How do I track my order?",

@@ -35,7 +35,7 @@ const sections = [
     points: [
       "We ship across India. International shipping is not available at this time.",
       "Standard delivery takes 5–8 business days. Express options may be available at checkout.",
-      "Free shipping is available on orders above ₹1,999.",
+      "Free shipping is available on orders above ₹1,099.",
       "Delivery timelines are estimates and may vary due to courier delays, remote locations, or public holidays.",
       "Once dispatched, a tracking ID will be shared via email or WhatsApp.",
     ],

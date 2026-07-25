@@ -70,7 +70,7 @@ const Ticker = memo(function Ticker() {
       <div style={{ display: "inline-flex", animation: "marquee 18s linear infinite" }}>
         {[...Array(2)].map((_, i) => (
           <span key={i} style={{ display: "inline-flex" }}>
-            {["FREE SHIPPING ABOVE ₹1999", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
+            {["FREE SHIPPING ABOVE ₹1099", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
               <span key={t} style={{ fontWeight: 900, letterSpacing: 3, fontSize: 16, padding: "0 40px" }}>★ {t}</span>
             ))}
           </span>

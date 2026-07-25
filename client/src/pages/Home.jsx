@@ -37,7 +37,21 @@ const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, cl
         src={images[0]}
         alt={alt}
         className={className}
-        style={{ ...style, cursor: onClick ? "pointer" : "default" }}
+        draggable="false"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center center",
+          transform: "scale(1.08)",
+          transformOrigin: "center center",
+          display: "block",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          WebkitUserDrag: "none",
+          pointerEvents: "none",
+          ...style
+        }}
         onClick={onClick}
       />
     );
@@ -87,7 +101,7 @@ const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, cl
   };
 
   return (
-    <div className="product-carousel-wrapper" style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", ...style }}>
+    <div className="product-carousel-wrapper" style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", userSelect: "none", ...style }}>
       <div 
         className="image-slider-container"
         onScroll={handleScroll}
@@ -97,9 +111,13 @@ const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, cl
           width: "100%",
           height: "100%",
           overflowX: "auto",
+          overflowY: "hidden",
+          touchAction: "pan-x",
           scrollSnapType: "x mandatory",
           scrollbarWidth: "none",
           msOverflowStyle: "none",
+          userSelect: "none",
+          WebkitUserSelect: "none",
           cursor: onClick ? "pointer" : "default"
         }}
       >
@@ -111,14 +129,29 @@ const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, cl
               flex: "0 0 100%",
               width: "100%",
               height: "100%",
-              scrollSnapAlign: "start"
+              scrollSnapAlign: "start",
+              userSelect: "none",
+              WebkitUserSelect: "none"
             }}
           >
             <img 
               src={img} 
               alt={`${alt} - ${idx + 1}`} 
               className={className}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              draggable="false"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center center",
+                transform: "scale(1.08)",
+                transformOrigin: "center center",
+                display: "block",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                WebkitUserDrag: "none",
+                pointerEvents: "none"
+              }}
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
@@ -301,7 +334,7 @@ const Ticker = memo(function Ticker() {
       <div style={{ display: "inline-flex", animation: "marquee 18s linear infinite" }}>
         {[...Array(2)].map((_, i) => (
           <span key={i} style={{ display: "inline-flex" }}>
-            {["FREE SHIPPING ABOVE ₹1999", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
+            {["FREE SHIPPING ABOVE ₹1099", "AUTHENTIC LICENSED JERSEYS", "EASY 30-DAY RETURNS", "COD AVAILABLE", "SIZES XS TO XXL"].map(t => (
               <span key={t} style={{ fontWeight: 900, letterSpacing: 3, fontSize: 16, padding: "0 40px" }}>★ {t}</span>
             ))}
           </span>
@@ -368,6 +401,8 @@ const filterButtons = [
   { key: "ALL", label: "ALL" },
   { key: "FAN VERSION", label: "FAN VERSION" },
   { key: "PLAYER VERSION", label: "PLAYER VERSION" },
+  { key: "26/27 KITS", label: "26/27 KITS" },
+  { key: "CLEARANCE SALE", label: "CLEARANCE SALE 🔥" },
   { key: "RETRO", label: "RETRO" },
 ];
 
@@ -385,6 +420,7 @@ export default function JerseyStore() {
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedJersey, setSelectedJersey] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
+  const [modalQty, setModalQty] = useState(1);
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [toast, setToast] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -401,10 +437,20 @@ export default function JerseyStore() {
   const [activeTeamName, setActiveTeamName] = useState("");
   const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
 
+  const [teamsList, setTeamsList] = useState([]);
+  const [sortBy, setSortBy] = useState("FEATURED");
+  const [sortOpen, setSortOpen] = useState(false);
+  const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
+  const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
+  const [menuSortOpen, setMenuSortOpen] = useState(false);
+
   useEffect(() => {
     supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
       .then(({ data }) => { if (data && data.value) setFeaturedCategoryName(data.value); })
       .catch(() => { setFeaturedCategoryName("FEATURED"); });
+
+    supabase.from("teams").select("*").order("name", { ascending: true })
+      .then(({ data, error }) => { if (!error && data) setTeamsList(data); });
   }, []);
 
   useEffect(() => {
@@ -442,12 +488,27 @@ export default function JerseyStore() {
   // FIX: showToast wrapped in useCallback so it's stable across renders
   const showToast = useCallback((msg) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 2500);
+    setTimeout(() => setToast(null), 4500);
   }, []);
+
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    const handler = (e) => {
+      if (!e.target.closest(".sort-dropdown-wrap")) setSortOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [sortOpen]);
 
   const openQuickView = useCallback((jersey) => {
     setSelectedJersey(jersey);
-    setSelectedSize("");
+    setSelectedSize("M");
+    setModalQty(1);
     ReactGA.event("view_item", {
       currency: "INR",
       value: jersey.price,
@@ -475,7 +536,7 @@ export default function JerseyStore() {
       setActiveTeamName("");
     }
 
-    let query = supabase.from("products").select("id, name, price, type, size_stock, stock, image_url, status, team_id, featured").eq("status", "active");
+    let query = supabase.from("products").select("*").eq("status", "active");
     if (teamId) query = query.eq("team_id", teamId);
 
     query.then(({ data, error }) => {
@@ -557,42 +618,85 @@ export default function JerseyStore() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const filtered = useMemo(() => jerseys.filter(j => {
-    const matchesSearch =
-      (j.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase());
+  const filtered = useMemo(() => {
+    let list = jerseys.filter(j => {
+      const matchesSearch =
+        (j.name || "").toLowerCase().includes(searchQuery.trim().toLowerCase());
 
-    const matchesFilter =
-    activeFilter === "ALL" || 
-    (activeFilter === "FEATURED" ? j.featured === true : j.type === activeFilter);
+      const matchesFilter =
+        activeFilter === "ALL" || 
+        (activeFilter === "FEATURED"
+          ? j.featured === true 
+          : activeFilter === "26/27 KITS"
+            ? (j.is_26_27 === true || (j.type === "26/27 KITS" && j.is_26_27 !== false))
+            : activeFilter === "CLEARANCE SALE"
+              ? (j.is_clearance === true || (j.type === "CLEARANCE SALE" && j.is_clearance !== false))
+              : j.type === activeFilter);
 
-    return matchesSearch && matchesFilter;
-  }), [jerseys, searchQuery, activeFilter]);
+      return matchesSearch && matchesFilter;
+    });
 
-  const addToCart = useCallback((jersey, size) => {
+    if (sortBy === "PRICE_LOW_HIGH") {
+      list.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    } else if (sortBy === "PRICE_HIGH_LOW") {
+      list.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+    } else if (sortBy === "NAME_ASC") {
+      list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    } else if (sortBy === "NEWEST") {
+      list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    }
+
+    return list;
+  }, [jerseys, searchQuery, activeFilter, sortBy]);
+
+  const addToCart = useCallback((jersey, size, quantity = 1) => {
+    const qtyToAdd = Math.max(1, Number(quantity) || 1);
     ReactGA.event("add_to_cart", {
       currency: "INR",
-      value: jersey.price,
+      value: jersey.price * qtyToAdd,
       items: [{
         item_id: jersey.id,
         item_name: jersey.name,
         price: jersey.price,
         item_variant: size,
         item_category: jersey.type,
-        quantity: 1
+        quantity: qtyToAdd
       }]
     });
     setCart(prev => {
       const existing = prev.find(i => i.id === jersey.id && i.size === size);
-      if (existing) return prev.map(i => i.id === jersey.id && i.size === size ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { ...jersey, size, qty: 1 }];
+      if (existing) return prev.map(i => i.id === jersey.id && i.size === size ? { ...i, qty: i.qty + qtyToAdd } : i);
+      return [...prev, { ...jersey, size, qty: qtyToAdd }];
     });
-    showToast(`${jersey.name} added to cart!`);
+    showToast(`${jersey.name} (${size} × ${qtyToAdd}) added to cart!`);
     setSelectedJersey(null);
   }, [showToast]);
 
   const removeFromCart = useCallback((id, size) => {
     setCart(prev => prev.filter(i => !(i.id === id && i.size === size)));
   }, []);
+
+  const updateCartQty = useCallback((id, size, delta) => {
+    setCart(prev => {
+      return prev.map(item => {
+        if (item.id === id && item.size === size) {
+          const newQty = item.qty + delta;
+          if (newQty <= 0) return null;
+          const maxStock = item.size_stock && typeof item.size_stock === "object" && item.size_stock[size] !== undefined
+            ? item.size_stock[size]
+            : (item.stock ?? 99);
+          if (delta > 0 && maxStock !== undefined && newQty > maxStock) {
+            showToast(`Only ${maxStock} in stock for size ${size}`);
+            return item;
+          }
+          return { ...item, qty: newQty };
+        }
+        return item;
+      }).filter(Boolean);
+    });
+  }, [showToast]);
+
+
 
   // FIX: getSizeStock wrapped in useCallback for stability
   const getSizeStock = useCallback((jersey, size) => {
@@ -710,9 +814,9 @@ export default function JerseyStore() {
 
   .card { background: repeating-linear-gradient( 45deg, #0f0f0f, #0f0f0f 4px, #111 4px, #111 8px ); border:1px solid var(--border); overflow:hidden; cursor:pointer; transition:transform 0.3s cubic-bezier(0.23,1,0.32,1), border-color 0.3s, box-shadow 0.3s; position:relative; display:flex; flex-direction:column; height:420px; }
   .card:hover { transform:translateY(-6px); border-color:#39ff14; box-shadow: 0 0 0 1px #39ff14, 0 0 30px rgba(57,255,20,0.2), 0 20px 60px rgba(0,0,0,0.6); }
-  .card-img { width:100%; height:240px; object-fit:cover; display:block; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1); }
-  .card-img-wrap { overflow:hidden; position:relative; height:240px; background:#0d0d0d; }
-  .card:hover .card-img { transform:scale(1.06); }
+  .card-img { width:100% !important; height:100% !important; object-fit:cover !important; object-position:center center !important; transform:scale(1.08) !important; transform-origin:center center !important; display:block !important; transition:transform 0.5s cubic-bezier(0.23,1,0.32,1) !important; }
+  .card-img-wrap { overflow:hidden; position:relative; height:280px; width:100%; background:#0d0d0d; }
+  .card:hover .card-img { transform:scale(1.15) !important; }
   .card-overlay { position:absolute; inset:0; background:linear-gradient(to top, #000 0%, transparent 60%); opacity:0.5; pointer-events:none; }
 
 
@@ -770,18 +874,22 @@ letter-spacing: 4px !important;
 ══════════════════════════════════════ */
 .filter-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   scrollbar-width: none;
   align-items: center;
+  gap: 6px;
   background: transparent;
   border: none;
+  width: 100%;
 }
 .filter-bar::-webkit-scrollbar { display: none; }
 
 #jv-root .filter-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
   border: 1px solid #2a2a2a !important;
   background: transparent !important;
   color: #fff !important;
@@ -860,6 +968,73 @@ letter-spacing: 4px !important;
   text-shadow: none !important;
   height: 40px !important;
   width: 80px !important;
+}
+
+#jv-root .filter-btn.kits2627-btn {
+  padding: 4px 8px !important;
+  width: 140px !important;
+  height: 40px !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 768px) {
+  .filter-bar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 6px !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+  #jv-root .filter-btn {
+    flex-shrink: 0 !important;
+    font-size: 14px !important;
+    letter-spacing: 2px !important;
+    padding: 6px 12px !important;
+    height: 36px !important;
+  }
+  #jv-root .filter-btn.wc26-btn {
+    width: 76px !important;
+    height: 36px !important;
+    flex-shrink: 0 !important;
+  }
+  #jv-root .filter-btn.kits2627-btn {
+    width: 110px !important;
+    height: 36px !important;
+    padding: 3px 6px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+#jv-root .kits2627-graphic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: filter 0.2s ease;
+}
+
+/* 1. NORMAL UNSELECTED STATE: white graphic on dark outline box */
+#jv-root .filter-btn.kits2627-btn:not(.active) .kits2627-graphic {
+  filter: brightness(1);
+}
+
+/* 2. HOVER STATE: green logos with outline style just like other boxes */
+#jv-root .filter-btn.kits2627-btn:not(.active):hover .kits2627-graphic {
+  filter: brightness(0) saturate(100%) invert(75%) sepia(90%) saturate(1250%) hue-rotate(65deg) brightness(105%) contrast(105%);
+}
+
+/* 3. ACTIVE STATE: box itself is green (#39ff14) like other active boxes, logos & text inside are solid black (#000) */
+#jv-root .filter-btn.kits2627-btn.active {
+  background: var(--green) !important;
+  border: none !important;
+}
+
+#jv-root .filter-btn.kits2627-btn.active .kits2627-graphic {
+  filter: brightness(0);
 }
 
 
@@ -1089,8 +1264,9 @@ letter-spacing: 4px !important;
   .modal-bg-dismiss { position:absolute; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); border:none; padding:0; cursor:pointer; width:100%; height:100%; }
   .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; }
   .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; position:relative; z-index:1; }
-  .modal-img { width:100%; height:240px; object-fit:cover; display:block; }
-  .modal-img-placeholder { width:100%; height:240px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
+  .modal-img-wrap { position:relative; width:100%; height:360px; background:#0d0d0d; overflow:hidden; }
+  .modal-img { width:100% !important; height:100% !important; object-fit:cover !important; object-position:center center !important; transform:scale(1.08) !important; transform-origin:center center !important; display:block !important; }
+  .modal-img-placeholder { width:100%; height:360px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
 
   /* ══════════════════════════════════════
      CART PANEL
@@ -1140,7 +1316,8 @@ letter-spacing: 4px !important;
   .desktop-search { display:none; }
   .cart-panel { width:100%; border-left:none; }
   .hero-section { padding:60px 16px 40px; }
-  .modal-img { height:180px; }
+  .modal-img-wrap { height:300px !important; }
+  .modal-img { height:100% !important; object-fit:cover !important; }
   .shop-header { flex-direction:column; align-items:flex-start !important; gap:12px !important; }
 
   .cart-total-row { padding:12px 16px 8px; }
@@ -1150,8 +1327,8 @@ letter-spacing: 4px !important;
   .cart-item-name { font-size:15px; }
   .cart-item-price { font-size:17px; }
   .cart-item-img { width:48px; height:48px; }
-  .card-img { height:180px; }
-  .card-img-wrap { height:180px; }
+  .card-img { height:100% !important; object-fit:cover !important; }
+  .card-img-wrap { height:240px !important; }
   .card { height:400px; }
   .card-grid { grid-template-columns:repeat(2, 1fr) !important; }
   .stats-grid { grid-template-columns:repeat(3,1fr); }
@@ -1171,11 +1348,12 @@ letter-spacing: 4px !important;
  @media(max-width:480px) {
   .stat-cell { padding:12px 0; }
   .size-btn { width:42px; height:42px; }
-  .card-img { height:160px; }
-  .card-img-wrap { height:160px; }
+  .card-img { height:100% !important; object-fit:cover !important; }
+  .card-img-wrap { height:210px !important; }
   .cart-item-img { width:44px; height:44px; }
   .cart-total-amount { font-size:24px; }
-  .modal-img { height:160px; }
+  .modal-img-wrap { height:260px !important; }
+  .modal-img { height:100% !important; object-fit:cover !important; }
 }
   @media(max-width:380px) {
   .checkout-btn {
@@ -1199,6 +1377,44 @@ letter-spacing: 4px !important;
   .toast-label { font-size:10px; font-weight:700; letter-spacing:2px; color:#39ff14; text-transform:uppercase; }
   .toast-msg { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
   .site-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
+  /* Custom Sort Dropdown */
+  .sort-dropdown-btn { display:inline-flex; align-items:center; gap:4px; background:linear-gradient(135deg,rgba(12,12,12,0.99),rgba(6,6,6,0.99)); border:1.5px solid #39ff14; box-shadow:0 0 8px rgba(57,255,20,0.3); padding:5px 12px; border-radius:6px; cursor:pointer; transition:all 0.2s ease; white-space:nowrap; }
+  .sort-dropdown-btn:hover { box-shadow:0 0 18px rgba(57,255,20,0.6); transform:translateY(-1px); }
+  .sort-dropdown-label { font-size:10px; font-weight:700; color:#efefef; letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; flex-shrink:0; }
+  .sort-dropdown-value { font-size:11px; font-weight:900; font-style:italic; color:#39ff14; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; margin-left:2px; }
+  .sort-dropdown-chevron { transition:transform 0.2s ease; flex-shrink:0; }
+  .sort-dropdown-chevron.open { transform:rotate(180deg); }
+  .sort-dropdown-menu { position:absolute; top:calc(100% + 6px); right:0; min-width:180px; background:#0a0a0a; border:1.5px solid #39ff14; border-radius:6px; box-shadow:0 8px 32px rgba(57,255,20,0.25); overflow:hidden; z-index:200; list-style:none; margin:0; padding:4px 0; animation:fadeInDown 0.15s ease; }
+  @keyframes fadeInDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+  .sort-dropdown-item { display:flex; align-items:center; gap:6px; padding:9px 14px; font-size:11px; font-weight:900; font-style:italic; letter-spacing:1.5px; font-family:'Barlow Condensed',sans-serif; color:#bbb; cursor:pointer; transition:all 0.15s ease; }
+  .sort-dropdown-item:hover { background:rgba(57,255,20,0.08); color:#39ff14; }
+  .sort-dropdown-item.active { color:#39ff14; background:rgba(57,255,20,0.05); }
+  .sort-dropdown-tick { color:#39ff14; font-size:11px; font-style:normal; width:12px; flex-shrink:0; }
+
+  /* Shop section layout */
+  .shop-header-outer { display:flex; flex-direction:column; gap:14px; margin-bottom:28px; }
+  .shop-section-title { font-size:36px; font-weight:900; font-style:italic; letter-spacing:1px; margin:0; }
+  .shop-controls-row { display:flex; align-items:center; width:100%; gap:10px; }
+  .shop-controls-row .filter-bar { flex:1; min-width:0; overflow-x:auto; padding-bottom:0; }
+  .shop-sort-wrap { flex-shrink:0; align-self:center; }
+
+  @media (min-width: 769px) {
+    #jv-root .filter-btn { font-size: 19px !important; letter-spacing: 4.5px !important; padding: 10px 22px !important; height: 46px !important; }
+    #jv-root .filter-btn.wc26-btn { width: 92px !important; height: 46px !important; }
+    .shop-controls-row { align-items: center !important; }
+    .shop-controls-row .filter-bar { padding-bottom: 0 !important; }
+    .sort-dropdown-btn { height: 46px !important; padding: 0 16px !important; gap: 5px !important; }
+    .sort-dropdown-label { font-size: 13px !important; letter-spacing: 2.5px !important; }
+    .sort-dropdown-value { font-size: 14px !important; letter-spacing: 2px !important; margin-left: 3px !important; }
+    .sort-dropdown-btn svg:first-child { width: 15px !important; height: 15px !important; }
+    .sort-dropdown-chevron { width: 13px !important; height: 13px !important; }
+  }
+  @media (max-width: 768px) {
+    .shop-controls-row { flex-direction:column !important; align-items:flex-start !important; gap:8px !important; }
+    .shop-controls-row .filter-bar { width:100% !important; }
+    .shop-sort-wrap { align-self:flex-end !important; }
+    .sort-dropdown-menu { right: 0; left: auto; }
+  }
 .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
 .wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.6); object-position:70% center; }
 @media(max-width:768px) { .wc26-video-wrap { display:none; } }
@@ -1231,15 +1447,33 @@ letter-spacing: 4px !important;
   .cart-count-badge { display:inline-block; margin-left:10px; background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:2px 8px; vertical-align:middle; border-radius:2px; }
   .cart-close-btn { background:none; border:1px solid #1a1a1a; color:#444; font-size:14px; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; transition:border-color 0.2s, color 0.2s; border-radius:2px; }
   .cart-close-btn:hover { border-color:#39ff14; color:#39ff14; }
-  .cart-remove-btn { background:none; border:1px solid #151515; color:#2a2a2a; cursor:pointer; font-size:12px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:2px; }
-  .cart-remove-btn:hover { border-color:#c0392b; color:#c0392b; background:rgba(192,57,43,0.08); }
+  .cart-remove-btn { background:none; border:1px solid #222; color:#888; cursor:pointer; font-size:12px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:2px; }
+  .cart-remove-btn:hover { border-color:#c0392b; color:#ff4d4d; background:rgba(192,57,43,0.15); }
+  .cart-qty-control { display:inline-flex; align-items:center; background:#111; border:1px solid #222; border-radius:2px; margin-left:6px; }
+  .cart-qty-btn { background:none; border:none; color:#888; cursor:pointer; font-size:14px; font-weight:900; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; transition:color 0.15s, background 0.15s, transform 0.15s; line-height:1; }
+  .cart-qty-btn:not(:disabled):hover,
+  .cart-qty-btn:not(:disabled):focus,
+  .cart-qty-btn:not(:disabled):active { color:#39ff14 !important; background:rgba(57,255,20,0.2) !important; box-shadow:0 0 8px rgba(57,255,20,0.4) !important; }
+  
+  .modal-qty-control button:not(:disabled) { transition: color 0.15s ease, transform 0.15s ease, text-shadow 0.15s ease; color: #ffffff; }
+  @media (hover: hover) {
+    .modal-qty-control button:not(:disabled):hover {
+      color: #39ff14 !important;
+      text-shadow: 0 0 12px rgba(57, 255, 20, 0.85) !important;
+      transform: scale(1.18);
+    }
+  }
+  .modal-qty-control button:not(:disabled):active {
+    color: #39ff14 !important;
+    transform: scale(0.92);
+  }
   .cart-shipping-note { font-size:12px; color:#888; margin-top:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; }
   .cart-secure-note { text-align:center; color:#1a1a1a; font-size:12px; letter-spacing:3px; padding-bottom:16px; font-weight:700; }
   .size-chart-btn {
     margin-left: auto !important;
     background: transparent;
     border: 1px dashed #39ff14 !important;
-    color: #39ff14 !important;
+    color: #ffffff !important;
     padding: 4px 10px;
     font-size: 12px;
     font-weight: 700;
@@ -1253,10 +1487,17 @@ letter-spacing: 4px !important;
     align-items: center;
     gap: 6px;
   }
+  .size-chart-btn svg {
+    stroke: #ffffff !important;
+    transition: stroke 0.2s ease-in-out;
+  }
   .size-chart-btn:hover {
     background: #39ff14 !important;
-    color: #000 !important;
+    color: #000000 !important;
     border-style: solid !important;
+  }
+  .size-chart-btn:hover svg {
+    stroke: #000000 !important;
   }
   .modal-price {
     font-size: 28px;
@@ -1308,19 +1549,18 @@ letter-spacing: 4px !important;
 
 `}</style>
 
-        {/* TOAST NOTIFICATION */}
-        {toast && (
-          <div className="toast-banner">
-            <span className="toast-icon">🛒</span>
-            <div className="toast-body">
-              <span className="toast-label">Added to Cart</span>
-              <span className="toast-msg">{toast.replace(" added to cart!", "")}</span>
-            </div>
-          </div>
-        )}
-
         {/* NAVBAR */}
         <nav className="site-nav">
+          <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
+            {mobileMenuOpen ? (
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <><span /><span /><span /></>
+            )}
+          </button>
           <BrandLogo style={{ marginLeft: 0, paddingLeft: 0 }} />
           <div className="desktop-search">
             <div style={{ position: 'relative', width: '100%' }}>
@@ -1449,16 +1689,6 @@ letter-spacing: 4px !important;
                 <span className="cart-count-inline">{cartCount}</span>
               )}
             </button>
-            <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
-              {mobileMenuOpen ? (
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <><span /><span /><span /></>
-              )}
-            </button>
           </div>
           <div className={`mobile-menu${mobileMenuOpen ? " open" : ""}`}>
             <div style={{ position: 'relative', marginBottom: '8px' }}>
@@ -1527,6 +1757,217 @@ letter-spacing: 4px !important;
                 </div>
               )}
             </div>
+            {/* ── DROPDOWN ACCORDIONS FOR CATEGORIES, TEAMS & SORT BY ── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%", margin: "8px 0" }}>
+              
+              {/* 1. CATEGORIES ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuCategoriesOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>⚡</span> CATEGORIES
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuCategoriesOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuCategoriesOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { key: "ALL", label: "ALL JERSEYS" },
+                      { key: "FAN VERSION", label: "FAN VERSION" },
+                      { key: "PLAYER VERSION", label: "PLAYER VERSION" },
+                      { key: "26/27 KITS", label: "26/27 KITS ⚽" },
+                      { key: "CLEARANCE SALE", label: "CLEARANCE SALE 🔥" },
+                      { key: "FEATURED", label: `${featuredCategoryName.toUpperCase()} 🏆` },
+                      { key: "RETRO", label: "RETRO JERSEYS 📜" },
+                    ].map(cat => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setActiveFilter(cat.key);
+                          setMobileMenuOpen(false);
+                          setTimeout(() => document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" }), 100);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          letterSpacing: 2,
+                          color: activeFilter === cat.key ? "#39ff14" : "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "3px 0"
+                        }}
+                      >
+                        {activeFilter === cat.key ? "▶ " : ""}{cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. TEAMS ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuTeamsOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>🛡️</span> TEAMS {teamsList.length > 0 ? `(${teamsList.length})` : ""}
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuTeamsOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuTeamsOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8, maxHeight: 220, overflowY: "auto" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate("/teams");
+                        setMobileMenuOpen(false);
+                      }}
+                      style={{
+                        textAlign: "left",
+                        fontSize: 13,
+                        fontWeight: 900,
+                        letterSpacing: 2,
+                        color: "#39ff14",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        marginBottom: 4
+                      }}
+                    >
+                      VIEW ALL TEAMS PAGE →
+                    </button>
+                    {teamsList.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          navigate(`/?team=${t.id}`);
+                          setMobileMenuOpen(false);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          letterSpacing: 1,
+                          color: "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "2px 0"
+                        }}
+                      >
+                        {t.logo_url ? (
+                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }} />
+                        ) : (
+                          <span style={{ fontSize: 14 }}>🛡️</span>
+                        )}
+                        <span>{t.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 3. SORT BY ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuSortOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>↕️</span> SORT BY
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuSortOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuSortOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { key: "FEATURED", label: "FEATURED (DEFAULT)" },
+                      { key: "PRICE_LOW_HIGH", label: "PRICE: LOW TO HIGH" },
+                      { key: "PRICE_HIGH_LOW", label: "PRICE: HIGH TO LOW" },
+                      { key: "NAME_ASC", label: "NAME: A TO Z" },
+                      { key: "NEWEST", label: "NEWEST ARRIVALS" },
+                    ].map(s => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => {
+                          setSortBy(s.key);
+                          setMobileMenuOpen(false);
+                          setTimeout(() => document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" }), 100);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          letterSpacing: 2,
+                          color: sortBy === s.key ? "#39ff14" : "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "3px 0"
+                        }}
+                      >
+                        {sortBy === s.key ? "▶ " : ""}{s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
             {/* FIX: NavLinks component used in mobile menu too */}
             <NavLinks
               user={user}
@@ -1577,38 +2018,96 @@ letter-spacing: 4px !important;
 
         {/* SHOP */}
         <section id="shop" style={{ padding: "60px 16px" }}>
-          <div className="shop-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
-            <h2 style={{ fontSize: 36, fontWeight: 900, fontStyle: "italic", letterSpacing: 1 }}>
+          <div className="shop-header-outer">
+            {/* ROW 1: Title */}
+            <h2 className="shop-section-title">
               <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
             </h2>
-            <div className="filter-bar">
-              {filterButtons.slice(0, 3).concat(
-                { key: "FEATURED", label: featuredCategoryName.toUpperCase() },
-                filterButtons.slice(3)
-            ).map(({ key, label }) => (
-  <button
-    type="button"
-    key={key}
-    className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
-    onClick={() => setActiveFilter(key)}
-    style={key === "FEATURED" ? {
-      "--wc26-bg": `url(${wc26Bg})`,
-      backgroundImage: `url(${wc26Bg})`,
-      backgroundSize: "400%",
-      backgroundPosition: "50% 50%",
-      backgroundColor: "transparent",
-      border: "none",
-      color: "transparent",
-      textShadow: "none"
-    } : undefined}
-  >
-    <span style={{ display: "inline-block", transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
-      {label}
-    </span>
-  </button>
-))}
-</div>
-</div>
+
+            {/* ROW 2 (desktop only combined, mobile split): Filter bar + Sort */}
+            <div className="shop-controls-row">
+              {/* FILTER BAR — scrollable on mobile */}
+              <div className="filter-bar">
+                {filterButtons.slice(0, 3).concat(
+                  filterButtons.slice(3, 4),
+                  { key: "FEATURED", label: featuredCategoryName.toUpperCase() },
+                  filterButtons.slice(4)
+                ).map(({ key, label }) => (
+                  <button
+                    type="button"
+                    key={key}
+                    className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
+                    onClick={() => setActiveFilter(key)}
+                    style={key === "FEATURED" ? {
+                      "--wc26-bg": `url(${wc26Bg})`,
+                      backgroundImage: `url(${wc26Bg})`,
+                      backgroundSize: "400%",
+                      backgroundPosition: "50% 50%",
+                      backgroundColor: "transparent",
+                      border: "none",
+                      color: "transparent",
+                      textShadow: "none"
+                    } : undefined}
+                  >
+                    <span style={{ display: "inline-block", opacity: key === "FEATURED" ? 0 : 1, transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* SORT BY — custom themed dropdown */}
+              <div className="sort-dropdown-wrap" style={{ position: "relative", flexShrink: 0 }}>
+                <button
+                  className="sort-dropdown-btn"
+                  onClick={() => setSortOpen(o => !o)}
+                  aria-haspopup="listbox"
+                  aria-expanded={sortOpen}
+                  type="button"
+                >
+                  {/* Hamburger icon */}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                  </svg>
+                  <span className="sort-dropdown-label">SORT BY</span>
+                  <span className="sort-dropdown-value">{
+                    sortBy === "FEATURED" ? "FEATURED" :
+                    sortBy === "PRICE_LOW_HIGH" ? "PRICE: LOW → HIGH" :
+                    sortBy === "PRICE_HIGH_LOW" ? "PRICE: HIGH → LOW" :
+                    sortBy === "NAME_ASC" ? "NAME: A → Z" :
+                    "NEWEST"
+                  }</span>
+                  <svg className={`sort-dropdown-chevron${sortOpen ? " open" : ""}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                {sortOpen && (
+                  <ul className="sort-dropdown-menu" role="listbox">
+                    {[
+                      { key: "FEATURED", label: "FEATURED" },
+                      { key: "PRICE_LOW_HIGH", label: "PRICE: LOW → HIGH" },
+                      { key: "PRICE_HIGH_LOW", label: "PRICE: HIGH → LOW" },
+                      { key: "NAME_ASC", label: "NAME: A → Z" },
+                      { key: "NEWEST", label: "NEWEST ARRIVALS" },
+                    ].map(opt => (
+                      <li
+                        key={opt.key}
+                        role="option"
+                        aria-selected={sortBy === opt.key}
+                        className={`sort-dropdown-item${sortBy === opt.key ? " active" : ""}`}
+                        onClick={() => { setSortBy(opt.key); setSortOpen(false); }}
+                      >
+                        {sortBy === opt.key && <span className="sort-dropdown-tick">✓</span>}
+                        {opt.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
 
           {loadingProducts ? (
             <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 6 }}>
@@ -1661,22 +2160,21 @@ letter-spacing: 4px !important;
                     </div>
                   </div>
                   <div style={{ marginTop: "auto" }}>
-                    <button type="button"
-                      className="add-btn"
-                      disabled={jersey.stock === 0}
-                      onClick={() => {
-                        if (jersey.stock > 0) {
-                          ReactGA.event("view_item", {
-                            currency: "INR", value: jersey.price,
-                            items: [{ item_id: jersey.id, item_name: jersey.name, price: jersey.price, item_category: jersey.type }]
-                          });
-                          setSelectedJersey(jersey);
-                          setSelectedSize("M");
-                        }
-                      }}
-                    >
-                      {jersey.stock === 0 ? "OUT OF STOCK" : "SELECT SIZE"}
-                    </button>
+                    {jersey.stock === 0 ? (
+                      <button type="button" className="add-btn" disabled>
+                        OUT OF STOCK
+                      </button>
+                    ) : (
+                      <button type="button"
+                        className="add-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openQuickView(jersey);
+                        }}
+                      >
+                        SELECT SIZE
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1725,7 +2223,7 @@ letter-spacing: 4px !important;
             <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }} />
             <div className="modal" style={{ position: "relative" }}>
               <button type="button" className="modal-close-btn" style={{ right: "12px", left: "auto", zIndex: 10 }} onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }}>✕</button>
-              <div style={{ position: "relative" }}>
+              <div className="modal-img-wrap" style={{ position: "relative" }}>
                 <ProductCarousel
                   imageUrl={selectedJersey.image_url}
                   alt={selectedJersey.name}
@@ -1775,6 +2273,7 @@ letter-spacing: 4px !important;
                         className={`size-btn${selectedSize === s ? " selected" : ""}`}
                         onClick={() => {
                           setSelectedSize(s);
+                          setModalQty(1);
                           ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
                         }}
                       >
@@ -1783,14 +2282,104 @@ letter-spacing: 4px !important;
                     );
                   })}
                 </div>
+
+                {/* SELECT QUANTITY FOR SELECTED SIZE */}
+                <div style={{ marginTop: 22 }}>
+                  <div className="size-label" style={{ marginBottom: 8 }}>SELECT QUANTITY</div>
+
+                  <div 
+                    className="modal-qty-control"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      background: "#0a0a0a",
+                      border: "1px solid #333",
+                      borderRadius: "2px",
+                      padding: "0 4px",
+                      height: "42px"
+                    }}
+                  >
+                    <button
+                      type="button"
+                      aria-label="Decrease quantity"
+                      disabled={modalQty <= 1}
+                      onClick={(e) => {
+                        setModalQty(prev => Math.max(1, prev - 1));
+                        e.currentTarget.blur();
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: modalQty <= 1 ? "#444" : "#ffffff",
+                        width: "36px",
+                        height: "36px",
+                        fontSize: "20px",
+                        fontWeight: 900,
+                        cursor: modalQty <= 1 ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        outline: "none"
+                      }}
+                    >
+                      −
+                    </button>
+
+                    <span style={{
+                      padding: "0 14px",
+                      color: "#ffffff",
+                      fontSize: "18px",
+                      fontWeight: 900,
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      letterSpacing: "1px",
+                      minWidth: "32px",
+                      textAlign: "center",
+                      userSelect: "none"
+                    }}>
+                      {modalQty}
+                    </span>
+
+                    <button
+                      type="button"
+                      aria-label="Increase quantity"
+                      disabled={modalQty >= (getSizeStock(selectedJersey, selectedSize) || (selectedJersey?.stock ?? 99))}
+                      onClick={(e) => {
+                        const maxStock = getSizeStock(selectedJersey, selectedSize) || (selectedJersey?.stock ?? 99);
+                        if (modalQty < maxStock) {
+                          setModalQty(prev => prev + 1);
+                        } else {
+                          showToast(`Only ${maxStock} items available in stock for size ${selectedSize}`);
+                        }
+                        e.currentTarget.blur();
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: modalQty >= (getSizeStock(selectedJersey, selectedSize) || (selectedJersey?.stock ?? 99)) ? "#444" : "#ffffff",
+                        width: "36px",
+                        height: "36px",
+                        fontSize: "20px",
+                        fontWeight: 900,
+                        cursor: modalQty >= (getSizeStock(selectedJersey, selectedSize) || (selectedJersey?.stock ?? 99)) ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        outline: "none"
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
                 <button type="button"
                   className="add-btn filled-variant"
                   style={{ marginTop: 24, fontSize: 16, padding: "16px" }}
-                  onClick={() => addToCart(selectedJersey, selectedSize)}
+                  onClick={() => addToCart(selectedJersey, selectedSize, modalQty)}
                 >
                   <span>ADD TO CART</span>
                   <span style={{ opacity: 0.5, fontWeight: 400, fontSize: 14, letterSpacing: 2 }}>—</span>
-                  <span>₹{selectedJersey.price}</span>
+                  <span>₹{selectedJersey.price * modalQty}</span>
                 </button>
               </div>
             </div>
@@ -1941,41 +2530,146 @@ letter-spacing: 4px !important;
                         <div className="cart-item-name">{item.name}</div>
                         <div className="cart-tag">
                           <span className="cart-tag-size">{item.size}</span>
-                          <span className="cart-tag-qty">× {item.qty}</span>
+                          <div className="cart-qty-control">
+                            <button
+                              type="button"
+                              className="cart-qty-btn"
+                              aria-label="Decrease quantity"
+                              title="Decrease quantity"
+                              onClick={() => updateCartQty(item.id, item.size, -1)}
+                            >
+                              −
+                            </button>
+                            <span style={{ color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontSize: 13, fontWeight: 900, padding: "0 6px", minWidth: 16, textAlign: "center" }}>
+                              {item.qty}
+                            </span>
+                            <button
+                              type="button"
+                              className="cart-qty-btn"
+                              aria-label="Increase quantity"
+                              title="Increase quantity"
+                              onClick={() => updateCartQty(item.id, item.size, 1)}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                         <div className="cart-item-price">₹{(item.price * item.qty).toLocaleString()}</div>
                       </div>
-                      <button type="button" className="cart-remove-btn" onClick={() => removeFromCart(item.id, item.size)}>✕</button>
+                      <button type="button" className="cart-remove-btn" title="Remove item" aria-label="Remove item" onClick={() => removeFromCart(item.id, item.size)}>✕</button>
                     </div>
                   ))
                 )}
               </div>
 
               {cart.length > 0 && (
-                <div style={{ borderTop: "1px solid #0f0f0f", paddingTop: 16, background: "#050505" }}>
+                <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, paddingBottom: 76, background: "#080808" }}>
+                  {/* FREE SHIPPING PROGRESS BANNER */}
+                  <div style={{ margin: "0 20px 14px", padding: "12px 14px", background: "rgba(57, 255, 20, 0.06)", border: "1px solid rgba(57, 255, 20, 0.25)", borderRadius: "2px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ color: "#39ff14", fontSize: 13, fontWeight: 800, letterSpacing: 1.5, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                        {total >= 1099 ? "🎉 FREE SHIPPING UNLOCKED!" : `🚚 ADD ₹${(1099 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
+                      </span>
+                      <span style={{ color: "#39ff14", fontSize: 12, fontWeight: 800, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                        {Math.min(100, Math.round((total / 1099) * 100))}%
+                      </span>
+                    </div>
+                    <div style={{ width: "100%", height: "5px", background: "#1a1a1a", borderRadius: "3px", overflow: "hidden" }}>
+                      <div style={{ width: `${Math.min(100, (total / 1099) * 100)}%`, height: "100%", background: "#39ff14", boxShadow: "0 0 10px #39ff14", transition: "width 0.4s ease" }} />
+                    </div>
+                  </div>
+
                   <div className="cart-total-row">
                     <div>
-                      <span className="cart-total-label" style={{ color: "#aaa", fontSize: 13, letterSpacing: 4, fontWeight: 900 }}>ORDER TOTAL</span>
-                      <div className="cart-shipping-note">
-                        {total >= 1999
-                          ? "✓ FREE SHIPPING APPLIED"
-                          : `ADD ₹${(1999 - total).toLocaleString()} MORE FOR FREE DELIVERY`}
-                      </div>
+                      <span className="cart-total-label" style={{ color: "#a1a1aa", fontSize: 13, letterSpacing: 4, fontWeight: 900 }}>ORDER TOTAL</span>
                     </div>
                     <span className="cart-total-amount">₹{total.toLocaleString()}</span>
                   </div>
-                  <button type="button" className="checkout-btn" onClick={handleCheckout}>
-                    <span>PROCEED TO CHECKOUT</span>
-                    <span className="checkout-arrow">→</span>
-                  </button>
-                  <p className="cart-secure-note">✦ SECURED BY RAZORPAY ✦</p>
+
+                  <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "0 20px" }}>
+                    <button type="button" className="checkout-btn" style={{ width: "100%", margin: "14px 0", justifyContent: "center", textAlign: "center" }} onClick={handleCheckout}>
+                      <span>PROCEED TO CHECKOUT</span>
+                      <span className="checkout-arrow">→</span>
+                    </button>
+                  </div>
+                  
+                  <p className="cart-secure-note" style={{ textAlign: "center" }}>✦ SECURED BY RAZORPAY ✦</p>
                 </div>
               )}
             </div>
           </div>
         )}
       </div>
-      <AnnouncementPopup />
+        {/* CLICKABLE ADDED TO CART TOAST POPUP */}
+        {toast && (
+          <div 
+            role="button"
+            tabIndex={0}
+            aria-label="Product added to cart notification. Click to view cart"
+            onClick={() => {
+              setCartOpen(true);
+              setToast(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setCartOpen(true);
+                setToast(null);
+              }
+            }}
+            style={{
+              position: "fixed",
+              bottom: 28,
+              right: 24,
+              zIndex: 300,
+              background: "#0d0d0d",
+              border: "2px solid #39ff14",
+              padding: "14px 22px",
+              borderRadius: "4px",
+              boxShadow: "0 0 30px rgba(57,255,20,0.45), 0 10px 35px rgba(0,0,0,0.9)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              animation: "toastIn 0.3s cubic-bezier(0.23,1,0.32,1)",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
+              userSelect: "none"
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-2px) scale(1.04)";
+              e.currentTarget.style.boxShadow = "0 0 45px rgba(57,255,20,0.7), 0 12px 40px rgba(0,0,0,0.95)";
+              e.currentTarget.style.background = "#111111";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "0 0 30px rgba(57,255,20,0.45), 0 10px 35px rgba(0,0,0,0.9)";
+              e.currentTarget.style.background = "#0d0d0d";
+            }}
+          >
+            <span style={{ fontSize: 26, display: "flex", alignItems: "center" }}>🛒</span>
+            <div>
+              <div style={{ color: "#39ff14", fontSize: 14, fontWeight: 900, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5, textTransform: "uppercase" }}>
+                ADDED TO CART!
+              </div>
+              <div style={{ color: "#eee", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1, marginTop: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span>{toast}</span>
+                <span style={{ 
+                  background: "#39ff14", 
+                  color: "#000", 
+                  fontWeight: 900, 
+                  padding: "3px 9px", 
+                  borderRadius: "2px", 
+                  fontSize: 11,
+                  letterSpacing: 1,
+                  display: "inline-flex",
+                  alignItems: "center"
+                }}>
+                  VIEW CART →
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+        <AnnouncementPopup />
     </>
   );
 }
