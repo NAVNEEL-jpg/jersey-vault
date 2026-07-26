@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
 import { downloadInvoice } from "../utils/downloadInvoice";
@@ -6,6 +6,7 @@ import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications";
+import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview } from "../utils/reviews";
 
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
@@ -117,6 +118,123 @@ export default function AdminPage() {
   const [teamSaving, setTeamSaving] = useState(false);
   const [teamLogoFile, setTeamLogoFile] = useState(null);
   const [teamLogoPreview, setTeamLogoPreview] = useState("");
+
+  // ── Review Management State & Handlers ──
+  const [adminReviews, setAdminReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [selectedReviewProductId, setSelectedReviewProductId] = useState("ALL");
+  const [reviewSearchQuery, setReviewSearchQuery] = useState("");
+  const [reviewForm, setReviewForm] = useState({
+    productId: "",
+    reviewer_name: "",
+    rating: 5,
+    comment: "",
+    photos: []
+  });
+  const [uploadingReviewPhoto, setUploadingReviewPhoto] = useState(false);
+  const [savingReview, setSavingReview] = useState(false);
+  const [reviewFormError, setReviewFormError] = useState("");
+  const [reviewFormSuccess, setReviewFormSuccess] = useState("");
+
+  const loadAdminReviews = useCallback(async () => {
+    setLoadingReviews(true);
+    try {
+      const all = await fetchProductReviews(null);
+      setAdminReviews(all || []);
+    } catch (err) {
+      console.error("Error loading admin reviews:", err);
+      setAdminReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "reviews") {
+      loadAdminReviews();
+    }
+  }, [activeTab, loadAdminReviews]);
+
+  const handleCreateReview = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.productId) {
+      setReviewFormError("Please select a jersey product.");
+      return;
+    }
+    if (!reviewForm.reviewer_name.trim()) {
+      setReviewFormError("Please enter reviewer name.");
+      return;
+    }
+    if (!reviewForm.comment.trim()) {
+      setReviewFormError("Please enter review comment.");
+      return;
+    }
+
+    setSavingReview(true);
+    setReviewFormError("");
+    setReviewFormSuccess("");
+
+    try {
+      await addProductReview(reviewForm.productId, {
+        reviewer_name: reviewForm.reviewer_name.trim(),
+        rating: Number(reviewForm.rating) || 5,
+        comment: reviewForm.comment.trim(),
+        photos: reviewForm.photos,
+        is_published: true
+      });
+
+      setReviewFormSuccess("✓ Review uploaded successfully!");
+      setReviewForm({
+        productId: selectedReviewProductId !== "ALL" ? selectedReviewProductId : "",
+        reviewer_name: "",
+        rating: 5,
+        comment: "",
+        photos: []
+      });
+      await loadAdminReviews();
+    } catch (err) {
+      setReviewFormError("Failed to upload review: " + err.message);
+    } finally {
+      setSavingReview(false);
+    }
+  };
+
+  const handleToggleReviewPublish = async (productId, reviewId, currentStatus) => {
+    try {
+      await toggleReviewPublishStatus(productId, reviewId, !currentStatus);
+      await loadAdminReviews();
+    } catch (err) {
+      alert("Failed to update review status: " + err.message);
+    }
+  };
+
+  const handleDeleteReview = async (productId, reviewId) => {
+    if (!window.confirm("Are you sure you want to delete this review permanently?")) return;
+    try {
+      await deleteProductReview(productId, reviewId);
+      await loadAdminReviews();
+    } catch (err) {
+      alert("Failed to delete review: " + err.message);
+    }
+  };
+
+  const handleUploadReviewPhotoFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingReviewPhoto(true);
+    try {
+      const url = await uploadProductImageAndGetUrl(file);
+      setReviewForm(prev => ({
+        ...prev,
+        photos: [...prev.photos, url]
+      }));
+    } catch (err) {
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setUploadingReviewPhoto(false);
+      e.target.value = "";
+    }
+  };
   const [deletingTeamId, setDeletingTeamId] = useState(null);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState(null);
   const [activeSportFilter, setActiveSportFilter] = useState("ALL");
@@ -794,6 +912,7 @@ export default function AdminPage() {
           <button type="button" className={`tab-btn ${activeTab === "stock" ? "active" : ""}`} onClick={() => setActiveTab("stock")}>📊 PRODUCTS</button>
           <button type="button" className={`tab-btn ${activeTab === "teams" ? "active" : ""}`} onClick={() => setActiveTab("teams")}>🛡️ TEAMS</button>
           <button type="button" className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 USERS</button>
+          <button type="button" className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`} onClick={() => setActiveTab("reviews")}>⭐ REVIEWS</button>
         </div>
 
         {/* ══════════ ORDERS TAB ══════════ */}
@@ -1359,6 +1478,7 @@ export default function AdminPage() {
                 );
                 return filtered.map(p => (
                   <StockRow key={p.id} product={p} deletingId={deletingId} confirmDeleteId={confirmDeleteId} setConfirmDeleteId={setConfirmDeleteId} onDelete={handleDeleteProduct} cloningId={cloningId} onClone={handleCloneProduct}
+                    onSelectReviewsProduct={(productId) => { setSelectedReviewProductId(productId); setActiveTab("reviews"); }}
                     onUpdate={(id, newSizeStock, newFeatured, newImageUrl, newName, newPrice, newIs2627, newType, newIsClearance) => setProducts(prev => prev.map(x => x.id === id ? { ...x, size_stock: newSizeStock, featured: newFeatured !== undefined ? newFeatured : x.featured, is_26_27: newIs2627 !== undefined ? newIs2627 : x.is_26_27, is_clearance: newIsClearance !== undefined ? newIsClearance : x.is_clearance, type: newType !== undefined ? newType : x.type, image_url: newImageUrl !== undefined ? newImageUrl : x.image_url, name: newName !== undefined ? newName : x.name, price: newPrice !== undefined ? newPrice : x.price } : x))} />
                 ));
               })()}
@@ -1565,6 +1685,292 @@ export default function AdminPage() {
             {loadingUsers && <div style={{ textAlign: "center", padding: "40px", color: "#39ff14" }}>LOADING...</div>}
           </div>
         )}
+
+        {/* ══════════ REVIEWS TAB ══════════ */}
+        {activeTab === "reviews" && (
+          <div style={{ animation: "fadeUp 0.4s ease" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 24, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+                  CUSTOMER REVIEWS MANAGER ⭐
+                </h2>
+                <div style={{ color: "#777", fontSize: 12, letterSpacing: 1, marginTop: 4 }}>
+                  Only admin can upload, unupload (hide), or delete customer reviews with photos.
+                </div>
+              </div>
+            </div>
+
+            {/* UPLOAD REVIEW FORM */}
+            <div className="add-product-form" style={{ borderColor: "#39ff1450" }}>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "#39ff14", letterSpacing: 3, marginBottom: 16 }}>
+                UPLOAD CUSTOMER REVIEW WITH PHOTOS
+              </div>
+
+              {reviewFormError && <div className="form-error">{reviewFormError}</div>}
+              {reviewFormSuccess && <div className="form-success">{reviewFormSuccess}</div>}
+
+              <form onSubmit={handleCreateReview} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label className="form-label">SELECT JERSEY PRODUCT *</label>
+                    <select
+                      className="form-select"
+                      value={reviewForm.productId}
+                      onChange={e => setReviewForm(prev => ({ ...prev, productId: e.target.value }))}
+                    >
+                      <option value="">-- Choose Jersey --</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} (₹{p.price})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">REVIEWER NAME *</label>
+                    <input
+                      className="form-input"
+                      placeholder="e.g. Rahul Sharma"
+                      value={reviewForm.reviewer_name}
+                      onChange={e => setReviewForm(prev => ({ ...prev, reviewer_name: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label className="form-label">RATING (STARS) *</label>
+                    <select
+                      className="form-select"
+                      value={reviewForm.rating}
+                      onChange={e => setReviewForm(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                    >
+                      <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                      <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                      <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                      <option value={2}>⭐⭐ (2 Stars)</option>
+                      <option value={1}>⭐ (1 Star)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-field">
+                    <label className="form-label">UPLOAD REVIEW PHOTOS</label>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <label
+                        style={{
+                          background: "#1a1a1a",
+                          border: "1px dashed #39ff14",
+                          color: "#39ff14",
+                          padding: "8px 16px",
+                          fontSize: 12,
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontWeight: 900,
+                          letterSpacing: 2,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                      >
+                        {uploadingReviewPhoto ? "UPLOADING..." : "📷 ATTACH PHOTO"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadReviewPhotoFile}
+                          disabled={uploadingReviewPhoto}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                      <span style={{ fontSize: 11, color: "#666" }}>
+                        {reviewForm.photos.length} photo(s) attached
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attached Photos Preview */}
+                {reviewForm.photos.length > 0 && (
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", background: "#111", padding: 10, border: "1px solid #222" }}>
+                    {reviewForm.photos.map((url, idx) => (
+                      <div key={idx} style={{ position: "relative" }}>
+                        <img src={url} alt="" style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid #39ff14" }} />
+                        <button
+                          type="button"
+                          onClick={() => setReviewForm(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }))}
+                          style={{ position: "absolute", top: -6, right: -6, background: "#ff4444", color: "#fff", border: "none", borderRadius: "50%", width: 18, height: 18, fontSize: 11, fontWeight: 900, cursor: "pointer" }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="form-field">
+                  <label className="form-label">REVIEW COMMENT *</label>
+                  <textarea
+                    className="form-input"
+                    rows={3}
+                    placeholder="e.g. Excellent jersey quality! Material feels premium and print is top notch."
+                    value={reviewForm.comment}
+                    onChange={e => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                    style={{ fontFamily: "'Barlow', sans-serif" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                  <button type="submit" className="btn-primary" disabled={savingReview || uploadingReviewPhoto}>
+                    {savingReview ? "UPLOADING..." : "UPLOAD REVIEW →"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* FILTER & SEARCH REVIEWS */}
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <select
+                  className="form-select"
+                  value={selectedReviewProductId}
+                  onChange={e => setSelectedReviewProductId(e.target.value)}
+                >
+                  <option value="ALL">All Jersey Products ({adminReviews.length} Reviews)</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <input
+                  className="admin-search-input"
+                  placeholder="Search review by name or comment..."
+                  value={reviewSearchQuery}
+                  onChange={e => setReviewSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* REVIEWS LIST */}
+            {loadingReviews ? (
+              <div style={{ color: "#777", textAlign: "center", padding: 40, letterSpacing: 2 }}>
+                LOADING REVIEWS...
+              </div>
+            ) : (
+              <div>
+                {(() => {
+                  const filtered = adminReviews.filter(r => {
+                    const matchesProduct = selectedReviewProductId === "ALL" || String(r.product_id) === String(selectedReviewProductId);
+                    const matchesSearch = !reviewSearchQuery || 
+                      (r.reviewer_name && r.reviewer_name.toLowerCase().includes(reviewSearchQuery.toLowerCase())) ||
+                      (r.comment && r.comment.toLowerCase().includes(reviewSearchQuery.toLowerCase()));
+                    return matchesProduct && matchesSearch;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ background: "#111", border: "1px solid #222", padding: 40, textAlign: "center", color: "#666" }}>
+                        No reviews found for this selection. Upload a new review above!
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {filtered.map(r => {
+                        const prod = products.find(p => String(p.id) === String(r.product_id));
+                        const isPub = r.is_published !== false;
+
+                        return (
+                          <div
+                            key={r.id}
+                            style={{
+                              background: isPub ? "#111" : "#1a0f0f",
+                              border: isPub ? "1px solid #222" : "1px solid #ff444450",
+                              padding: 18,
+                              borderRadius: 2,
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 10
+                            }}
+                          >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+                              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                {prod && getFirstImage(prod.image_url) ? (
+                                  <img src={getFirstImage(prod.image_url)} alt="" style={{ width: 44, height: 44, objectFit: "cover", background: "#0a0a0a" }} />
+                                ) : (
+                                  <span style={{ fontSize: 24 }}>👕</span>
+                                )}
+                                <div>
+                                  <div style={{ color: "#39ff14", fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>
+                                    {prod ? prod.name : `Product ID #${r.product_id}`}
+                                  </div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: "#fff" }}>{r.reviewer_name}</span>
+                                    <span style={{ color: "#ffb700", fontSize: 12 }}>
+                                      {"★".repeat(r.rating || 5)}{"☆".repeat(5 - (r.rating || 5))}
+                                    </span>
+                                    {!isPub && (
+                                      <span style={{ background: "#ff444420", border: "1px solid #ff4444", color: "#ff4444", fontSize: 9, fontWeight: 900, padding: "1px 6px", letterSpacing: 1 }}>
+                                        UNUPLOADED (HIDDEN)
+                                      </span>
+                                    )}
+                                    {isPub && (
+                                      <span style={{ background: "#39ff1420", border: "1px solid #39ff14", color: "#39ff14", fontSize: 9, fontWeight: 900, padding: "1px 6px", letterSpacing: 1 }}>
+                                        PUBLISHED (LIVE)
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                <button
+                                  type="button"
+                                  className={isPub ? "btn-ghost" : "btn-primary sm"}
+                                  style={isPub ? { fontSize: 11, padding: "4px 10px", border: "1px solid #ff9900", color: "#ff9900" } : { fontSize: 11, padding: "4px 10px" }}
+                                  onClick={() => handleToggleReviewPublish(r.product_id, r.id, isPub)}
+                                >
+                                  {isPub ? "👁️ UNUPLOAD / HIDE" : "✓ UPLOAD / PUBLISH"}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-danger"
+                                  style={{ fontSize: 11, padding: "4px 10px" }}
+                                  onClick={() => handleDeleteReview(r.product_id, r.id)}
+                                >
+                                  🗑 DELETE
+                                </button>
+                              </div>
+                            </div>
+
+                            <div style={{ color: "#ccc", fontSize: 13, fontFamily: "'Barlow', sans-serif", background: "#0a0a0a", padding: "10px 12px", borderLeft: "2px solid #39ff14" }}>
+                              "{r.comment}"
+                            </div>
+
+                            {/* Photos */}
+                            {Array.isArray(r.photos) && r.photos.length > 0 && (
+                              <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
+                                {r.photos.map((ph, idx) => (
+                                  <a key={idx} href={ph} target="_blank" rel="noreferrer">
+                                    <img src={ph} alt="" style={{ width: 56, height: 56, objectFit: "cover", border: "1px solid #333", borderRadius: 2 }} />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1577,7 +1983,7 @@ export default function AdminPage() {
 // Subtracting is blocked client-side (and the Supabase write is skipped)
 // if it would push stock below zero.
 
-function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate, cloningId, onClone }) {
+function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId, onDelete, onUpdate, cloningId, onClone, onSelectReviewsProduct }) {
   const [sizeInputs, setSizeInputs]   = useState({});
   const [savingSize, setSavingSize]   = useState(null);
   const [saveError,  setSaveError]    = useState(null);
@@ -1983,6 +2389,14 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             </button>
             <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "4px 8px", border: "1px solid #333", color: "#aaa" }} onClick={() => setShowImageManager(!showImageManager)}>
               📷 IMAGES ({localImages.length})
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 11, padding: "4px 8px", border: "1px solid #39ff1450", color: "#39ff14", fontWeight: 700 }}
+              onClick={() => onSelectReviewsProduct && onSelectReviewsProduct(p.id)}
+            >
+              ⭐ REVIEWS
             </button>
             {!isConfirming ? (
               <button type="button" className="btn-danger" style={{ fontSize: 11, padding: "4px 8px" }} onClick={() => setConfirmDeleteId(p.id)} disabled={isDeleting}>

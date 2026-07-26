@@ -3,7 +3,7 @@ import { API_BASE } from '../config/api';
 export const FREE_SHIPPING_MIN = 1099;
 export const PREPAID_SHIPPING_FEE = 99;
 export const COD_SHIPPING_FEE = 149;
-export const PARTIAL_COD_SHIPPING_FEE = 99; // Partial COD: ₹99 delivery + half jersey price upfront
+export const PARTIAL_COD_SHIPPING_FEE = 99; // Partial COD: ₹99 delivery + 50% cart value upfront
 export const SHIPPING_FEE = 99; // Default prepaid fee
 
 export function calcShipping(subtotal, paymentMode = 'PREPAID', overrideFee = null) {
@@ -35,7 +35,9 @@ export async function fetchShippingDetails({ pincode, paymentMode = 'PREPAID', c
   }
 
   const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-  const isCod = String(paymentMode).toUpperCase() === 'COD';
+  const modeUpper = String(paymentMode).toUpperCase();
+  const isCod = modeUpper === 'COD';
+  const isPartialCod = modeUpper === 'PARTIAL_COD';
 
   try {
     const res = await fetch(`${API_BASE}/api/shipping/calculate`, {
@@ -43,7 +45,7 @@ export async function fetchShippingDetails({ pincode, paymentMode = 'PREPAID', c
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pincode,
-        paymentMode: paymentMode.toUpperCase(),
+        paymentMode: modeUpper,
         subtotal
       })
     });
@@ -58,9 +60,9 @@ export async function fetchShippingDetails({ pincode, paymentMode = 'PREPAID', c
     console.error('Failed to fetch shipping details from API:', err);
   }
 
-  // Fallback to Prepaid ₹99 / COD ₹149 (₹0 if cart subtotal > ₹1099)
+  // Fallback to Prepaid ₹99 / COD ₹149 / Partial COD ₹99 (₹0 if cart subtotal > ₹1099)
   const isFreeShipping = subtotal > FREE_SHIPPING_MIN;
-  const fallbackFee = isFreeShipping ? 0 : (isCod ? COD_SHIPPING_FEE : PREPAID_SHIPPING_FEE);
+  const fallbackFee = isFreeShipping ? 0 : (isCod ? COD_SHIPPING_FEE : isPartialCod ? PARTIAL_COD_SHIPPING_FEE : PREPAID_SHIPPING_FEE);
 
   return {
     serviceable: true,
@@ -70,6 +72,6 @@ export async function fetchShippingDetails({ pincode, paymentMode = 'PREPAID', c
     estimatedDays: '3-5 Business Days',
     remarks: isFreeShipping
       ? 'Free Shipping Applied 🎉 (Cart total > ₹1099)'
-      : (isCod ? 'Standard COD Delivery Fee ₹149' : 'Standard Delivery Fee ₹99')
+      : (isCod ? 'Standard COD Delivery Fee ₹149' : isPartialCod ? 'Standard Partial COD Delivery Fee ₹99' : 'Standard Delivery Fee ₹99')
   };
 }

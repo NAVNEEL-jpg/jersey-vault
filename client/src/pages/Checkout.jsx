@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { initiatePayment, checkAndRecoverPayment } from '../razorpay';
 import { supabase } from '../supabase';
-import { calcOrderTotals, FREE_SHIPPING_MIN, fetchShippingDetails, calcRazorpayTaxFee } from "../utils/shipping";
+import { calcOrderTotals, calcShipping, FREE_SHIPPING_MIN, fetchShippingDetails, calcRazorpayTaxFee } from "../utils/shipping";
 import { API_BASE } from "../config/api";
 import { suggestEmailTypo } from "../utils/emailValidation";
 import ReactGA from "react-ga4";
@@ -103,10 +103,16 @@ export default function CheckoutPage() {
   const dynamicFee = delhiveryInfo ? delhiveryInfo.totalShipping : null;
   const { subtotal, shipping, total, freeShippingGap } = calcOrderTotals(cart, dynamicFee, payMethod);
 
-  // Partial COD: pay ₹99 delivery + half jersey price upfront, rest on delivery
-  const halfJerseyPrice = Math.ceil(subtotal / 2);
-  const partialCodUpfront = shipping === 0 ? 0 : (shipping + halfJerseyPrice); // shipping + half jersey
-  const partialCodDoorstep = subtotal - halfJerseyPrice; // remaining half
+  // Partial COD: pay ₹99 delivery + 50% cart value upfront, rest on delivery
+  const halfCartValue = Math.ceil(subtotal / 2);
+  const partialCodUpfront = shipping + halfCartValue;
+  const partialCodDoorstep = subtotal - halfCartValue;
+
+  // Specific shipping fee calculations for payment option cards (so COD ALWAYS displays 149, Partial COD 99 unless subtotal > 1099)
+  const codShipping = calcShipping(subtotal, 'COD', payMethod === 'cod' ? dynamicFee : null);
+  const partialCodShipping = calcShipping(subtotal, 'PARTIAL_COD', payMethod === 'partial_cod' ? dynamicFee : null);
+  const partialCodUpfrontCalc = partialCodShipping + halfCartValue;
+  const partialCodDoorstepCalc = subtotal - halfCartValue;
 
   // COD & Shipping calculations
   const razorpayTaxFee = 0;
@@ -533,17 +539,17 @@ export default function CheckoutPage() {
                     id: "cod",
                     icon: "💵",
                     label: "CASH ON DELIVERY",
-                    sub: shipping === 0
+                    sub: codShipping === 0
                       ? `Free Shipping 🎉 · Pay ₹${subtotal.toLocaleString()} in cash on delivery`
-                      : `Pay delivery charge (₹${shipping.toLocaleString()}) online now · Pay full jersey price (₹${subtotal.toLocaleString()}) on delivery`,
+                      : `Pay delivery charge (₹${codShipping.toLocaleString()}) online now · Pay full cart value (₹${subtotal.toLocaleString()}) on delivery`,
                   },
                   {
                     id: "partial_cod",
                     icon: "🤝",
                     label: "PARTIAL COD",
-                    sub: shipping === 0
-                      ? `Free Shipping 🎉 · Pay half (₹${Math.ceil(subtotal / 2).toLocaleString()}) now · Remaining ₹${(subtotal - Math.ceil(subtotal / 2)).toLocaleString()} on delivery`
-                      : `Pay ₹${(shipping + Math.ceil(subtotal / 2)).toLocaleString()} now (₹${shipping} delivery + ₹${Math.ceil(subtotal / 2).toLocaleString()} half jersey) · Pay ₹${(subtotal - Math.ceil(subtotal / 2)).toLocaleString()} on delivery`,
+                    sub: partialCodShipping === 0
+                      ? `Free Shipping 🎉 · Pay 50% cart value (₹${halfCartValue.toLocaleString()}) now · Remaining ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`
+                      : `Pay ₹${partialCodUpfrontCalc.toLocaleString()} now (₹${partialCodShipping} delivery + ₹${halfCartValue.toLocaleString()} (50% cart value)) · Pay ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`,
                   },
                 ] : []),
               ].map(p => (
@@ -569,7 +575,7 @@ export default function CheckoutPage() {
                 <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>ℹ️</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
-                    Pay full amount now (₹{subtotal.toLocaleString()} jersey + {shipping === 0 ? "free shipping" : `₹${shipping} shipping`} = ₹{total.toLocaleString()}). UPI, Card, or Net Banking on the next screen.
+                    Pay full amount now (₹{subtotal.toLocaleString()} cart value + {shipping === 0 ? "free shipping" : `₹${shipping} shipping`} = ₹{total.toLocaleString()}). UPI, Card, or Net Banking on the next screen.
                   </span>
                 </div>
               )}
@@ -577,7 +583,7 @@ export default function CheckoutPage() {
                 <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>ℹ️</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
-                    Pay delivery charge (₹{shipping.toLocaleString()}) online now via Razorpay. Pay full jersey price (₹{subtotal.toLocaleString()}) in cash when your order arrives.
+                    Pay delivery charge (₹{shipping.toLocaleString()}) online now via Razorpay. Pay full cart value (₹{subtotal.toLocaleString()}) in cash when your order arrives.
                   </span>
                 </div>
               )}
@@ -585,7 +591,7 @@ export default function CheckoutPage() {
                 <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>🤝</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
-                    Pay {shipping === 0 ? `half jersey price (₹${halfJerseyPrice.toLocaleString()}) now` : `₹${partialCodUpfront.toLocaleString()} now (₹${shipping} delivery + ₹${halfJerseyPrice.toLocaleString()} half jersey price)`}. Pay remaining ₹{partialCodDoorstep.toLocaleString()} in cash when your order arrives.
+                    Pay {shipping === 0 ? `50% cart value (₹${halfCartValue.toLocaleString()}) now` : `₹${partialCodUpfront.toLocaleString()} now (₹${shipping} delivery + ₹${halfCartValue.toLocaleString()} (50% cart value))`}. Pay remaining ₹${partialCodDoorstep.toLocaleString()} in cash when your order arrives.
                   </span>
                 </div>
               )}

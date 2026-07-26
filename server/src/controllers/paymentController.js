@@ -110,10 +110,10 @@ export const verifyPayment = async (req, res) => {
         let expectedPayment = 0;
         
         if (order_data.pay_method === 'Partial_COD') {
-          // Partial COD: upfront = shipping fee + half jersey price
+          // Partial COD: upfront = shipping fee + 50% cart value
           const deliveryFee = subtotal > FREE_SHIPPING_MIN ? 0 : PARTIAL_COD_SHIPPING_FEE;
-          const halfJerseyPrice = Math.ceil(subtotal / 2);
-          expectedPayment = deliveryFee === 0 ? halfJerseyPrice : (deliveryFee + halfJerseyPrice);
+          const halfCartValue = Math.ceil(subtotal / 2);
+          expectedPayment = deliveryFee === 0 ? halfCartValue : (deliveryFee + halfCartValue);
           isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
         } else if (order_data.pay_method === 'COD' || order_data.pay_method === 'Hybrid_COD') {
           // Full COD: upfront = delivery fee only

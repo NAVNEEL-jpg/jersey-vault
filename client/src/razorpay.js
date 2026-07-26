@@ -104,7 +104,7 @@ export const initiatePayment = async (
     currency: 'INR',
     name: 'JerseyVault',
     description: isCODMode === 'partial_cod'
-      ? `Partial COD: ₹${shipping} delivery + ₹${Math.ceil(calcOrderTotals(cart).subtotal / 2)} (half jersey price)`
+      ? `Partial COD: ₹${shipping} delivery + ₹${Math.ceil(calcOrderTotals(cart).subtotal / 2)} (50% cart value)`
       : isCOD
       ? (shipping > 0 ? `Shipping fee (₹${shipping}) — COD order` : 'Jersey Purchase')
       : `Order total (₹${total})`,

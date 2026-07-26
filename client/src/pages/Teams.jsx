@@ -225,7 +225,7 @@ export default function Teams() {
           /* ── HAMBURGER ── */
           .t-hamburger { display:none; flex-direction:column; justify-content:space-between; align-items:stretch; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
           .t-hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
-          .t-mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(7,7,7,0.99); border-bottom:1px solid #1a1a1a; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; backdrop-filter:blur(12px); }
+          .t-mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:120; backdrop-filter:blur(12px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
           .t-mobile-menu.open { display:flex; }
           .t-mobile-menu .t-nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
           .t-search-input { background:#1a1a1a; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }

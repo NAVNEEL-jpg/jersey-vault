@@ -14,7 +14,7 @@ export default function Navbar() {
         .nb-link:hover { color: #00E65B; }
         .nb-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
         .nb-hamburger span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 2px; transition: all 0.2s; }
-        .nb-mobile-menu { display: none; flex-direction: column; gap: 16px; padding: 16px 16px; background: rgba(10,10,10,0.98); border-bottom: 1px solid #222; position: absolute; top: 52px; left: 0; right: 0; z-index: 49; }
+        .nb-mobile-menu { display: none; flex-direction: column; gap: 16px; padding: 20px 20px 40px; background: #070707; border-bottom: 1px solid #222; position: fixed; top: 52px; left: 0; right: 0; bottom: 0; z-index: 120; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
         .nb-mobile-menu.open { display: flex; }
         .nb-mobile-menu .nb-link { font-size: 16px; letter-spacing: 2px; padding: 6px 0; border-bottom: 1px solid #1a1a1a; }
         @media (max-width: 520px) {

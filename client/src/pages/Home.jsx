@@ -18,6 +18,7 @@ import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
 import wc26Video from "../assets/WC26(1).mp4";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
+import { fetchProductReviews } from "../utils/reviews";
 
 const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "24px" }) {
   const images = getProductImages(imageUrl);
@@ -422,6 +423,27 @@ export default function JerseyStore() {
   const [selectedSize, setSelectedSize] = useState("M");
   const [modalQty, setModalQty] = useState(1);
   const [showSizeChart, setShowSizeChart] = useState(false);
+  const [jerseyReviews, setJerseyReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [previewReviewPhoto, setPreviewReviewPhoto] = useState(null);
+
+  useEffect(() => {
+    if (selectedJersey) {
+      setLoadingReviews(true);
+      fetchProductReviews(selectedJersey.id)
+        .then(reviews => {
+          const published = (reviews || []).filter(r => r.is_published !== false);
+          setJerseyReviews(published);
+        })
+        .catch(err => {
+          console.error("Failed to fetch product reviews:", err);
+          setJerseyReviews([]);
+        })
+        .finally(() => setLoadingReviews(false));
+    } else {
+      setJerseyReviews([]);
+    }
+  }, [selectedJersey]);
   const [toast, setToast] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heroVisible, setHeroVisible] = useState(() => {
@@ -504,6 +526,25 @@ export default function JerseyStore() {
       document.removeEventListener("touchstart", handler);
     };
   }, [sortOpen]);
+
+  // Lock background page scrolling when product modal, cart, lightbox, size chart, or mobile menu is active
+  useEffect(() => {
+    const isAnyModalOpen = Boolean(selectedJersey || cartOpen || previewReviewPhoto || showSizeChart || mobileMenuOpen);
+    if (isAnyModalOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [selectedJersey, cartOpen, previewReviewPhoto, showSizeChart, mobileMenuOpen]);
 
   const openQuickView = useCallback((jersey) => {
     setSelectedJersey(jersey);
@@ -1260,10 +1301,10 @@ letter-spacing: 4px !important;
   /* ══════════════════════════════════════
      MODAL
   ══════════════════════════════════════ */
-  .modal-bg { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
-  .modal-bg-dismiss { position:absolute; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); border:none; padding:0; cursor:pointer; width:100%; height:100%; }
-  .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; }
-  .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; position:relative; z-index:1; }
+  .modal-bg { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; overscroll-behavior:contain; touch-action:none; }
+  .modal-bg-dismiss { position:absolute; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); border:none; padding:0; cursor:pointer; width:100%; height:100%; touch-action:none; }
+  .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; touch-action:none; }
+  .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; position:relative; z-index:1; }
   .modal-img-wrap { position:relative; width:100%; height:360px; background:#0d0d0d; overflow:hidden; }
   .modal-img { width:100% !important; height:100% !important; object-fit:cover !important; object-position:center center !important; transform:scale(1.08) !important; transform-origin:center center !important; display:block !important; }
   .modal-img-placeholder { width:100%; height:360px; background:#0d0d0d; display:flex; align-items:center; justify-content:center; font-size:80px; }
@@ -1271,7 +1312,7 @@ letter-spacing: 4px !important;
   /* ══════════════════════════════════════
      CART PANEL
   ══════════════════════════════════════ */
-  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#070707; border-left:none; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-30px 0 80px rgba(0,0,0,0.8); }
+  .cart-panel { position:fixed; right:0; top:0; bottom:0; width:380px; background:#070707; border-left:none; z-index:200; display:flex; flex-direction:column; animation:slideDown 0.28s cubic-bezier(0.23,1,0.32,1); box-shadow:-30px 0 80px rgba(0,0,0,0.8); overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 
   .cart-item { display:flex; gap:14px; padding:16px 20px; border-bottom:1px solid #111; align-items:center; animation:cartItemSlide 0.25s ease both; transition:background 0.2s; }
   .cart-item:hover { background:#0c0c0c; }
@@ -1306,7 +1347,7 @@ letter-spacing: 4px !important;
 .hamburger { display:none; flex-direction:column; justify-content:space-between; align-items:stretch; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
 .hamburger.open { justify-content:center; align-items:center; }
 .hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
-.mobile-menu { display:none; position:absolute; top:64px; left:0; right:0; background:rgba(7,7,7,0.99); border-bottom:1px solid #1a1a1a; padding:16px 24px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:49; backdrop-filter:blur(12px); }
+.mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:120; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; overflow-y:auto; }
 .mobile-menu.open { display:flex; }
 .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
@@ -1412,7 +1453,7 @@ letter-spacing: 4px !important;
   @media (max-width: 768px) {
     .shop-controls-row { flex-direction:column !important; align-items:flex-start !important; gap:8px !important; }
     .shop-controls-row .filter-bar { width:100% !important; }
-    .shop-sort-wrap { align-self:flex-end !important; }
+    .sort-dropdown-wrap, .shop-sort-wrap { align-self:flex-end !important; margin-left:auto !important; }
     .sort-dropdown-menu { right: 0; left: auto; }
   }
 .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
@@ -1439,8 +1480,8 @@ letter-spacing: 4px !important;
   .card-title { font-size:15px; font-weight:900; letter-spacing:1px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; min-height:54px; }
   .card-price { font-size:24px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
   .stock-warning { font-size:12px; color:#e67e22; letter-spacing:3px; font-weight:700; }
-  .modal-close-btn { position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.8); border:1px solid #2a2a2a; color:#888; font-size:14px; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; z-index:2; font-family:'Barlow Condensed',sans-serif; font-weight:900; border-radius:2px; transition:border-color 0.2s, color 0.2s; }
-  .modal-close-btn:hover { border-color:#39ff14; color:#39ff14; }
+  .modal-close-btn { position:absolute; top:14px; right:14px; background:rgba(0,0,0,0.85); border:1.5px solid #39ff14; color:#39ff14; font-size:18px; cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; z-index:100; font-family:'Barlow Condensed',sans-serif; font-weight:900; border-radius:4px; box-shadow:0 0 10px rgba(57,255,20,0.4); transition:transform 0.15s, border-color 0.2s; }
+  .modal-close-btn:hover { border-color:#39ff14; color:#fff; transform:scale(1.05); }
   .modal-type-badge { display:inline-block; font-size:12px; letter-spacing:4px; color:#000; font-weight:900; background:#39ff14; padding:3px 10px; border-radius:2px; }
   .cart-overlay { position:fixed; inset:0; z-index:150; }
   .cart-header { display:flex; align-items:center; justify-content:space-between; padding:20px; border-bottom:1px solid #111; }
@@ -2057,7 +2098,7 @@ letter-spacing: 4px !important;
               </div>
 
               {/* SORT BY — custom themed dropdown */}
-              <div className="sort-dropdown-wrap" style={{ position: "relative", flexShrink: 0 }}>
+              <div className="sort-dropdown-wrap shop-sort-wrap" style={{ position: "relative", flexShrink: 0 }}>
                 <button
                   className="sort-dropdown-btn"
                   onClick={() => setSortOpen(o => !o)}
@@ -2222,7 +2263,36 @@ letter-spacing: 4px !important;
           <div className="modal-bg">
             <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }} />
             <div className="modal" style={{ position: "relative" }}>
-              <button type="button" className="modal-close-btn" style={{ right: "12px", left: "auto", zIndex: 10 }} onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }}>✕</button>
+              {/* Top Left Compact Back Button */}
+              <button
+                type="button"
+                className="modal-back-btn"
+                onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }}
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  left: "10px",
+                  zIndex: 100,
+                  background: "rgba(0, 0, 0, 0.85)",
+                  border: "1px solid #39ff14",
+                  color: "#39ff14",
+                  padding: "4px 10px",
+                  borderRadius: "3px",
+                  fontSize: "11px",
+                  fontWeight: 900,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  boxShadow: "0 0 8px rgba(57, 255, 20, 0.3)",
+                  backdropFilter: "blur(4px)"
+                }}
+              >
+                <span style={{ fontSize: "12px", lineHeight: 1 }}>←</span>
+                <span>BACK</span>
+              </button>
               <div className="modal-img-wrap" style={{ position: "relative" }}>
                 <ProductCarousel
                   imageUrl={selectedJersey.image_url}
@@ -2381,7 +2451,124 @@ letter-spacing: 4px !important;
                   <span style={{ opacity: 0.5, fontWeight: 400, fontSize: 14, letterSpacing: 2 }}>—</span>
                   <span>₹{selectedJersey.price * modalQty}</span>
                 </button>
+
+                {/* ── CUSTOMER REVIEWS SECTION ── */}
+                <div style={{ marginTop: 28, borderTop: "1px solid #1a1a1a", paddingTop: 20 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                    <div>
+                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#fff" }}>
+                        CUSTOMER REVIEWS ({jerseyReviews.length})
+                      </div>
+                      {jerseyReviews.length > 0 && (
+                        <div style={{ fontSize: 12, color: "#39ff14", letterSpacing: 1, marginTop: 3, display: "flex", alignItems: "center", gap: 6 }}>
+                          <span>⭐⭐⭐⭐⭐</span>
+                          <span style={{ fontWeight: 700 }}>(5.0 / 5.0 Rating)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {loadingReviews ? (
+                    <div style={{ color: "#777", fontSize: 12, padding: "16px 0", letterSpacing: 1 }}>
+                      Loading customer reviews...
+                    </div>
+                  ) : jerseyReviews.length === 0 ? (
+                    <div style={{ background: "#080808", border: "1px dashed #222", padding: "20px", textAlign: "center", borderRadius: "4px" }}>
+                      <div style={{ fontSize: 22, marginBottom: 4 }}>💬</div>
+                      <div style={{ color: "#aaa", fontSize: 13, letterSpacing: 1, fontWeight: 600 }}>No reviews for this jersey yet</div>
+                      <div style={{ color: "#555", fontSize: 11, letterSpacing: 0.5, marginTop: 4 }}>Verified customer reviews will appear here.</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: "340px", overflowY: "auto", paddingRight: 4 }}>
+                      {jerseyReviews.map((rev) => (
+                        <div key={rev.id} style={{ background: "#0c0c0c", border: "1px solid #1a1a1a", padding: "14px 14px 12px 14px", borderRadius: "4px", position: "relative", boxSizing: "border-box" }}>
+                          {/* Card Header: Reviewer Name, Verified Badge & Star Rating */}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px 12px", marginBottom: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                              <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.5px", color: "#d4d4d4" }}>
+                                {rev.reviewer_name}
+                              </span>
+                              <span style={{
+                                background: "rgba(57, 255, 20, 0.12)",
+                                border: "1px solid rgba(57, 255, 20, 0.25)",
+                                color: "#39ff14",
+                                fontSize: "10px",
+                                fontWeight: 800,
+                                padding: "3px 8px",
+                                borderRadius: "4px",
+                                letterSpacing: "0.5px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                whiteSpace: "nowrap"
+                              }}>
+                                ✓ VERIFIED BUYER
+                              </span>
+                            </div>
+                            <span style={{ color: "#ffb700", fontSize: "11px", letterSpacing: "1px", whiteSpace: "nowrap" }}>
+                              {"★".repeat(rev.rating || 5)}{"☆".repeat(5 - (rev.rating || 5))}
+                            </span>
+                          </div>
+
+                          {/* Review Comment Body */}
+                          <p style={{ color: "#b0b0b0", fontSize: "13px", lineHeight: 1.4, fontFamily: "'Barlow', sans-serif", margin: "6px 0 10px 0", wordBreak: "break-word" }}>
+                            {rev.comment}
+                          </p>
+
+                          {/* Customer Review Photo Attachments */}
+                          {Array.isArray(rev.photos) && rev.photos.length > 0 && (
+                            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                              {rev.photos.map((photo, pIdx) => (
+                                <img
+                                  key={pIdx}
+                                  src={photo}
+                                  alt={`Review attachment ${pIdx + 1}`}
+                                  onClick={() => setPreviewReviewPhoto(photo)}
+                                  style={{
+                                    width: 60,
+                                    height: 60,
+                                    objectFit: "cover",
+                                    border: "1px solid #2a2a2a",
+                                    borderRadius: "4px",
+                                    cursor: "pointer",
+                                    transition: "transform 0.2s, border-color 0.2s"
+                                  }}
+                                  onMouseOver={(e) => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.borderColor = "#39ff14"; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.borderColor = "#2a2a2a"; }}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Review Date Footer (Fixed clipping inside card) */}
+                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10, marginBottom: 4 }}>
+                            <span style={{ color: "#555", fontSize: "11px", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "1px" }}>
+                              {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : '7/26/2026'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* LIGHTBOX FOR REVIEW PHOTOS */}
+        {previewReviewPhoto && (
+          <div className="modal-bg" style={{ zIndex: 130 }}>
+            <button type="button" className="modal-bg-dismiss" onClick={() => setPreviewReviewPhoto(null)} />
+            <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", margin: "auto", background: "#000", border: "1px solid #39ff14", padding: 8 }}>
+              <button
+                type="button"
+                style={{ position: "absolute", top: 12, right: 12, background: "#39ff14", color: "#000", border: "none", width: 32, height: 32, fontWeight: 900, cursor: "pointer", zIndex: 10 }}
+                onClick={() => setPreviewReviewPhoto(null)}
+              >
+                ✕
+              </button>
+              <img src={previewReviewPhoto} alt="Customer review attachment" style={{ maxWidth: "100%", maxHeight: "80vh", display: "block", objectFit: "contain", margin: "0 auto" }} />
             </div>
           </div>
         )}
