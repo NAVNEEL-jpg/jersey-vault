@@ -465,6 +465,7 @@ export default function JerseyStore() {
   const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
   const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
   const [menuSortOpen, setMenuSortOpen] = useState(false);
+  const [showFilterScrollHint, setShowFilterScrollHint] = useState(true);
 
   useEffect(() => {
     supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
@@ -531,19 +532,22 @@ export default function JerseyStore() {
   useEffect(() => {
     const isAnyModalOpen = Boolean(selectedJersey || cartOpen || previewReviewPhoto || showSizeChart || mobileMenuOpen);
     if (isAnyModalOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-      document.documentElement.style.overflow = "";
+      return () => {
+        const savedScrollY = Math.abs(parseInt(document.body.style.top || "0", 10));
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        if (savedScrollY) {
+          window.scrollTo(0, savedScrollY);
+        }
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-      document.documentElement.style.overflow = "";
-    };
   }, [selectedJersey, cartOpen, previewReviewPhoto, showSizeChart, mobileMenuOpen]);
 
   const openQuickView = useCallback((jersey) => {
@@ -610,6 +614,20 @@ export default function JerseyStore() {
   }, [searchParams, showToast]);
 
   useEffect(() => {
+    const catParam = searchParams.get("cat") || searchParams.get("filter");
+    if (catParam) {
+      setActiveFilter(catParam.toUpperCase());
+      setTimeout(() => {
+        document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+    const sortParam = searchParams.get("sort");
+    if (sortParam) {
+      setSortBy(sortParam.toUpperCase());
+      setTimeout(() => {
+        document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
     if (searchParams.get("featured") === "true") {
       setActiveFilter("FEATURED");
       setTimeout(() => {
@@ -1018,21 +1036,44 @@ letter-spacing: 4px !important;
   overflow: hidden !important;
 }
 
+.mobile-scroll-arrow-hint {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  background: rgba(57,255,20,0.08);
+  border: 1px solid rgba(57,255,20,0.3);
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+@keyframes bounceRight {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
 @media (max-width: 768px) {
+  .mobile-scroll-arrow-hint {
+    display: inline-flex;
+  }
   .filter-bar {
     display: flex !important;
     flex-wrap: nowrap !important;
-    overflow-x: auto !important;
+    overflow-x: scroll !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
     padding-bottom: 6px !important;
-    gap: 4px !important;
+    gap: 6px !important;
     width: 100% !important;
+    scrollbar-width: none !important;
+  }
+  .filter-bar::-webkit-scrollbar {
+    display: none !important;
   }
   #jv-root .filter-btn {
     flex-shrink: 0 !important;
     font-size: 14px !important;
     letter-spacing: 2px !important;
-    padding: 6px 12px !important;
+    padding: 6px 14px !important;
     height: 36px !important;
   }
   #jv-root .filter-btn.wc26-btn {
@@ -1271,15 +1312,17 @@ letter-spacing: 4px !important;
     padding: 13px 0;
   }
   .nav-right { 
-    gap: 12px !important; 
+    gap: 14px !important; 
     align-items: center !important;
+    margin-right: 4px !important;
   }
   .hamburger { 
-    margin-left: 4px;
+    margin-left: 0;
+    margin-right: 2px;
     align-self: center;
   }
   nav {
-    padding: 0 12px !important;
+    padding: 0 8px 0 4px !important;
   }
 .card-img { height:200px; }
 .card-img-wrap { height:200px; }
@@ -1335,6 +1378,11 @@ letter-spacing: 4px !important;
   .logo-img { width:52px; height:54px; object-fit:contain; mix-blend-mode:screen; filter:brightness(1.3) contrast(1.13) drop-shadow(0 0 4px rgba(57,255,20,0.15)); display:block; background:transparent; }
   .logo-wrap { display:flex; align-items:center; gap:8px; }
   .out-of-stock-badge { position:absolute; top:12px; left:12px; background:#c0392b; color:#fff; font-size:12px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; border-radius:2px; }
+  .hamburger { display:none; align-items:center; justify-content:center; width:32px; height:32px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; flex-shrink:0; z-index:130; }
+  .hamburger.open { justify-content:center; align-items:center; }
+  .hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
+  .mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; height:calc(100vh - 64px); background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:999999; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; overflow-y:auto; }
+  .mobile-menu.open { display:flex !important; }
   .type-badge-card { position:absolute; top:12px; right:12px; font-size:12px; font-weight:900; letter-spacing:3px; padding:4px 10px; z-index:2; background:rgba(0,0,0,0.75); border:1px solid rgba(57,255,20,0.3); color:var(--green); border-radius:2px; backdrop-filter:blur(4px); }
   .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #151515; border-bottom:1px solid #151515; background:#070707; }
   .stat-cell { text-align:center; padding:20px 0; border-right:1px solid #151515; }
@@ -1344,11 +1392,6 @@ letter-spacing: 4px !important;
   /* ── NAVBAR ── */
 .desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
 .desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
-.hamburger { display:none; flex-direction:column; justify-content:space-between; align-items:stretch; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
-.hamburger.open { justify-content:center; align-items:center; }
-.hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
-.mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:120; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; overflow-y:auto; }
-.mobile-menu.open { display:flex; }
 .mobile-menu .nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
 
  @media(max-width:768px) {
@@ -1417,7 +1460,7 @@ letter-spacing: 4px !important;
   .toast-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .toast-label { font-size:10px; font-weight:700; letter-spacing:2px; color:#39ff14; text-transform:uppercase; }
   .toast-msg { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
-  .site-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
+  .site-nav { position:sticky; top:0; z-index:99999; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
   /* Custom Sort Dropdown */
   .sort-dropdown-btn { display:inline-flex; align-items:center; gap:4px; background:linear-gradient(135deg,rgba(12,12,12,0.99),rgba(6,6,6,0.99)); border:1.5px solid #39ff14; box-shadow:0 0 8px rgba(57,255,20,0.3); padding:5px 12px; border-radius:6px; cursor:pointer; transition:all 0.2s ease; white-space:nowrap; }
   .sort-dropdown-btn:hover { box-shadow:0 0 18px rgba(57,255,20,0.6); transform:translateY(-1px); }
@@ -1592,14 +1635,18 @@ letter-spacing: 4px !important;
 
         {/* NAVBAR */}
         <nav className="site-nav">
-          <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu">
+          <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu" style={{ marginLeft: 0 }}>
             {mobileMenuOpen ? (
-              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <svg width="26" height="26" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             ) : (
-              <><span /><span /><span /></>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             )}
           </button>
           <BrandLogo style={{ marginLeft: 0, paddingLeft: 0 }} />
@@ -1686,7 +1733,7 @@ letter-spacing: 4px !important;
           <div className="wc26-video-wrap" onClick={() => { setActiveFilter("FEATURED"); setTimeout(() => { document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ cursor: 'pointer' }}>
   <video src={wc26Video} autoPlay loop muted playsInline />
 </div>
-          <div className="nav-right">
+          <div className="nav-right" style={{ gap: "18px", marginLeft: "auto" }}>
             {/* SEARCH ICON */}
             <div className="mobile-search-btn">
               <button type="button"
@@ -1702,12 +1749,12 @@ letter-spacing: 4px !important;
                 }}
               >
                 <svg
-                  width="22"
-                  height="22"
+                  width="26"
+                  height="26"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="1.8"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -1722,7 +1769,7 @@ letter-spacing: 4px !important;
               className="icon-action-btn icon-cart-btn"
               onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
@@ -2060,14 +2107,29 @@ letter-spacing: 4px !important;
         {/* SHOP */}
         <section id="shop" style={{ padding: "60px 16px" }}>
           <div className="shop-header-outer">
-            {/* ROW 1: Title */}
-            <h2 className="shop-section-title">
-              <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
-            </h2>
+            {/* ROW 1: Title & Right Border Arrow Indicator */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <h2 className="shop-section-title" style={{ margin: 0 }}>
+                <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
+              </h2>
+              <div 
+                className="mobile-scroll-arrow-hint"
+                style={{ marginTop: 6 }}
+                onClick={() => {
+                  const el = document.querySelector(".filter-bar");
+                  if (el) el.scrollBy({ left: 120, behavior: "smooth" });
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "bounceRight 1.2s ease-in-out infinite" }}>
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
+            </div>
 
             {/* ROW 2 (desktop only combined, mobile split): Filter bar + Sort */}
             <div className="shop-controls-row">
-              {/* FILTER BAR — scrollable on mobile */}
+              {/* FILTER BAR — 100% native smooth horizontal scroll */}
               <div className="filter-bar">
                 {filterButtons.slice(0, 3).concat(
                   filterButtons.slice(3, 4),
@@ -2186,7 +2248,13 @@ letter-spacing: 4px !important;
                   }}
                 >
                   {jersey.stock === 0 && <div className="out-of-stock-badge">OUT OF STOCK</div>}
-                  {jersey.type && <div className="type-badge-card">{jersey.type}</div>}
+                  <div className="type-badge-card">{(() => {
+                    if (jersey.type && (jersey.type.toUpperCase().includes("FAN") || jersey.type.toUpperCase().includes("PLAYER"))) {
+                      return jersey.type.toUpperCase();
+                    }
+                    const str = `${jersey.name || ""} ${jersey.category || ""} ${jersey.sub_category || ""} ${jersey.description || ""}`.toUpperCase();
+                    return str.includes("PLAYER") ? "PLAYER VERSION" : "FAN VERSION";
+                  })()}</div>
                   <div className="card-img-wrap">
                     <ProductCarousel imageUrl={jersey.image_url} alt={jersey.name} className="card-img" arrowSize="16px" />
                     <div className="card-overlay" />
@@ -2309,9 +2377,13 @@ letter-spacing: 4px !important;
               <div style={{ padding: "16px 24px 6px" }}>
                 <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, width: "100%" }}>
-                  {selectedJersey.type && (
-                    <span className="modal-type-badge">{selectedJersey.type}</span>
-                  )}
+                  <span className="modal-type-badge">{(() => {
+                    if (selectedJersey.type && (selectedJersey.type.toUpperCase().includes("FAN") || selectedJersey.type.toUpperCase().includes("PLAYER"))) {
+                      return selectedJersey.type.toUpperCase();
+                    }
+                    const str = `${selectedJersey.name || ""} ${selectedJersey.category || ""} ${selectedJersey.sub_category || ""} ${selectedJersey.description || ""}`.toUpperCase();
+                    return str.includes("PLAYER") ? "PLAYER VERSION" : "FAN VERSION";
+                  })()}</span>
                   <span className="modal-price">₹{selectedJersey.price}</span>
                   <button
                     type="button"
@@ -2451,6 +2523,95 @@ letter-spacing: 4px !important;
                   <span style={{ opacity: 0.5, fontWeight: 400, fontSize: 14, letterSpacing: 2 }}>—</span>
                   <span>₹{selectedJersey.price * modalQty}</span>
                 </button>
+
+                {/* ── PRODUCT SPECIFICATIONS & DETAILS ── */}
+                <div style={{ marginTop: 24, borderTop: "1px solid #1a1a1a", paddingTop: 20 }}>
+                  <div style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    marginBottom: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8
+                  }}>
+                    <span style={{ color: "#39ff14" }}>📋</span> PRODUCT SPECIFICATIONS &amp; DETAILS
+                  </div>
+
+                  <div style={{
+                    background: "#0c0c0c",
+                    border: "1px solid #1f1f1f",
+                    borderRadius: "4px",
+                    padding: "16px 18px"
+                  }}>
+                    <ul style={{
+                      margin: 0,
+                      padding: 0,
+                      listStyle: "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      fontFamily: "'Barlow', sans-serif"
+                    }}>
+                      {(() => {
+                        const name = (selectedJersey?.name || "").toUpperCase();
+                        const cat = (selectedJersey?.category || "").toUpperCase();
+                        const subCat = (selectedJersey?.sub_category || "").toUpperCase();
+                        const type = (selectedJersey?.type || "").toUpperCase();
+                        const desc = (selectedJersey?.description || "").toUpperCase();
+
+                        const isPlayer = cat.includes("PLAYER") || subCat.includes("PLAYER") || type.includes("PLAYER") || name.includes("PLAYER") || desc.includes("PLAYER");
+
+                        if (isPlayer) {
+                          return [
+                            "Made in Thailand",
+                            "Superior Dry Fit Quality",
+                            "Authentic Rubberised 3D Logo"
+                          ];
+                        } else {
+                          return [
+                            "Made in Thailand",
+                            "Dry Fit Quality",
+                            "Embroidered Premium Logo",
+                            "Shorts Included"
+                          ];
+                        }
+                      })().map((feature, idx) => (
+                        <li key={idx} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+                          <span style={{ color: "#39ff14", fontSize: 18, fontWeight: 900, lineHeight: 1 }}>•</span>
+                          <strong style={{ color: "#ffffff", fontWeight: 700 }}>{feature}</strong>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div style={{
+                      marginTop: 12,
+                      paddingTop: 12,
+                      borderTop: "1px dashed #222",
+                      color: "#aaaaaa",
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                      fontFamily: "'Barlow', sans-serif"
+                    }}>
+                      {selectedJersey?.description && selectedJersey.description.trim() !== ""
+                        ? selectedJersey.description
+                        : (() => {
+                            const name = (selectedJersey?.name || "").toUpperCase();
+                            const cat = (selectedJersey?.category || "").toUpperCase();
+                            const subCat = (selectedJersey?.sub_category || "").toUpperCase();
+                            const type = (selectedJersey?.type || "").toUpperCase();
+                            const isPlayer = cat.includes("PLAYER") || subCat.includes("PLAYER") || type.includes("PLAYER") || name.includes("PLAYER");
+                            return isPlayer
+                              ? "Authentic Match / Player Edition jersey engineered with Thailand superior ultra-lightweight Dry-Fit performance fabric, heat-transferred authentic rubberised 3D club crests, and precision athletic slim-fit tailoring as worn on pitch by professional players."
+                              : "Premium Fan Edition football jersey imported from Thailand. Features breathable Dry-Fit fabric technology for maximum comfort, high-density embroidered club logos, and comes complete with matching shorts included.";
+                          })()
+                      }
+                    </div>
+                  </div>
+                </div>
 
                 {/* ── CUSTOMER REVIEWS SECTION ── */}
                 <div style={{ marginTop: 28, borderTop: "1px solid #1a1a1a", paddingTop: 20 }}>

@@ -109,6 +109,9 @@ export default function Teams() {
   const [searchQuery,    setSearchQuery]    = useState("");
   const [teams,          setTeams]          = useState([]);
   const [loading,        setLoading]        = useState(true);
+  const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
+  const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
+  const [menuSortOpen, setMenuSortOpen] = useState(false);
 
   /* ── Auth ── */
   useEffect(() => {
@@ -141,6 +144,27 @@ export default function Teams() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  /* ── Lock body scroll when mobile menu is open ── */
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+      return () => {
+        const savedScrollY = Math.abs(parseInt(document.body.style.top || "0", 10));
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        if (savedScrollY) {
+          window.scrollTo(0, savedScrollY);
+        }
+      };
+    }
+  }, [mobileMenuOpen]);
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -223,10 +247,10 @@ export default function Teams() {
           .t-logo-wrap { display:flex; align-items:center; gap:8px; }
 
           /* ── HAMBURGER ── */
-          .t-hamburger { display:none; flex-direction:column; justify-content:space-between; align-items:stretch; width:28px; height:22px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; }
+          .t-hamburger { display:none; align-items:center; justify-content:center; width:32px; height:32px; background:none !important; border:none !important; cursor:pointer; padding:0 !important; flex-shrink:0; z-index:130; }
           .t-hamburger span { display:block !important; width:100%; height:2px; background:white !important; border-radius:2px; }
-          .t-mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:120; backdrop-filter:blur(12px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
-          .t-mobile-menu.open { display:flex; }
+          .t-mobile-menu { display:none; position:fixed; top:64px; left:0; right:0; bottom:0; height:calc(100vh - 64px); background:#070707; border-bottom:1px solid #1a1a1a; padding:20px 24px 40px; flex-direction:column; gap:20px; animation:mobileMenuSlide 0.2s ease; z-index:999999; backdrop-filter:blur(12px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+          .t-mobile-menu.open { display:flex !important; }
           .t-mobile-menu .t-nav-link { font-size:18px; letter-spacing:3px; padding:4px 0; border-bottom:1px solid #111; }
           .t-search-input { background:#1a1a1a; border:1px solid #444; border-radius:999px; color:#fff; padding:10px 20px; font-family:'Barlow Condensed',sans-serif; font-size:15px; outline:none; letter-spacing:1px; width:100%; transition:border-color 0.2s, box-shadow 0.2s; }
           .t-search-input:focus { border-color:var(--green); box-shadow:0 0 0 2px rgba(57,255,20,0.1); }
@@ -306,7 +330,7 @@ export default function Teams() {
 
           /* ── HERO ── */
           .t-hero { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
-          .t-nav { position:sticky; top:0; z-index:50; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
+          .t-nav { position:sticky; top:0; z-index:99999; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
           .t-nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
           .t-flame-wrap { position:relative; display:inline-block; line-height:0.9; }
           .t-flame-text { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#ffffff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
@@ -347,7 +371,27 @@ export default function Teams() {
         `}</style>
 
         {/* ════════════════════ NAVBAR ════════════════════ */}
-        <nav className="t-nav">
+        <nav className="t-nav" style={{ padding: "0 8px 0 4px" }}>
+          <button type="button"
+            className={`t-hamburger${mobileMenuOpen ? " open" : ""}`}
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+            style={{ marginRight: 2 }}
+          >
+            {mobileMenuOpen ? (
+              <svg width="26" height="26" viewBox="0 0 22 22" fill="none">
+                <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            ) : (
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
+          </button>
+
           <Link to="/" className="t-logo-wrap" style={{ textDecoration:"none", flexShrink:0 }}>
             <BrandLogo />
           </Link>
@@ -358,8 +402,8 @@ export default function Teams() {
 
           <div className="t-desktop-nav-links">{navLinks}</div>
 
-          {/* Right: cart + hamburger */}
-          <div className="t-nav-right">
+          {/* Right: cart */}
+          <div className="t-nav-right" style={{ marginRight: "4px" }}>
             <button type="button"
               aria-label="View cart"
               onClick={() => navigate("/")}
@@ -367,31 +411,206 @@ export default function Teams() {
               onMouseEnter={e => e.currentTarget.style.color="#39ff14"}
               onMouseLeave={e => e.currentTarget.style.color="#fff"}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
               {cartCount > 0 && <span style={{ color:"#39ff14", fontSize:19, fontWeight:900, lineHeight:1 }}>{cartCount}</span>}
             </button>
-
-            <button type="button"
-              className={`t-hamburger${mobileMenuOpen ? " open" : ""}`}
-              onClick={() => setMobileMenuOpen(o => !o)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <line x1="2" y1="2" x2="20" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="20" y1="2" x2="2" y2="20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              ) : (
-                <><span /><span /><span /></>
-              )}
-            </button>
           </div>
 
           <div className={`t-mobile-menu${mobileMenuOpen ? " open" : ""}`}>
             <input className="t-search-input" placeholder="SEARCH TEAMS..." aria-label="Search teams" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ marginBottom:8 }} />
+
+            {/* ── DROPDOWN ACCORDIONS FOR CATEGORIES, TEAMS & SORT BY ── */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, width: "100%", margin: "8px 0" }}>
+              
+              {/* 1. CATEGORIES ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuCategoriesOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>⚡</span> CATEGORIES
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuCategoriesOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuCategoriesOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { key: "ALL", label: "ALL JERSEYS" },
+                      { key: "FAN VERSION", label: "FAN VERSION" },
+                      { key: "PLAYER VERSION", label: "PLAYER VERSION" },
+                      { key: "26/27 KITS", label: "26/27 KITS ⚽" },
+                      { key: "CLEARANCE SALE", label: "CLEARANCE SALE 🔥" },
+                      { key: "FEATURED", label: "WC26 / FEATURED 🏆" },
+                      { key: "RETRO", label: "RETRO JERSEYS 📜" },
+                    ].map(cat => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(`/?cat=${encodeURIComponent(cat.key)}`);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 14,
+                          fontWeight: 700,
+                          letterSpacing: 2,
+                          color: "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "3px 0"
+                        }}
+                      >
+                        {cat.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. TEAMS ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuTeamsOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>🛡️</span> TEAMS {teams.length > 0 ? `(${teams.length})` : ""}
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuTeamsOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuTeamsOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8, maxHeight: 220, overflowY: "auto" }}>
+                    {teams.map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(`/?team=${t.id}`);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          letterSpacing: 1,
+                          color: "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "2px 0"
+                        }}
+                      >
+                        {t.logo_url ? (
+                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }} />
+                        ) : (
+                          <span style={{ fontSize: 14 }}>🛡️</span>
+                        )}
+                        <span>{t.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 3. SORT BY ACCORDION */}
+              <div style={{ borderBottom: "1px solid #1a1a1a" }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuSortOpen(o => !o)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 0",
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ color: "#39ff14" }}>↕️</span> SORT BY
+                  </span>
+                  <span style={{ color: "#39ff14", fontSize: 12 }}>{menuSortOpen ? "▲" : "▼"}</span>
+                </button>
+                {menuSortOpen && (
+                  <div style={{ padding: "4px 0 12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { key: "FEATURED", label: "FEATURED (DEFAULT)" },
+                      { key: "PRICE_LOW_HIGH", label: "PRICE: LOW TO HIGH" },
+                      { key: "PRICE_HIGH_LOW", label: "PRICE: HIGH TO LOW" },
+                      { key: "NAME_ASC", label: "NAME: A TO Z" },
+                      { key: "NEWEST", label: "NEWEST ARRIVALS" },
+                    ].map(s => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(`/?sort=${encodeURIComponent(s.key)}`);
+                        }}
+                        style={{
+                          textAlign: "left",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          letterSpacing: 2,
+                          color: "#bbb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "3px 0"
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
             {navLinks}
           </div>
         </nav>

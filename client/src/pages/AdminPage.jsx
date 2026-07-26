@@ -427,6 +427,11 @@ export default function AdminPage() {
     if (!price || isNaN(Number(price)) || Number(price) <= 0) { setFormError("Enter a valid price."); return; }
     setFormSaving(true);
     const totalStock = SIZES.reduce((s, sz) => s + (formData.size_stock[sz] || 0), 0);
+    const isPlayerProd = (formData.type || "").toUpperCase().includes("PLAYER") || name.toUpperCase().includes("PLAYER");
+    const defaultDescText = isPlayerProd
+      ? "Authentic Match / Player Edition jersey engineered with Thailand superior ultra-lightweight Dry-Fit performance fabric, heat-transferred authentic rubberised 3D club crests, and precision athletic slim-fit tailoring as worn on pitch by professional players."
+      : "Premium Fan Edition football jersey imported from Thailand. Features breathable Dry-Fit fabric technology for maximum comfort, high-density embroidered club logos, and comes complete with matching shorts included.";
+
     const payload = {
       name: name.trim(),
       price: Number(price),
@@ -439,6 +444,7 @@ export default function AdminPage() {
       featured: formData.featured || false,
       is_26_27: formData.is_26_27 || false,
       is_clearance: formData.is_clearance || false,
+      description: formData.description?.trim() ? formData.description.trim() : defaultDescText
     };
     let { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
     if (error && (error.message?.includes("is_26_27") || error.message?.includes("is_clearance"))) {
