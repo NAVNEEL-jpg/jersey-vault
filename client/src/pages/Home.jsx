@@ -926,7 +926,63 @@ export default function JerseyStore() {
   const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
 
-  const sectionTitle = activeTeamName ? `${activeTeamName} JERSEYS` : activeFilter === "ALL" ? "SHOP ALL" : activeFilter;
+  const handleSelectSearchJersey = useCallback((jerseyName) => {
+    if (jerseyName !== undefined) {
+      setSearchQuery(jerseyName);
+    }
+    setShowSuggestions(false);
+    setMobileMenuOpen(false);
+    setTimeout(() => {
+      const shop = document.getElementById('shop');
+      if (shop) {
+        const y = shop.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 150);
+  }, []);
+
+  const sectionTitle = useMemo(() => {
+    if (activeTeamName) {
+      return `${activeTeamName.toUpperCase()} JERSEYS`;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      // 1. Direct team name match in teamsList
+      const teamByQuery = teamsList.find(t =>
+        t.name && (
+          t.name.toLowerCase() === q ||
+          q.includes(t.name.toLowerCase()) ||
+          t.name.toLowerCase().includes(q)
+        )
+      );
+      if (teamByQuery) {
+        return `${teamByQuery.name.toUpperCase()} JERSEYS`;
+      }
+      // 2. Team match via top filtered jersey's team_id
+      if (filtered.length > 0) {
+        const topJ = filtered[0];
+        if (topJ.team_id) {
+          const teamByJerseyId = teamsList.find(t => String(t.id) === String(topJ.team_id));
+          if (teamByJerseyId) {
+            return `${teamByJerseyId.name.toUpperCase()} JERSEYS`;
+          }
+        }
+        // 3. Team match via jersey name
+        const teamByJerseyName = teamsList.find(t =>
+          t.name && (topJ.name || "").toLowerCase().includes(t.name.toLowerCase())
+        );
+        if (teamByJerseyName) {
+          return `${teamByJerseyName.name.toUpperCase()} JERSEYS`;
+        }
+      }
+      return `SEARCH: "${searchQuery.trim().toUpperCase()}"`;
+    }
+    if (activeFilter === "ALL") {
+      return "SHOP ALL";
+    }
+    return activeFilter;
+  }, [activeTeamName, searchQuery, teamsList, filtered, activeFilter]);
+
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -1820,6 +1876,11 @@ letter-spacing: 4px !important;
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    handleSelectSearchJersey(searchQuery);
+                  }
+                }}
               />
               {showSuggestions && searchQuery.trim().length > 0 && (
                 <div style={{
@@ -1842,17 +1903,7 @@ letter-spacing: 4px !important;
                     .map(jersey => (
                       <div
                         key={jersey.id}
-                       onClick={() => {
-  setSearchQuery(jersey.name);
-  setShowSuggestions(false);
-  setTimeout(() => {
-    const shop = document.getElementById('shop');
-    if (shop) {
-      const y = shop.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }, 150);
-}}
+                        onClick={() => handleSelectSearchJersey(jersey.name)}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
@@ -1948,6 +1999,11 @@ letter-spacing: 4px !important;
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    handleSelectSearchJersey(searchQuery);
+                  }
+                }}
               />
               {showSuggestions && searchQuery.trim().length > 0 && (
                 <div style={{
@@ -1970,17 +2026,7 @@ letter-spacing: 4px !important;
                     .map(jersey => (
                       <div
                         key={jersey.id}
-                        onClick={() => {
-  setSearchQuery(jersey.name);
-  setShowSuggestions(false);
-  setTimeout(() => {
-    const shop = document.getElementById('shop');
-    if (shop) {
-      const y = shop.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  }, 150);
-}}
+                        onClick={() => handleSelectSearchJersey(jersey.name)}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
