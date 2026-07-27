@@ -2524,8 +2524,9 @@ letter-spacing: 4px !important;
                     width: 40,
                     height: 40,
                     borderRadius: 4,
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: 900,
+                    lineHeight: 1,
                     cursor: validCurrentPage === 1 ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -2534,7 +2535,7 @@ letter-spacing: 4px !important;
                   }}
                   aria-label="Previous Page"
                 >
-                  ‹
+                  «
                 </button>
 
                 {/* PAGE NUMBERS */}
@@ -2585,8 +2586,9 @@ letter-spacing: 4px !important;
                     width: 40,
                     height: 40,
                     borderRadius: 4,
-                    fontSize: 20,
+                    fontSize: 24,
                     fontWeight: 900,
+                    lineHeight: 1,
                     cursor: validCurrentPage === totalPages ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
@@ -2595,7 +2597,7 @@ letter-spacing: 4px !important;
                   }}
                   aria-label="Next Page"
                 >
-                  ›
+                  »
                 </button>
               </div>
 
