@@ -410,7 +410,7 @@ const filterButtons = [
 
 export default function JerseyStore() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jerseys, setJerseys] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [cart, setCart] = useState(() => {
@@ -926,10 +926,41 @@ export default function JerseyStore() {
   const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
   const cartCount = useMemo(() => cart.reduce((s, i) => s + i.qty, 0), [cart]);
 
-  const handleSelectSearchJersey = useCallback((jerseyName) => {
-    if (jerseyName !== undefined) {
-      setSearchQuery(jerseyName);
+  const handleSelectSearchJersey = useCallback((target) => {
+    let matchedTeam = null;
+
+    if (typeof target === "object" && target !== null) {
+      if (target.team_id) {
+        matchedTeam = teamsList.find(t => String(t.id) === String(target.team_id));
+      }
+      if (!matchedTeam && target.name) {
+        matchedTeam = teamsList.find(t => t.name && target.name.toLowerCase().includes(t.name.toLowerCase()));
+      }
+      if (!matchedTeam) {
+        setSearchQuery(target.name || "");
+      }
+    } else if (typeof target === "string" && target.trim().length > 0) {
+      const q = target.trim().toLowerCase();
+      matchedTeam = teamsList.find(t => t.name && (t.name.toLowerCase() === q || q.includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(q)));
+      
+      if (!matchedTeam) {
+        const matchingJersey = jerseys.find(j => (j.name || "").toLowerCase().includes(q));
+        if (matchingJersey && matchingJersey.team_id) {
+          matchedTeam = teamsList.find(t => String(t.id) === String(matchingJersey.team_id));
+        }
+      }
+
+      if (!matchedTeam) {
+        setSearchQuery(target);
+      }
     }
+
+    if (matchedTeam) {
+      setSearchQuery("");
+      setActiveFilter("ALL");
+      setSearchParams({ team: matchedTeam.id });
+    }
+
     setShowSuggestions(false);
     setMobileMenuOpen(false);
     setTimeout(() => {
@@ -939,7 +970,8 @@ export default function JerseyStore() {
         window.scrollTo({ top: y, behavior: 'smooth' });
       }
     }, 150);
-  }, []);
+  }, [teamsList, jerseys, setSearchParams]);
+
 
   const sectionTitle = useMemo(() => {
     if (activeTeamName) {
@@ -1903,7 +1935,7 @@ letter-spacing: 4px !important;
                     .map(jersey => (
                       <div
                         key={jersey.id}
-                        onClick={() => handleSelectSearchJersey(jersey.name)}
+                        onClick={() => handleSelectSearchJersey(jersey)}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
@@ -2026,7 +2058,7 @@ letter-spacing: 4px !important;
                     .map(jersey => (
                       <div
                         key={jersey.id}
-                        onClick={() => handleSelectSearchJersey(jersey.name)}
+                        onClick={() => handleSelectSearchJersey(jersey)}
                         style={{
                           padding: '8px 12px',
                           cursor: 'pointer',
