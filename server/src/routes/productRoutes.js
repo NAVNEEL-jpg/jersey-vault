@@ -1,5 +1,5 @@
 import express from 'express';
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getReviews, addReview, toggleReview, deleteReview } from '../controllers/productController.js';
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getReviews, addReview, toggleReview, deleteReview, updateReview } from '../controllers/productController.js';
 import { protect, adminOnly } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -9,6 +9,7 @@ router.get('/reviews/all', getReviews);
 router.get('/reviews/:productId', getReviews);
 router.post('/reviews', addReview);
 router.put('/reviews/toggle', toggleReview);
+router.put('/reviews', updateReview);
 router.delete('/reviews/:productId/:reviewId', deleteReview);
 
 router.get('/', getProducts);

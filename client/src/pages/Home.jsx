@@ -542,6 +542,19 @@ export default function JerseyStore() {
   const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
   const [menuSortOpen, setMenuSortOpen] = useState(false);
   const [showFilterScrollHint, setShowFilterScrollHint] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, sortBy, searchQuery, activeTeamName]);
+
 
   useEffect(() => {
     supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
@@ -845,6 +858,15 @@ export default function JerseyStore() {
 
     return list;
   }, [jerseys, searchQuery, activeFilter, sortBy]);
+
+  const ITEMS_PER_PAGE = isMobile ? 10 : 12;
+  const totalPages = useMemo(() => Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1, [filtered.length, ITEMS_PER_PAGE]);
+  const validCurrentPage = useMemo(() => Math.min(Math.max(currentPage, 1), totalPages), [currentPage, totalPages]);
+  const paginatedProducts = useMemo(() => {
+    const start = (validCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
+  }, [filtered, validCurrentPage, ITEMS_PER_PAGE]);
+
 
   const addToCart = useCallback((jersey, size, quantity = 1) => {
     const qtyToAdd = Math.max(1, Number(quantity) || 1);
@@ -2369,7 +2391,7 @@ letter-spacing: 4px !important;
             </div>
           ) : (
             <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
-              {filtered.map((jersey, i) => (
+              {paginatedProducts.map((jersey, i) => (
                 <div
                   key={`${activeFilter}-${jersey.id}`}
                   className="card"
@@ -2425,6 +2447,116 @@ letter-spacing: 4px !important;
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* CATEGORY PAGINATION CONTROLS */}
+          {totalPages > 1 && (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+              marginTop: 36,
+              paddingTop: 20,
+              borderTop: "1px solid #151515"
+            }}>
+              {/* Pagination Nav Buttons */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                {/* PREV ARROW BUTTON */}
+                <button
+                  type="button"
+                  disabled={validCurrentPage === 1}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  style={{
+                    background: validCurrentPage === 1 ? "#0a0a0a" : "#141414",
+                    border: `1px solid ${validCurrentPage === 1 ? "#222" : "#39ff14"}`,
+                    color: validCurrentPage === 1 ? "#333" : "#39ff14",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 4,
+                    fontSize: 20,
+                    fontWeight: 900,
+                    cursor: validCurrentPage === 1 ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease"
+                  }}
+                  aria-label="Previous Page"
+                >
+                  ‹
+                </button>
+
+                {/* PAGE NUMBERS */}
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(pageNum => {
+                  const isActive = pageNum === validCurrentPage;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      style={{
+                        background: isActive ? "#39ff14" : "#0d0d0d",
+                        border: `1px solid ${isActive ? "#39ff14" : "#222"}`,
+                        color: isActive ? "#000" : "#bbb",
+                        minWidth: 40,
+                        height: 40,
+                        padding: "0 10px",
+                        borderRadius: 4,
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 900,
+                        fontSize: 16,
+                        letterSpacing: 1,
+                        cursor: "pointer",
+                        boxShadow: isActive ? "0 0 16px rgba(57,255,20,0.4)" : "none",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* NEXT ARROW BUTTON */}
+                <button
+                  type="button"
+                  disabled={validCurrentPage === totalPages}
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  style={{
+                    background: validCurrentPage === totalPages ? "#0a0a0a" : "#141414",
+                    border: `1px solid ${validCurrentPage === totalPages ? "#222" : "#39ff14"}`,
+                    color: validCurrentPage === totalPages ? "#333" : "#39ff14",
+                    width: 40,
+                    height: 40,
+                    borderRadius: 4,
+                    fontSize: 20,
+                    fontWeight: 900,
+                    cursor: validCurrentPage === totalPages ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease"
+                  }}
+                  aria-label="Next Page"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* PAGE INFO SUBTITLE */}
+              <div style={{ color: "#666", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>
+                SHOWING {(validCurrentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(validCurrentPage * ITEMS_PER_PAGE, filtered.length)} OF {filtered.length} JERSEYS (PAGE {validCurrentPage} OF {totalPages})
+              </div>
             </div>
           )}
         </section>

@@ -6,7 +6,7 @@ import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications";
-import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview } from "../utils/reviews";
+import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview, updateProductReview } from "../utils/reviews";
 
 
 const statusOptions = ["pending", "preparing", "shipped", "delivered"];
@@ -235,6 +235,117 @@ export default function AdminPage() {
       e.target.value = "";
     }
   };
+
+  // ── Edit Review State & Handlers ──
+  const [editingReview, setEditingReview] = useState(null);
+  const [editReviewForm, setEditReviewForm] = useState({
+    id: "",
+    productId: "",
+    oldProductId: "",
+    reviewer_name: "",
+    rating: 5,
+    comment: "",
+    photos: [],
+    is_published: true
+  });
+  const [uploadingEditReviewPhoto, setUploadingEditReviewPhoto] = useState(false);
+  const [savingEditReview, setSavingEditReview] = useState(false);
+  const [editReviewError, setEditReviewError] = useState("");
+  const [editReviewSuccess, setEditReviewSuccess] = useState("");
+
+  const handleStartEditReview = (review) => {
+    setEditingReview(review);
+    setEditReviewForm({
+      id: review.id,
+      productId: String(review.product_id),
+      oldProductId: String(review.product_id),
+      reviewer_name: review.reviewer_name || "",
+      rating: Number(review.rating) || 5,
+      comment: review.comment || "",
+      photos: Array.isArray(review.photos) ? [...review.photos] : [],
+      is_published: review.is_published !== false
+    });
+    setEditReviewError("");
+    setEditReviewSuccess("");
+  };
+
+  const handleCancelEditReview = () => {
+    setEditingReview(null);
+    setEditReviewError("");
+    setEditReviewSuccess("");
+  };
+
+  const handleUploadEditReviewPhotoFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingEditReviewPhoto(true);
+    try {
+      const url = await uploadProductImageAndGetUrl(file);
+      setEditReviewForm(prev => ({
+        ...prev,
+        photos: [...prev.photos, url]
+      }));
+    } catch (err) {
+      alert("Failed to upload photo: " + err.message);
+    } finally {
+      setUploadingEditReviewPhoto(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveEditReviewPhoto = (photoIndex) => {
+    setEditReviewForm(prev => ({
+      ...prev,
+      photos: prev.photos.filter((_, idx) => idx !== photoIndex)
+    }));
+  };
+
+  const handleSaveEditReview = async (e) => {
+    e.preventDefault();
+    if (!editReviewForm.productId) {
+      setEditReviewError("Please select a jersey product.");
+      return;
+    }
+    if (!editReviewForm.reviewer_name.trim()) {
+      setEditReviewError("Please enter reviewer name.");
+      return;
+    }
+    if (!editReviewForm.comment.trim()) {
+      setEditReviewError("Please enter review comment.");
+      return;
+    }
+
+    setSavingEditReview(true);
+    setEditReviewError("");
+    setEditReviewSuccess("");
+
+    try {
+      await updateProductReview(
+        editReviewForm.productId,
+        editReviewForm.id,
+        {
+          reviewer_name: editReviewForm.reviewer_name.trim(),
+          rating: Number(editReviewForm.rating) || 5,
+          comment: editReviewForm.comment.trim(),
+          photos: editReviewForm.photos,
+          is_published: editReviewForm.is_published
+        },
+        editReviewForm.oldProductId
+      );
+
+      setEditReviewSuccess("✓ Review updated successfully!");
+      await loadAdminReviews();
+      setTimeout(() => {
+        setEditingReview(null);
+        setEditReviewSuccess("");
+      }, 1200);
+    } catch (err) {
+      setEditReviewError("Failed to update review: " + err.message);
+    } finally {
+      setSavingEditReview(false);
+    }
+  };
+
   const [deletingTeamId, setDeletingTeamId] = useState(null);
   const [confirmDeleteTeamId, setConfirmDeleteTeamId] = useState(null);
   const [activeSportFilter, setActiveSportFilter] = useState("ALL");
@@ -1706,6 +1817,196 @@ export default function AdminPage() {
               </div>
             </div>
 
+            {/* EDIT REVIEW FORM / MODAL */}
+            {editingReview && (
+              <div className="add-product-form" style={{ borderColor: "#00aaff", background: "#0c1520", marginBottom: 24, boxShadow: "0 0 20px rgba(0,170,255,0.2)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: "#00aaff", letterSpacing: 3 }}>
+                    ✏️ EDIT CUSTOMER REVIEW #{editReviewForm.id}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelEditReview}
+                    style={{ background: "transparent", border: "none", color: "#ff4444", fontSize: 16, fontWeight: 900, cursor: "pointer" }}
+                  >
+                    ✕ CLOSE
+                  </button>
+                </div>
+
+                {editReviewError && <div className="form-error">{editReviewError}</div>}
+                {editReviewSuccess && <div className="form-success">{editReviewSuccess}</div>}
+
+                <form onSubmit={handleSaveEditReview} style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 10 }}>
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label className="form-label">ASSIGNED JERSEY PRODUCT *</label>
+                      <select
+                        className="form-select"
+                        value={editReviewForm.productId}
+                        onChange={e => setEditReviewForm(prev => ({ ...prev, productId: e.target.value }))}
+                      >
+                        <option value="">-- Choose Jersey --</option>
+                        {products.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (₹{p.price})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="form-field">
+                      <label className="form-label">REVIEWER NAME *</label>
+                      <input
+                        className="form-input"
+                        placeholder="e.g. Rahul Sharma"
+                        value={editReviewForm.reviewer_name}
+                        onChange={e => setEditReviewForm(prev => ({ ...prev, reviewer_name: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label className="form-label">RATING (STARS) *</label>
+                      <select
+                        className="form-select"
+                        value={editReviewForm.rating}
+                        onChange={e => setEditReviewForm(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                      >
+                        <option value={5}>⭐⭐⭐⭐⭐ (5 Stars)</option>
+                        <option value={4}>⭐⭐⭐⭐ (4 Stars)</option>
+                        <option value={3}>⭐⭐⭐ (3 Stars)</option>
+                        <option value={2}>⭐⭐ (2 Stars)</option>
+                        <option value={1}>⭐ (1 Star)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-field">
+                      <label className="form-label">MANAGE REVIEW PHOTOS (ADD / REMOVE)</label>
+                      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        <label
+                          style={{
+                            background: "#1a1a1a",
+                            border: "1px dashed #00aaff",
+                            color: "#00aaff",
+                            padding: "8px 16px",
+                            fontSize: 12,
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 900,
+                            letterSpacing: 2,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 6
+                          }}
+                        >
+                          {uploadingEditReviewPhoto ? "UPLOADING..." : "📷 ATTACH NEW PHOTO"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleUploadEditReviewPhotoFile}
+                            disabled={uploadingEditReviewPhoto}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                        <span style={{ fontSize: 11, color: "#aaa" }}>
+                          {editReviewForm.photos.length} photo(s) attached
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Edit Attached Photos Gallery (With Delete x Badges) */}
+                  {editReviewForm.photos.length > 0 && (
+                    <div style={{ background: "#0a0a0a", padding: 12, border: "1px solid #1a2a3a", borderRadius: 4 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#888", letterSpacing: 1, marginBottom: 8 }}>
+                        CLICK '✕' TO REMOVE AN IMAGE:
+                      </div>
+                      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                        {editReviewForm.photos.map((url, idx) => (
+                          <div key={idx} style={{ position: "relative", display: "inline-block" }}>
+                            <img
+                              src={url}
+                              alt=""
+                              style={{ width: 64, height: 64, objectFit: "cover", border: "1px solid #00aaff", borderRadius: 4 }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveEditReviewPhoto(idx)}
+                              title="Remove image from review"
+                              style={{
+                                position: "absolute",
+                                top: -8,
+                                right: -8,
+                                background: "#ff4444",
+                                color: "#fff",
+                                border: "2px solid #0c1520",
+                                borderRadius: "50%",
+                                width: 22,
+                                height: 22,
+                                fontSize: 12,
+                                fontWeight: 900,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.5)"
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-field">
+                    <label className="form-label">REVIEW COMMENT *</label>
+                    <textarea
+                      className="form-input"
+                      rows={3}
+                      placeholder="Enter review comment text..."
+                      value={editReviewForm.comment}
+                      onChange={e => setEditReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                      style={{ fontFamily: "'Barlow', sans-serif" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      id="edit_is_published"
+                      checked={editReviewForm.is_published}
+                      onChange={e => setEditReviewForm(prev => ({ ...prev, is_published: e.target.checked }))}
+                      style={{ width: 16, height: 16, cursor: "pointer", accentColor: "#39ff14" }}
+                    />
+                    <label htmlFor="edit_is_published" style={{ fontSize: 13, color: "#fff", cursor: "pointer", fontWeight: 700 }}>
+                      Published / Visible on Website (Live)
+                    </label>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                      disabled={savingEditReview || uploadingEditReviewPhoto}
+                      style={{ background: "#00aaff", borderColor: "#00aaff", color: "#fff" }}
+                    >
+                      {savingEditReview ? "SAVING..." : "💾 SAVE CHANGES"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      onClick={handleCancelEditReview}
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {/* UPLOAD REVIEW FORM */}
             <div className="add-product-form" style={{ borderColor: "#39ff1450" }}>
               <div style={{ fontSize: 14, fontWeight: 900, color: "#39ff14", letterSpacing: 3, marginBottom: 16 }}>
@@ -1934,6 +2235,14 @@ export default function AdminPage() {
                               </div>
 
                               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                <button
+                                  type="button"
+                                  className="btn-primary sm"
+                                  style={{ fontSize: 11, padding: "4px 10px", background: "#00aaff", borderColor: "#00aaff", color: "#fff" }}
+                                  onClick={() => handleStartEditReview(r)}
+                                >
+                                  ✏️ EDIT
+                                </button>
                                 <button
                                   type="button"
                                   className={isPub ? "btn-ghost" : "btn-primary sm"}

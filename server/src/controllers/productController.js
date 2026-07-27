@@ -297,3 +297,110 @@ export const deleteReview = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const updateReview = async (req, res) => {
+  try {
+    const { productId, oldProductId, reviewId, reviewer_name, rating, comment, photos, is_published } = req.body;
+    if (!productId || !reviewId) return res.status(400).json({ success: false, message: 'Missing required fields' });
+
+    const targetProductId = String(productId);
+    const originalProductId = String(oldProductId || productId);
+
+    if (targetProductId !== originalProductId) {
+      // 1. Remove from old product key
+      const oldKey = `${REVIEWS_KEY_PREFIX}${originalProductId}`;
+      const { data: oldData } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', oldKey)
+        .maybeSingle();
+
+      let oldReviews = [];
+      if (oldData?.value) {
+        try { oldReviews = JSON.parse(oldData.value); } catch (_) {}
+      }
+      const existingReview = oldReviews.find(r => r.id === reviewId);
+      const filteredOld = oldReviews.filter(r => r.id !== reviewId);
+
+      await supabase
+        .from('site_settings')
+        .upsert({ key: oldKey, value: JSON.stringify(filteredOld) }, { onConflict: 'key' });
+
+      // 2. Add updated review to new product key
+      const newKey = `${REVIEWS_KEY_PREFIX}${targetProductId}`;
+      const { data: newData } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', newKey)
+        .maybeSingle();
+
+      let newReviews = [];
+      if (newData?.value) {
+        try { newReviews = JSON.parse(newData.value); } catch (_) {}
+      }
+
+      const updatedReview = {
+        id: reviewId,
+        product_id: targetProductId,
+        reviewer_name: reviewer_name !== undefined ? reviewer_name : (existingReview?.reviewer_name || 'Customer'),
+        rating: rating !== undefined ? Number(rating) : (existingReview?.rating || 5),
+        comment: comment !== undefined ? comment : (existingReview?.comment || ''),
+        photos: Array.isArray(photos) ? photos : (existingReview?.photos || []),
+        is_published: is_published !== undefined ? !!is_published : (existingReview?.is_published !== false),
+        created_at: existingReview?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const updatedNew = [updatedReview, ...newReviews.filter(r => r.id !== reviewId)];
+
+      await supabase
+        .from('site_settings')
+        .upsert({ key: newKey, value: JSON.stringify(updatedNew) }, { onConflict: 'key' });
+
+      return res.json({ success: true, review: updatedReview, reviews: updatedNew });
+    } else {
+      // Update in place for same product ID
+      const key = `${REVIEWS_KEY_PREFIX}${targetProductId}`;
+      const { data: existingData } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', key)
+        .maybeSingle();
+
+      let current = [];
+      if (existingData?.value) {
+        try { current = JSON.parse(existingData.value); } catch (_) {}
+      }
+
+      let updatedReview = null;
+      const updated = current.map(r => {
+        if (r.id === reviewId) {
+          updatedReview = {
+            ...r,
+            product_id: targetProductId,
+            reviewer_name: reviewer_name !== undefined ? reviewer_name : r.reviewer_name,
+            rating: rating !== undefined ? Number(rating) : r.rating,
+            comment: comment !== undefined ? comment : r.comment,
+            photos: Array.isArray(photos) ? photos : r.photos,
+            is_published: is_published !== undefined ? !!is_published : r.is_published,
+            updated_at: new Date().toISOString()
+          };
+          return updatedReview;
+        }
+        return r;
+      });
+
+      const { error: upsertError } = await supabase
+        .from('site_settings')
+        .upsert({ key, value: JSON.stringify(updated) }, { onConflict: 'key' });
+
+      if (upsertError) throw upsertError;
+
+      return res.json({ success: true, review: updatedReview, reviews: updated });
+    }
+  } catch (error) {
+    console.error('updateReview error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

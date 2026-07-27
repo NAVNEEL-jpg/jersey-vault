@@ -164,6 +164,70 @@ export async function deleteProductReview(productId, reviewId) {
   return updated;
 }
 
+export async function updateProductReview(productId, reviewId, reviewObj, oldProductId = null) {
+  try {
+    const res = await fetch(`${API_BASE}/api/products/reviews`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId,
+        oldProductId: oldProductId || productId,
+        reviewId,
+        reviewer_name: reviewObj.reviewer_name,
+        rating: reviewObj.rating,
+        comment: reviewObj.comment,
+        photos: reviewObj.photos,
+        is_published: reviewObj.is_published !== false,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.error('API updateProductReview error:', err);
+  }
+
+  // Fallback
+  const origPid = oldProductId || productId;
+  const current = await fetchProductReviews(origPid);
+  const existing = current.find(r => r.id === reviewId);
+  const updatedReviewObj = {
+    ...(existing || {}),
+    id: reviewId,
+    product_id: String(productId),
+    reviewer_name: reviewObj.reviewer_name,
+    rating: Number(reviewObj.rating),
+    comment: reviewObj.comment,
+    photos: Array.isArray(reviewObj.photos) ? reviewObj.photos : [],
+    is_published: reviewObj.is_published !== false,
+    updated_at: new Date().toISOString()
+  };
+
+  if (String(origPid) !== String(productId)) {
+    const filteredOld = current.filter(r => r.id !== reviewId);
+    try {
+      localStorage.setItem(`${REVIEWS_KEY_PREFIX}${origPid}`, JSON.stringify(filteredOld));
+    } catch (_) {}
+    const targetCurrent = await fetchProductReviews(productId);
+    const updatedTarget = [updatedReviewObj, ...targetCurrent.filter(r => r.id !== reviewId)];
+    try {
+      localStorage.setItem(`${REVIEWS_KEY_PREFIX}${productId}`, JSON.stringify(updatedTarget));
+    } catch (_) {}
+  } else {
+    const updatedList = current.map(r => r.id === reviewId ? updatedReviewObj : r);
+    try {
+      localStorage.setItem(`${REVIEWS_KEY_PREFIX}${productId}`, JSON.stringify(updatedList));
+    } catch (_) {}
+  }
+
+  return { success: true, review: updatedReviewObj };
+}
+
+
 export async function uploadReviewImage(file) {
   try {
     const ext = file.name ? file.name.split('.').pop() : 'jpg';
