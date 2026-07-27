@@ -18,7 +18,7 @@ import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
 import wc26Video from "../assets/WC26(1).mp4";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
-import { fetchProductReviews } from "../utils/reviews";
+import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
 
 const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "24px" }) {
   const images = getProductImages(imageUrl);
@@ -381,6 +381,7 @@ function NavLinks({ user, isAdmin, handleLogout, scrollToShop, navigate, setMobi
       <Link to="/" className="nav-link" onClick={() => setMobileMenuOpen(false)}>HOME</Link>
       <button type="button" className="nav-link" onClick={scrollToShop}>SHOP</button>
       <Link to="/teams" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TEAMS</Link>
+      <Link to="/reviews" className="nav-link" onClick={() => setMobileMenuOpen(false)}>REVIEWS</Link>
       <Link to="/tracking" className="nav-link" onClick={() => setMobileMenuOpen(false)}>TRACK</Link>
       <button type="button" className="nav-link" onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); setMobileMenuOpen(false); }}>CART</button>
       <Link to="/myorders" className="nav-link" onClick={() => setMobileMenuOpen(false)}>MY ORDERS</Link>
@@ -427,9 +428,26 @@ export default function JerseyStore() {
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [previewReviewPhoto, setPreviewReviewPhoto] = useState(null);
 
+  const [showWriteReviewForm, setShowWriteReviewForm] = useState(false);
+  const [newReviewerName, setNewReviewerName] = useState("");
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState("");
+  const [newReviewPhotos, setNewReviewPhotos] = useState([]);
+  const [uploadingReviewPhoto, setUploadingReviewPhoto] = useState(false);
+  const [submittingCustomerReview, setSubmittingCustomerReview] = useState(false);
+  const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState("");
+  const [reviewSubmitError, setReviewSubmitError] = useState("");
+
   useEffect(() => {
     if (selectedJersey) {
       setLoadingReviews(true);
+      setShowWriteReviewForm(false);
+      setNewReviewerName("");
+      setNewReviewRating(5);
+      setNewReviewComment("");
+      setNewReviewPhotos([]);
+      setReviewSubmitSuccess("");
+      setReviewSubmitError("");
       fetchProductReviews(selectedJersey.id)
         .then(reviews => {
           const published = (reviews || []).filter(r => r.is_published !== false);
@@ -444,6 +462,64 @@ export default function JerseyStore() {
       setJerseyReviews([]);
     }
   }, [selectedJersey]);
+
+  const handleUploadCustomerPhoto = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadingReviewPhoto(true);
+    setReviewSubmitError("");
+    try {
+      for (const file of files) {
+        const url = await uploadReviewImage(file);
+        if (url) {
+          setNewReviewPhotos(prev => [...prev, url]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to upload photo:", err);
+      setReviewSubmitError("Failed to upload photo. Please try again.");
+    } finally {
+      setUploadingReviewPhoto(false);
+      e.target.value = "";
+    }
+  };
+
+  const handlePostCustomerReview = async (e) => {
+    e.preventDefault();
+    if (!selectedJersey) return;
+    if (!newReviewComment.trim()) {
+      setReviewSubmitError("Please enter your review comments.");
+      return;
+    }
+    setSubmittingCustomerReview(true);
+    setReviewSubmitError("");
+    setReviewSubmitSuccess("");
+    try {
+      const updatedReviews = await addProductReview(selectedJersey.id, {
+        reviewer_name: newReviewerName.trim() || "Customer",
+        rating: newReviewRating,
+        comment: newReviewComment.trim(),
+        photos: newReviewPhotos,
+        is_published: true
+      });
+      const published = (updatedReviews || []).filter(r => r.is_published !== false);
+      setJerseyReviews(published);
+      setReviewSubmitSuccess("✓ Thank you! Your review with photo(s) has been posted successfully.");
+      setNewReviewComment("");
+      setNewReviewPhotos([]);
+      setNewReviewerName("");
+      setNewReviewRating(5);
+      setTimeout(() => {
+        setShowWriteReviewForm(false);
+        setReviewSubmitSuccess("");
+      }, 2500);
+    } catch (err) {
+      console.error("Error posting review:", err);
+      setReviewSubmitError("Failed to post review: " + (err.message || "Unknown error"));
+    } finally {
+      setSubmittingCustomerReview(false);
+    }
+  };
   const [toast, setToast] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [heroVisible, setHeroVisible] = useState(() => {
@@ -509,9 +585,11 @@ export default function JerseyStore() {
   }, [searchParams, activeTeamName]);
 
   // FIX: showToast wrapped in useCallback so it's stable across renders
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 4500);
+  const showToast = useCallback((msg, options = {}) => {
+    const text = typeof msg === "string" ? msg : (msg?.text || msg?.message || "");
+    const isCart = options.isCart ?? (typeof msg === "object" && msg?.isCart !== undefined ? msg.isCart : true);
+    setToast({ text, isCart });
+    setTimeout(() => setToast(null), 3500);
   }, []);
 
   // Close sort dropdown on outside click
@@ -554,6 +632,13 @@ export default function JerseyStore() {
     setSelectedJersey(jersey);
     setSelectedSize("M");
     setModalQty(1);
+    if (jersey && jersey.id) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("product", jersey.id);
+        window.history.replaceState({}, "", url.toString());
+      } catch (_) {}
+    }
     ReactGA.event("view_item", {
       currency: "INR",
       value: jersey.price,
@@ -566,9 +651,50 @@ export default function JerseyStore() {
     });
   }, []);
 
-  // FIX: cart removed from the dependency array to avoid infinite loops.
+  const closeQuickView = useCallback(() => {
+    setSelectedJersey(null);
+    setShowSizeChart(false);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("product");
+      url.searchParams.delete("id");
+      window.history.replaceState({}, "", url.toString());
+    } catch (_) {}
+  }, []);
+
+  const handleCopyShareLink = useCallback((jersey, e) => {
+    if (e) e.stopPropagation();
+    if (!jersey) return;
+    const shareUrl = `${window.location.origin}/?product=${jersey.id}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast("✓ Product share link copied to clipboard!", { isCart: false });
+      }).catch(() => {
+        fallbackCopyText(shareUrl);
+      });
+    } else {
+      fallbackCopyText(shareUrl);
+    }
+    function fallbackCopyText(text) {
+      const input = document.createElement("input");
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      showToast("✓ Product share link copied to clipboard!", { isCart: false });
+    }
+  }, [showToast]);
+
+  const handleShareWhatsApp = useCallback((jersey, e) => {
+    if (e) e.stopPropagation();
+    if (!jersey) return;
+    const shareUrl = `${window.location.origin}/?product=${jersey.id}`;
+    const text = `🔥 Check out the ${jersey.name} on Jersey Vault for ₹${jersey.price}!\n\nDirect Link: ${shareUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+  }, []);
+
   // Cart validation runs only when searchParams changes (i.e. when products load).
-  // We read the latest cart via a functional setState pattern instead.
   useEffect(() => {
     let cancelled = false;
     let scrollTimer;
@@ -588,6 +714,18 @@ export default function JerseyStore() {
       if (cancelled) return;
       if (!error && data) {
         setJerseys(data);
+
+        // Auto open product modal if product ID in URL
+        const targetId = searchParams.get("product") || searchParams.get("id");
+        if (targetId) {
+          const found = data.find(p => String(p.id) === String(targetId));
+          if (found) {
+            setSelectedJersey(found);
+            setSelectedSize("M");
+            setModalQty(1);
+          }
+        }
+
         if (teamId) {
           scrollTimer = setTimeout(() => {
             document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
@@ -1135,10 +1273,10 @@ letter-spacing: 4px !important;
   background: #111;
   border: 1px solid #2a2a2a !important;
   color: #aaa !important;
-  width: 52px;
-  height: 52px;
+  width: 40px;
+  height: 40px;
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: 1px;
   cursor: pointer;
   border-radius: 3px;
@@ -1418,7 +1556,7 @@ letter-spacing: 4px !important;
   .stats-grid { grid-template-columns:repeat(3,1fr); }
   .stat-cell { padding:14px 0; }
   .filter-btn { font-size:14px !important; padding:6px 12px; }
-  .size-btn { width:44px; height:44px; font-size:14px; }
+  .size-btn { width:36px; height:36px; font-size:13px; }
   .modal { max-width:100%; margin:0; border-radius:0; }
   .size-grid { gap:6px; }
   .checkout-btn {
@@ -1431,7 +1569,7 @@ letter-spacing: 4px !important;
 }
  @media(max-width:480px) {
   .stat-cell { padding:12px 0; }
-  .size-btn { width:42px; height:42px; }
+  .size-btn { width:34px; height:34px; font-size:12px; }
   .card-img { height:100% !important; object-fit:cover !important; }
   .card-img-wrap { height:210px !important; }
   .cart-item-img { width:44px; height:44px; }
@@ -1447,7 +1585,7 @@ letter-spacing: 4px !important;
   .checkout-arrow { font-size:16px; }
   .cart-item-name { font-size:13px; }
   .cart-item-price { font-size:15px; }
-  .size-btn { width:38px; height:38px; font-size:13px; }
+  .size-btn { width:32px; height:32px; font-size:11px; }
   .filter-btn { font-size:12px !important; padding:4px 8px; }
   .cart-total-amount { font-size:22px; }
   .stat-cell { padding:10px 0; }
@@ -2329,13 +2467,13 @@ letter-spacing: 4px !important;
         {/* SIZE PICKER MODAL */}
         {selectedJersey && (
           <div className="modal-bg">
-            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }} />
+            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={closeQuickView} />
             <div className="modal" style={{ position: "relative" }}>
               {/* Top Left Compact Back Button */}
               <button
                 type="button"
                 className="modal-back-btn"
-                onClick={() => { setSelectedJersey(null); setShowSizeChart(false); }}
+                onClick={closeQuickView}
                 style={{
                   position: "absolute",
                   top: "10px",
@@ -2376,53 +2514,141 @@ letter-spacing: 4px !important;
 
               <div style={{ padding: "16px 24px 6px" }}>
                 <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic" }}>{selectedJersey.name}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, width: "100%" }}>
-                  <span className="modal-type-badge">{(() => {
-                    if (selectedJersey.type && (selectedJersey.type.toUpperCase().includes("FAN") || selectedJersey.type.toUpperCase().includes("PLAYER"))) {
-                      return selectedJersey.type.toUpperCase();
-                    }
-                    const str = `${selectedJersey.name || ""} ${selectedJersey.category || ""} ${selectedJersey.sub_category || ""} ${selectedJersey.description || ""}`.toUpperCase();
-                    return str.includes("PLAYER") ? "PLAYER VERSION" : "FAN VERSION";
-                  })()}</span>
-                  <span className="modal-price">₹{selectedJersey.price}</span>
-                  <button
-                    type="button"
-                    className="size-chart-btn"
-                    onClick={() => setShowSizeChart(true)}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 9h20v6H2z"/>
-                      <path d="M6 9v3"/>
-                      <path d="M10 9v2"/>
-                      <path d="M14 9v3"/>
-                      <path d="M18 9v2"/>
-                    </svg>
-                    SIZE CHART
-                  </button>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginTop: 8, width: "100%" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="modal-type-badge">{(() => {
+                      if (selectedJersey.type && (selectedJersey.type.toUpperCase().includes("FAN") || selectedJersey.type.toUpperCase().includes("PLAYER"))) {
+                        return selectedJersey.type.toUpperCase();
+                      }
+                      const str = `${selectedJersey.name || ""} ${selectedJersey.category || ""} ${selectedJersey.sub_category || ""} ${selectedJersey.description || ""}`.toUpperCase();
+                      return str.includes("PLAYER") ? "PLAYER VERSION" : "FAN VERSION";
+                    })()}</span>
+                    <span className="modal-price">₹{selectedJersey.price}</span>
+                  </div>
+
+                  {/* WhatsApp & Link White Logos (Size 26px with 16px gap) */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      onClick={(e) => handleShareWhatsApp(selectedJersey, e)}
+                      title="Share on WhatsApp"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#ffffff",
+                        padding: "2px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "transform 0.15s"
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.2)"}
+                      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                    >
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff">
+                        <path d="M12.012 2c-5.508 0-9.989 4.478-9.989 9.984 0 1.762.459 3.483 1.332 5.004L2 22l5.161-1.344a9.96 9.96 0 004.851 1.256h.004c5.507 0 9.988-4.478 9.988-9.984 0-2.668-1.039-5.176-2.925-7.062A9.925 9.925 0 0012.012 2zm5.721 14.286c-.24.673-1.398 1.282-1.92 1.348-.48.06-1.096.084-3.54-.924-2.772-1.144-4.56-3.96-4.696-4.14-.136-.18-1.12-1.488-1.12-2.844 0-1.356.708-2.016.96-2.292.24-.264.528-.336.708-.336.18 0 .36.004.516.012.168.008.396-.064.62.472.24.576.816 1.992.888 2.136.072.144.12.312.024.504-.096.192-.144.312-.288.48-.144.168-.304.376-.432.504-.144.144-.294.3-.126.588.168.288.75 1.238 1.61 2.004 1.106.985 2.038 1.29 2.326 1.434.288.144.48.216.552.336.072.12.072.696-.168 1.368z"/>
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleCopyShareLink(selectedJersey, e)}
+                      title="Copy Product Link"
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#ffffff",
+                        padding: "2px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "transform 0.15s"
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.2)"}
+                      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                    >
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
+
                 {selectedJersey.stock > 0 && selectedJersey.stock <= 5 && (
                   <div className="stock-warning" style={{ marginTop: 8 }}>⚠ ONLY {selectedJersey.stock} LEFT IN STOCK</div>
                 )}
               </div>
 
               <div style={{ padding: "10px 24px 32px" }}>
-                <div className="size-label">SELECT SIZE</div>
-                <div className="size-grid">
-                  {sizes.filter(s => getSizeStock(selectedJersey, s) > 0).map(s => {
-                    return (
-                      <button type="button"
-                        key={s}
-                        className={`size-btn${selectedSize === s ? " selected" : ""}`}
-                        onClick={() => {
-                          setSelectedSize(s);
-                          setModalQty(1);
-                          ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
-                        }}
-                      >
-                        {s}
-                      </button>
-                    );
-                  })}
+                <div className="size-label" style={{ margin: "0 0 8px", fontSize: "13px", letterSpacing: "2.5px" }}>
+                  SELECT SIZE
+                </div>
+
+                {/* SIZE GRID & WHITE SIZE CHART LOGO ON EXTREME RIGHT */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "nowrap", gap: "10px" }}>
+                  <div className="size-grid" style={{ margin: 0 }}>
+                    {sizes.filter(s => getSizeStock(selectedJersey, s) > 0).map(s => {
+                      return (
+                        <button type="button"
+                          key={s}
+                          className={`size-btn${selectedSize === s ? " selected" : ""}`}
+                          onClick={() => {
+                            setSelectedSize(s);
+                            setModalQty(1);
+                            ReactGA.event("size_selected", { size: s, item_id: selectedJersey.id, item_name: selectedJersey.name });
+                          }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Size Chart White Logo at EXTREME RIGHT with small SIZE CHART text below */}
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeChart(true)}
+                    title="View Size Chart"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#ffffff",
+                      padding: "2px",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginLeft: "auto",
+                      marginRight: "-6px",
+                      flexShrink: 0,
+                      transition: "transform 0.15s"
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+                    onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                  >
+                    <svg width="38" height="38" viewBox="0 0 100 100" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M 18 16 L 18 72 L 78 72" />
+                      <line x1="18" y1="28" x2="25" y2="28" />
+                      <line x1="18" y1="40" x2="25" y2="40" />
+                      <line x1="18" y1="52" x2="25" y2="52" />
+                      <line x1="18" y1="64" x2="25" y2="64" />
+                      <line x1="30" y1="72" x2="30" y2="65" />
+                      <line x1="42" y1="72" x2="42" y2="65" />
+                      <line x1="54" y1="72" x2="54" y2="65" />
+                      <line x1="66" y1="72" x2="66" y2="65" />
+                      <path d="M 12 24 L 18 14 L 24 24" />
+                      <path d="M 70 66 L 80 72 L 70 78" />
+                      <path d="M 36 24 H 60 V 58 H 52 L 48 38 L 44 58 H 36 Z" strokeWidth="4" />
+                      <path d="M 36 30 H 60" strokeWidth="3" />
+                    </svg>
+                    <span style={{ fontSize: "8.5px", fontWeight: "900", letterSpacing: "0.8px", color: "#ffffff", marginTop: "1px", textTransform: "uppercase", fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      SIZE CHART
+                    </span>
+                  </button>
                 </div>
 
                 {/* SELECT QUANTITY FOR SELECTED SIZE */}
@@ -2615,7 +2841,7 @@ letter-spacing: 4px !important;
 
                 {/* ── CUSTOMER REVIEWS SECTION ── */}
                 <div style={{ marginTop: 28, borderTop: "1px solid #1a1a1a", paddingTop: 20 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
                     <div>
                       <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#fff" }}>
                         CUSTOMER REVIEWS ({jerseyReviews.length})
@@ -2627,7 +2853,257 @@ letter-spacing: 4px !important;
                         </div>
                       )}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowWriteReviewForm(o => !o)}
+                      style={{
+                        background: showWriteReviewForm ? "rgba(255, 68, 68, 0.15)" : "rgba(57, 255, 20, 0.12)",
+                        border: showWriteReviewForm ? "1px solid rgba(255, 68, 68, 0.4)" : "1px solid #39ff14",
+                        color: showWriteReviewForm ? "#ff4444" : "#39ff14",
+                        padding: "6px 14px",
+                        borderRadius: "4px",
+                        fontWeight: 800,
+                        fontSize: "12px",
+                        letterSpacing: "1px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      {showWriteReviewForm ? "✕ CLOSE FORM" : "✍️ WRITE A REVIEW"}
+                    </button>
                   </div>
+
+                  {/* CUSTOMER REVIEW SUBMISSION FORM */}
+                  {showWriteReviewForm && (
+                    <form
+                      onSubmit={handlePostCustomerReview}
+                      style={{
+                        background: "#080808",
+                        border: "1px solid #39ff14",
+                        borderRadius: "6px",
+                        padding: "16px",
+                        marginBottom: "20px",
+                        boxShadow: "0 0 20px rgba(57, 255, 20, 0.15)"
+                      }}
+                    >
+                      <div style={{ fontWeight: 900, fontSize: "14px", letterSpacing: "1.5px", color: "#39ff14", textTransform: "uppercase", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>✍️</span> WRITE & POST A REVIEW
+                      </div>
+
+                      {/* Star Rating Picker */}
+                      <div style={{ marginBottom: "12px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "#aaa", marginBottom: "6px" }}>
+                          YOUR RATING:
+                        </label>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setNewReviewRating(star)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: star <= newReviewRating ? "#ffb700" : "#444",
+                                fontSize: "22px",
+                                cursor: "pointer",
+                                padding: "0 2px",
+                                transition: "transform 0.15s, color 0.15s"
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.2)"}
+                              onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+                            >
+                              ★
+                            </button>
+                          ))}
+                          <span style={{ fontSize: "12px", color: "#39ff14", fontWeight: 800, marginLeft: "8px", letterSpacing: "0.5px" }}>
+                            ({newReviewRating} / 5 Stars)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Reviewer Name */}
+                      <div style={{ marginBottom: "12px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "#aaa", marginBottom: "4px" }}>
+                          YOUR NAME / NICKNAME:
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Rahul S. (or leave empty for 'Customer')"
+                          value={newReviewerName}
+                          onChange={(e) => setNewReviewerName(e.target.value)}
+                          style={{
+                            width: "100%",
+                            background: "#111",
+                            border: "1px solid #2a2a2a",
+                            borderRadius: "4px",
+                            padding: "8px 12px",
+                            color: "#fff",
+                            fontSize: "13px",
+                            fontFamily: "'Barlow', sans-serif",
+                            outline: "none",
+                            boxSizing: "border-box"
+                          }}
+                          onFocus={(e) => e.currentTarget.style.borderColor = "#39ff14"}
+                          onBlur={(e) => e.currentTarget.style.borderColor = "#2a2a2a"}
+                        />
+                      </div>
+
+                      {/* Review Comment */}
+                      <div style={{ marginBottom: "14px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "#aaa", marginBottom: "4px" }}>
+                          YOUR REVIEW / FEEDBACK:
+                        </label>
+                        <textarea
+                          rows={3}
+                          placeholder="Share details about jersey quality, fabric, printing, sizing fit..."
+                          value={newReviewComment}
+                          onChange={(e) => setNewReviewComment(e.target.value)}
+                          required
+                          style={{
+                            width: "100%",
+                            background: "#111",
+                            border: "1px solid #2a2a2a",
+                            borderRadius: "4px",
+                            padding: "8px 12px",
+                            color: "#fff",
+                            fontSize: "13px",
+                            fontFamily: "'Barlow', sans-serif",
+                            outline: "none",
+                            resize: "vertical",
+                            boxSizing: "border-box"
+                          }}
+                          onFocus={(e) => e.currentTarget.style.borderColor = "#39ff14"}
+                          onBlur={(e) => e.currentTarget.style.borderColor = "#2a2a2a"}
+                        />
+                      </div>
+
+                      {/* Photo Upload Section */}
+                      <div style={{ marginBottom: "16px" }}>
+                        <label style={{ display: "block", fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "#aaa", marginBottom: "6px" }}>
+                          ADD PHOTOS (OPTIONAL):
+                        </label>
+                        
+                        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                          <label
+                            style={{
+                              background: "#161616",
+                              border: "1px dashed #39ff14",
+                              color: "#39ff14",
+                              padding: "8px 14px",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              letterSpacing: "1px",
+                              cursor: uploadingReviewPhoto ? "wait" : "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px"
+                            }}
+                          >
+                            <span>📷</span> {uploadingReviewPhoto ? "UPLOADING PHOTO..." : "UPLOAD PHOTO"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              disabled={uploadingReviewPhoto}
+                              onChange={handleUploadCustomerPhoto}
+                              style={{ display: "none" }}
+                            />
+                          </label>
+
+                          {uploadingReviewPhoto && (
+                            <span style={{ fontSize: "11px", color: "#aaa", fontStyle: "italic" }}>
+                              Processing image...
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Image Previews */}
+                        {newReviewPhotos.length > 0 && (
+                          <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
+                            {newReviewPhotos.map((url, pIdx) => (
+                              <div key={pIdx} style={{ position: "relative" }}>
+                                <img
+                                  src={url}
+                                  alt="Attached preview"
+                                  style={{
+                                    width: 56,
+                                    height: 56,
+                                    objectFit: "cover",
+                                    borderRadius: "4px",
+                                    border: "1px solid #39ff14"
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setNewReviewPhotos(prev => prev.filter((_, i) => i !== pIdx))}
+                                  style={{
+                                    position: "absolute",
+                                    top: -5,
+                                    right: -5,
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: "50%",
+                                    background: "#ff4444",
+                                    color: "#fff",
+                                    border: "none",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "10px",
+                                    fontWeight: 900,
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Messages */}
+                      {reviewSubmitError && (
+                        <div style={{ color: "#ff4444", fontSize: "12px", marginBottom: "12px", fontWeight: 700 }}>
+                          ⚠️ {reviewSubmitError}
+                        </div>
+                      )}
+                      {reviewSubmitSuccess && (
+                        <div style={{ color: "#39ff14", fontSize: "12px", marginBottom: "12px", fontWeight: 800 }}>
+                          {reviewSubmitSuccess}
+                        </div>
+                      )}
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        disabled={submittingCustomerReview || uploadingReviewPhoto}
+                        style={{
+                          width: "100%",
+                          background: "#39ff14",
+                          color: "#000",
+                          border: "none",
+                          padding: "10px 16px",
+                          borderRadius: "4px",
+                          fontWeight: 900,
+                          fontSize: "13px",
+                          letterSpacing: "2px",
+                          textTransform: "uppercase",
+                          cursor: (submittingCustomerReview || uploadingReviewPhoto) ? "wait" : "pointer",
+                          opacity: (submittingCustomerReview || uploadingReviewPhoto) ? 0.7 : 1,
+                          transition: "transform 0.15s, background 0.2s"
+                        }}
+                      >
+                        {submittingCustomerReview ? "POSTING REVIEW..." : "POST REVIEW →"}
+                      </button>
+                    </form>
+                  )}
 
                   {loadingReviews ? (
                     <div style={{ color: "#777", fontSize: 12, padding: "16px 0", letterSpacing: 1 }}>
@@ -2948,19 +3424,19 @@ letter-spacing: 4px !important;
           </div>
         )}
       </div>
-        {/* CLICKABLE ADDED TO CART TOAST POPUP */}
+        {/* TOAST POPUP NOTIFICATION */}
         {toast && (
           <div 
             role="button"
             tabIndex={0}
-            aria-label="Product added to cart notification. Click to view cart"
+            aria-label={toast.isCart !== false ? "Product added to cart notification. Click to view cart" : "Notification"}
             onClick={() => {
-              setCartOpen(true);
+              if (toast.isCart !== false) setCartOpen(true);
               setToast(null);
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                setCartOpen(true);
+                if (toast.isCart !== false) setCartOpen(true);
                 setToast(null);
               }
             }}
@@ -2974,7 +3450,7 @@ letter-spacing: 4px !important;
               padding: "14px 22px",
               borderRadius: "4px",
               boxShadow: "0 0 30px rgba(57,255,20,0.45), 0 10px 35px rgba(0,0,0,0.9)",
-              cursor: "pointer",
+              cursor: toast.isCart !== false ? "pointer" : "default",
               display: "flex",
               alignItems: "center",
               gap: 14,
@@ -2983,36 +3459,44 @@ letter-spacing: 4px !important;
               userSelect: "none"
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.transform = "translateY(-2px) scale(1.04)";
-              e.currentTarget.style.boxShadow = "0 0 45px rgba(57,255,20,0.7), 0 12px 40px rgba(0,0,0,0.95)";
-              e.currentTarget.style.background = "#111111";
+              if (toast.isCart !== false) {
+                e.currentTarget.style.transform = "translateY(-2px) scale(1.04)";
+                e.currentTarget.style.boxShadow = "0 0 45px rgba(57,255,20,0.7), 0 12px 40px rgba(0,0,0,0.95)";
+                e.currentTarget.style.background = "#111111";
+              }
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.transform = "translateY(0) scale(1)";
-              e.currentTarget.style.boxShadow = "0 0 30px rgba(57,255,20,0.45), 0 10px 35px rgba(0,0,0,0.9)";
-              e.currentTarget.style.background = "#0d0d0d";
+              if (toast.isCart !== false) {
+                e.currentTarget.style.transform = "translateY(0) scale(1)";
+                e.currentTarget.style.boxShadow = "0 0 30px rgba(57,255,20,0.45), 0 10px 35px rgba(0,0,0,0.9)";
+                e.currentTarget.style.background = "#0d0d0d";
+              }
             }}
           >
-            <span style={{ fontSize: 26, display: "flex", alignItems: "center" }}>🛒</span>
+            <span style={{ fontSize: 26, display: "flex", alignItems: "center" }}>
+              {toast.isCart !== false ? "🛒" : "🔗"}
+            </span>
             <div>
               <div style={{ color: "#39ff14", fontSize: 14, fontWeight: 900, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5, textTransform: "uppercase" }}>
-                ADDED TO CART!
+                {toast.isCart !== false ? "ADDED TO CART!" : "LINK COPIED!"}
               </div>
               <div style={{ color: "#eee", fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1, marginTop: 2, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span>{toast}</span>
-                <span style={{ 
-                  background: "#39ff14", 
-                  color: "#000", 
-                  fontWeight: 900, 
-                  padding: "3px 9px", 
-                  borderRadius: "2px", 
-                  fontSize: 11,
-                  letterSpacing: 1,
-                  display: "inline-flex",
-                  alignItems: "center"
-                }}>
-                  VIEW CART →
-                </span>
+                <span>{typeof toast === "string" ? toast : (toast.text || toast.message || "")}</span>
+                {toast.isCart !== false && (
+                  <span style={{ 
+                    background: "#39ff14", 
+                    color: "#000", 
+                    fontWeight: 900, 
+                    padding: "3px 9px", 
+                    borderRadius: "2px", 
+                    fontSize: 11,
+                    letterSpacing: 1,
+                    display: "inline-flex",
+                    alignItems: "center"
+                  }}>
+                    VIEW CART →
+                  </span>
+                )}
               </div>
             </div>
           </div>

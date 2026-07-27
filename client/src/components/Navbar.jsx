@@ -50,6 +50,7 @@ export default function Navbar() {
       {/* Desktop links */}
       <div className="nb-links">
         <Link to="/" className="nb-link">Home</Link>
+        <Link to="/reviews" className="nb-link">Reviews</Link>
         <Link to="/tracking" className="nb-link">Track</Link>
         <Link to="/checkout" className="nb-link">Cart</Link>
       </div>
@@ -57,6 +58,7 @@ export default function Navbar() {
       {/* Mobile dropdown */}
       <div className={`nb-mobile-menu${menuOpen ? " open" : ""}`}>
         <Link to="/" className="nb-link" onClick={() => setMenuOpen(false)}>HOME</Link>
+        <Link to="/reviews" className="nb-link" onClick={() => setMenuOpen(false)}>REVIEWS</Link>
         <Link to="/tracking" className="nb-link" onClick={() => setMenuOpen(false)}>TRACK ORDER</Link>
         <Link to="/checkout" className="nb-link" onClick={() => setMenuOpen(false)}>CART</Link>
       </div>

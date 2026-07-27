@@ -13,7 +13,9 @@ import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Teams from "./pages/Teams";
+import Reviews from "./pages/Reviews";
 import SupportChat from "./components/SupportChat";
+
 
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Admin = lazy(() => import("./pages/AdminPage"));
@@ -111,6 +113,7 @@ function AppContent() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/teams" element={<Teams />} />
+          <Route path="/reviews" element={<Reviews />} />
         </Routes>
       </Suspense>
       <SupportChat />

@@ -23,6 +23,12 @@ export default function AnnouncementPopup() {
   useEffect(() => {
     if (!POPUP_CONFIG.enabled) return;
 
+    // Suppress WC advertisement popup when customer opens a dynamic product link
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('product') || searchParams.get('id')) {
+      return;
+    }
+
     if (POPUP_CONFIG.startDate || POPUP_CONFIG.endDate) {
       const now = new Date();
       if (POPUP_CONFIG.startDate && now < new Date(POPUP_CONFIG.startDate)) return;
