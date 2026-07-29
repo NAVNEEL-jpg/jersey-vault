@@ -123,15 +123,17 @@ export default function TrackingPage() {
 
         {error && <p style={{ color: "#ff4444", marginTop: 12, fontSize: 13, letterSpacing: 1 }}>{error}</p>}
 
-        {order && (
-          <div style={{ marginTop: 32, animation: "fadeUp 0.4s ease" }}>
-            <div className="status-card">
-              <div className="track-status-label">CURRENT STATUS</div>
-              <div style={{ fontSize: 28, fontWeight: 900, color: statusColors[currentStatus + 1] || "#39ff14" }}>
-                {statusLabels[currentStatus + 1] || "PROCESSING"}
+        {order && (() => {
+          const isCancelled = String(order?.status).toLowerCase() === "cancelled";
+          return (
+            <div style={{ marginTop: 32, animation: "fadeUp 0.4s ease" }}>
+              <div className="status-card" style={{ borderLeftColor: isCancelled ? "#ff4444" : "#39ff14" }}>
+                <div className="track-status-label">CURRENT STATUS</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: isCancelled ? "#ff4444" : (statusColors[currentStatus + 1] || "#39ff14") }}>
+                  {isCancelled ? "CANCELLED" : (statusLabels[currentStatus + 1] || (typeof order.status === "string" ? String(order.status).toUpperCase() : "PROCESSING"))}
+                </div>
+                <div style={{ color: "#555", fontSize: 12, marginTop: 8, fontFamily: "'Barlow',sans-serif" }}>Order ID: {order.id}</div>
               </div>
-              <div style={{ color: "#555", fontSize: 12, marginTop: 8, fontFamily: "'Barlow',sans-serif" }}>Order ID: {order.id}</div>
-            </div>
 
             <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 24 }}>
               <div className="track-timeline-label">DELIVERY TIMELINE</div>
@@ -162,8 +164,8 @@ export default function TrackingPage() {
                 <span style={{ color: "#39ff14" }}>₹{total}</span>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

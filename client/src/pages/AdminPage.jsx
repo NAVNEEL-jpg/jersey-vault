@@ -9,12 +9,13 @@ import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications"
 import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview, updateProductReview } from "../utils/reviews";
 
 
-const statusOptions = ["pending", "preparing", "shipped", "delivered"];
+const statusOptions = ["pending", "preparing", "shipped", "delivered", "cancelled"];
 const statusColors = {
   pending: "#ff9900",
   preparing: "#00aaff",
   shipped: "#aa44ff",
   delivered: "#39ff14",
+  cancelled: "#ff4444",
 };
 
 const JERSEY_TYPES = ["FAN VERSION", "PLAYER VERSION", "RETRO"];
@@ -479,7 +480,15 @@ export default function AdminPage() {
   const updateStatus = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    setOrders(prev => {
+      const updated = prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+      const totalRev = updated
+        .filter(o => o.status !== "cancelled")
+        .reduce((acc, order) => acc + (order.total ?? 0), 0);
+      const pendingCount = updated.filter(o => o.status === "pending").length;
+      setStats(s => ({ ...s, totalRevenue: totalRev, pendingOrders: pendingCount }));
+      return updated;
+    });
     setUpdatingId(null);
   };
 

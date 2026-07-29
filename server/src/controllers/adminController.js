@@ -10,7 +10,9 @@ export const getStats = async (req, res) => {
     if (orderError) throw orderError;
 
     const totalOrders = orders.length;
-    const totalRevenue = orders.reduce((acc, order) => acc + (order.total ?? 0), 0);
+    const totalRevenue = orders
+      .filter(o => o.status !== 'cancelled')
+      .reduce((acc, order) => acc + (order.total ?? 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
     // 2. Total Users

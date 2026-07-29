@@ -6,6 +6,7 @@ const statusLabels = {
   preparing: "PACKED & PREPARING",
   shipped:   "SHIPPED",
   delivered: "DELIVERED",
+  cancelled: "CANCELLED",
 };
 
 // Initialize Supabase Client
@@ -136,7 +137,9 @@ function getLocalResponse(message, orderDetails, matchedJerseys, searchTerms) {
     let additionalInfo = '';
     const orderStatus = (orderDetails.status || '').toLowerCase();
 
-    if (orderStatus === 'shipped') { // Shipped — show Delhivery tracking
+    if (orderStatus === 'cancelled') {
+      additionalInfo = `\n\n❌ **Cancelled:** This order has been cancelled. If you have any questions, feel free to contact our support team.`;
+    } else if (orderStatus === 'shipped') { // Shipped — show Delhivery tracking
       additionalInfo =
         `\n\n🚚 **Your order has been shipped!**\n\n` +
         `The order ID sent to the invoice in your mail can be used to track the shipment on the Delhivery track website.\n\n` +
@@ -152,7 +155,7 @@ function getLocalResponse(message, orderDetails, matchedJerseys, searchTerms) {
         `👉 **[Delhivery Tracking Website](https://www.delhivery.com/track/package/)**`;
     }
 
-    const stepMap = { pending: '1/4', preparing: '2/4', shipped: '3/4', delivered: '4/4' };
+    const stepMap = { pending: '1/4', preparing: '2/4', shipped: '3/4', delivered: '4/4', cancelled: 'CANCELLED' };
     return `I found your order **${orderDetails.tracking_id || orderDetails.id}**:\n\n` +
            `📦 **Status:** ${statusText} (Step ${stepMap[orderStatus] || '?/4'})\n` +
            `📅 **Ordered On:** ${new Date(orderDetails.created_at).toLocaleDateString()}\n\n` +

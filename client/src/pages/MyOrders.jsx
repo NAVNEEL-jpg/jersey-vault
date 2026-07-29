@@ -10,6 +10,7 @@ const statusColors = {
   preparing: "#00aaff",
   shipped: "#aa44ff",
   delivered: "#39ff14",
+  cancelled: "#ff4444",
 };
 
 export default function MyOrders() {
@@ -43,7 +44,7 @@ export default function MyOrders() {
     fetchOrders();
   }, []);
 
-  const totalSpent = orders.reduce((s, o) => s + (o.total || 0), 0);
+  const totalSpent = orders.filter(o => o.status !== "cancelled").reduce((s, o) => s + (o.total || 0), 0);
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
