@@ -51,7 +51,7 @@ export default function TrackingPage() {
     setLoading(false);
   };
 
-  const total = order ? order.items.reduce((s, i) => s + i.price * i.qty, 0) : 0;
+  const total = order?.total || (order ? order.items.reduce((s, i) => s + i.price * i.qty, 0) : 0);
   const currentStatus = order?.status ?? 0;
   const timeline = order?.timeline || defaultSteps.map((s, i) => ({
     ...s,
@@ -164,6 +164,7 @@ export default function TrackingPage() {
                 <span style={{ color: "#39ff14" }}>₹{total}</span>
               </div>
             </div>
+          </div>
           );
         })()}
       </div>

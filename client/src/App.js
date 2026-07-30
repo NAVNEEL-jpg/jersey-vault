@@ -16,9 +16,38 @@ import Teams from "./pages/Teams";
 import Reviews from "./pages/Reviews";
 import SupportChat from "./components/SupportChat";
 
+// Browser guard for strict webviews (e.g., Instagram/Facebook in-app browsers)
+if (typeof window !== "undefined") {
+  if (!window.webkit) window.webkit = {};
+  if (!window.webkit.messageHandlers) window.webkit.messageHandlers = {};
+}
 
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Admin = lazy(() => import("./pages/AdminPage"));
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    if (error.name === 'ChunkLoadError' || String(error).includes('Loading chunk')) {
+      window.location.reload();
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="text-white p-5">An error occurred while loading this page. Please refresh.</div>;
+    }
+    return this.props.children; 
+  }
+}
 
 // Initialize GA4 with your unique Measurement ID and debug mode for development
 ReactGA.initialize([
@@ -38,18 +67,6 @@ if (!window.clarityInitialized) {
   } catch (e) {
     console.error("Clarity init failed", e);
   }
-}
-
-// Component to track page views on route change
-function PageTracker() {
-  const location = React.useMemo(() => window.location, []);
-  
-  React.useEffect(() => {
-    // We can't easily use useLocation without moving this inside Router,
-    // but we'll handle the router tracking properly below.
-  }, []);
-  
-  return null;
 }
 
 // Better approach: wrap the app content in a component that uses useLocation
@@ -99,23 +116,25 @@ function AppContent() {
       >
         Skip to content
       </a>
-      <Suspense fallback={<div className="text-white p-5">Loading...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/tracking" element={<Tracking />} />
-          <Route path="/success" element={<Success />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/myorders" element={<MyOrders />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/teams" element={<Teams />} />
-          <Route path="/reviews" element={<Reviews />} />
-        </Routes>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<div className="text-white p-5">Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/tracking" element={<Tracking />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/myorders" element={<MyOrders />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/reviews" element={<Reviews />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
       <SupportChat />
     </>
   );

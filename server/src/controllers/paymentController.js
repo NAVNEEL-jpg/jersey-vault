@@ -104,24 +104,43 @@ export const verifyPayment = async (req, res) => {
       try {
         const { subtotal, shipping, total, verifiedItems } = await recalculateCart(order_data.items || []);
         const clientTotal = order_data.total;
-        const amountPaid = order_data.amount_paid;
+        let amountPaid = order_data.amount_paid;
+
+        // Verify true amount with Razorpay to prevent price manipulation
+        try {
+          const rpPayment = await razorpay.payments.fetch(razorpay_payment_id);
+          if (rpPayment.order_id !== razorpay_order_id) {
+            return res.status(400).json({ message: 'Order ID mismatch' });
+          }
+          amountPaid = rpPayment.amount / 100;
+        } catch (fetchErr) {
+          console.error('Failed to fetch Razorpay payment details:', fetchErr);
+          return res.status(500).json({ message: 'Unable to verify payment amount.' });
+        }
         
         let isMatch = false;
-        let expectedPayment = 0;
+        let amount_paid = 0;
+        let balance_due = 0;
         
-        if (order_data.pay_method === 'Partial_COD') {
+        const payMethodLower = String(order_data.pay_method || '').toLowerCase();
+
+        if (payMethodLower === 'partial_cod') {
           // Partial COD: upfront = shipping fee + 50% cart value
           const deliveryFee = subtotal > FREE_SHIPPING_MIN ? 0 : PARTIAL_COD_SHIPPING_FEE;
           const halfCartValue = Math.ceil(subtotal / 2);
-          expectedPayment = deliveryFee === 0 ? halfCartValue : (deliveryFee + halfCartValue);
-          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
-        } else if (order_data.pay_method === 'COD' || order_data.pay_method === 'Hybrid_COD') {
-          // Full COD: upfront = delivery fee only
-          expectedPayment = Number(order_data.upfront_shipping || order_data.shipping || shipping || COD_DEPOSIT);
-          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment));
+          amount_paid = deliveryFee === 0 ? halfCartValue : (deliveryFee + halfCartValue);
+          balance_due = Math.max(0, total - amount_paid);
+          isMatch = (Math.round(amountPaid) === Math.round(amount_paid));
+        } else if (payMethodLower === 'cod' || payMethodLower === 'hybrid_cod') {
+          // Full COD: upfront = deposit fee only (149)
+          amount_paid = COD_DEPOSIT;
+          balance_due = Math.max(0, total - amount_paid);
+          isMatch = (Math.round(amountPaid) === Math.round(amount_paid));
         } else {
-          expectedPayment = total;
-          isMatch = (Math.round(amountPaid) === Math.round(expectedPayment) && Math.round(clientTotal) === Math.round(total));
+          // Prepaid: full total paid
+          amount_paid = total;
+          balance_due = 0;
+          isMatch = (Math.round(amountPaid) === Math.round(amount_paid) && Math.round(clientTotal) === Math.round(total));
         }
 
         console.log(`PAYMENT_SECURITY_AUDIT:
@@ -129,7 +148,7 @@ Pay Method: ${order_data.pay_method}
 Client Total: ₹${clientTotal}
 Client Upfront Amount Paid: ₹${amountPaid}
 Server Cart Total: ₹${total}
-Expected Upfront Payment: ₹${expectedPayment}
+Expected Upfront Payment: ₹${amount_paid}
 Match: ${isMatch ? 'YES' : 'NO'}`);
 
         if (ENFORCE_SECURITY && !isMatch) {
@@ -140,8 +159,10 @@ Match: ${isMatch ? 'YES' : 'NO'}`);
           ...order_data,
           items: verifiedItems,
           subtotal,
-          shipping: expectedPayment,
-          total: subtotal + expectedPayment,
+          shipping,
+          total,
+          amount_paid,
+          balance_due,
           razorpay_order_id,
           razorpay_payment_id,
           paymentStatus: 'captured',
@@ -326,7 +347,7 @@ export const reconcilePayment = async (req, res) => {
 async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...order_data }) {
   if (!razorpay_order_id && order_data.pay_method !== 'COD') return;
 
-  const orderId = razorpay_payment_id || order_data.id || `COD-${Date.now()}`;
+  const orderId = razorpay_payment_id || order_data.id || `COD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
   const trackingId = `TRK-${orderId.slice(-6).toUpperCase()}`;
 
   const { error } = await supabase
@@ -344,6 +365,8 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
       subtotal: order_data.subtotal,
       shipping: order_data.shipping,
       total: order_data.total,
+      amount_paid: order_data.amount_paid,
+      balance_due: order_data.balance_due,
       pay_method: order_data.pay_method || 'Online',
       status: 'confirmed',
       tracking_id: trackingId,
@@ -357,15 +380,30 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     return;
   }
 
+  let inventoryFailures = [];
   if (order_data.items && Array.isArray(order_data.items)) {
     for (const item of order_data.items) {
-      const { data: p } = await supabase.from('products').select('size_stock').eq('id', item.id).single();
-      if (p?.size_stock) {
-        const newSizeStock = { ...p.size_stock };
-        newSizeStock[item.size] = Math.max(0, (newSizeStock[item.size] || 0) - item.qty);
-        await supabase.from('products').update({ size_stock: newSizeStock }).eq('id', item.id);
+      const { data, error } = await supabase.rpc('update_size_stock', {
+        p_product_id: item.id,
+        p_size: item.size,
+        p_qty_change: -Math.abs(item.qty)
+      });
+      if (error) {
+        console.error(`Failed to decrement size_stock for product ${item.id}, size ${item.size}:`, error);
+        inventoryFailures.push(`[${new Date().toISOString()}] RPC Error for product ${item.id} (${item.size}): ${error.message}`);
+      } else if (data && !data.success) {
+        console.error(`RPC reported failure for product ${item.id}, size ${item.size}:`, data.message);
+        inventoryFailures.push(`[${new Date().toISOString()}] Inventory Conflict for product ${item.id} (${item.size}): requested ${item.qty}, Response: ${data.message}`);
       }
     }
+  }
+
+  if (inventoryFailures.length > 0) {
+    const adminNote = "INVENTORY FAILURE:\n" + inventoryFailures.join('\n');
+    await supabase.from('orders').update({
+      status: 'inventory_pending',
+      admin_notes: adminNote
+    }).eq('id', orderId);
   }
 
   // Trigger send-invoice directly via Resend API
@@ -403,6 +441,33 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
       }
 
       // 3. Send via Resend
+      const hasInventoryConflict = inventoryFailures && inventoryFailures.length > 0;
+      const emailSubject = hasInventoryConflict 
+        ? `Payment Received – Inventory Review Required for Order ${savedOrder.id}`
+        : `Your JerseyVault Invoice ${savedOrder.id}`;
+        
+      const emailHtml = hasInventoryConflict
+        ? `
+            <h2>Payment Received ✅</h2>
+            <p>Your payment has been successfully received and your order has <strong>NOT</strong> been cancelled.</p>
+            <p>Order ID: <strong>${savedOrder.id}</strong></p>
+            <p>Amount Paid: <strong>₹${Number(savedOrder.amount_paid || 0).toLocaleString()}</strong></p>
+            <p>Balance Due: <strong>₹${Number(savedOrder.balance_due || 0).toLocaleString()}</strong></p>
+            <hr />
+            <p><strong>Inventory Review Required</strong></p>
+            <p>Due to high demand, an item in your order is currently under inventory review. Fulfillment has been temporarily paused while we physically verify stock in our warehouse.</p>
+            <p><strong>No action is required from you at this time.</strong> Our support team will contact you directly if any further action is needed.</p>
+            <p>Thank you for choosing JerseyVault.</p>
+          `
+        : `
+            <h2>Order Confirmed ✅</h2>
+            <p>Order ID: <strong>${savedOrder.id}</strong></p>
+            <p>Tracking ID: <strong>${savedOrder.tracking_id}</strong></p>
+            <p>Amount Paid: <strong>₹${Number(savedOrder.amount_paid || 0).toLocaleString()}</strong></p>
+            <p>Balance Due: <strong>₹${Number(savedOrder.balance_due || 0).toLocaleString()}</strong></p>
+            <p>Your order has been successfully placed. We will notify you once it ships.</p>
+          `;
+
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -412,13 +477,8 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
         body: JSON.stringify({
           from: `JerseyVault <${FROM_EMAIL}>`,
           to: savedOrder.customer_email,
-          subject: `Your JerseyVault Invoice ${savedOrder.id}`,
-          html: `
-            <h2>Order Confirmed ✅</h2>
-            <p>Order ID: <strong>${savedOrder.id}</strong></p>
-            <p>Tracking ID: <strong>${savedOrder.tracking_id}</strong></p>
-            <p>Your order has been successfully placed. We will notify you once it ships.</p>
-          `,
+          subject: emailSubject,
+          html: emailHtml,
           attachments: attachments.length > 0 ? attachments : undefined
         })
       });

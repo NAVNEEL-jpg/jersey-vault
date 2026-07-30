@@ -541,31 +541,27 @@ export default function JerseyStore() {
   const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
   const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
   const [menuSortOpen, setMenuSortOpen] = useState(false);
-  const [showFilterScrollHint, setShowFilterScrollHint] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth <= 768 : false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [activeFilter, sortBy, searchQuery, activeTeamName]);
 
-
   useEffect(() => {
+    // Resize Listener
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+
+    // Initial Data Fetch
     supabase.from("site_settings").select("value").eq("key", "featured_category_name").single()
       .then(({ data }) => { if (data && data.value) setFeaturedCategoryName(data.value); })
       .catch(() => { setFeaturedCategoryName("FEATURED"); });
 
-    supabase.from("teams").select("*").order("name", { ascending: true })
+    supabase.from("teams").select("id, name, logo_url, sport").order("name", { ascending: true })
       .then(({ data, error }) => { if (!error && data) setTeamsList(data); });
-  }, []);
 
-  useEffect(() => {
+    // Cart Event Listener
     const handleOpenCart = () => setCartOpen(true);
     window.addEventListener('open-cart', handleOpenCart);
 
@@ -576,7 +572,10 @@ export default function JerseyStore() {
       window.history.replaceState({}, '', newUrl);
     }
 
-    return () => window.removeEventListener('open-cart', handleOpenCart);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('open-cart', handleOpenCart);
+    };
   }, []);
 
  useEffect(() => {
@@ -1764,7 +1763,7 @@ letter-spacing: 4px !important;
   .hero-cta-row { margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
   .hero-btn-primary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:#39ff14; color:#000; border:none; padding:14px 40px; font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:16px; letter-spacing:5px; cursor:pointer; animation:pulse 2s infinite; border-radius:2px; }
   .hero-btn-secondary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#fff; border:1px solid #2a2a2a; padding:14px 40px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:4px; cursor:pointer; border-radius:2px; transition:border-color 0.2s; }
-  .hero-divider { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); }
+  .hero-divider { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); pointer-events:none; }
   .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
   .stat-label { font-size:12px; letter-spacing:4px; color:#777; margin-top:4px; font-weight:700; }
   .card-body { padding:16px 16px 0; flex:1; }

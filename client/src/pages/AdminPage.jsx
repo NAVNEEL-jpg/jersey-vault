@@ -9,13 +9,14 @@ import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications"
 import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview, updateProductReview } from "../utils/reviews";
 
 
-const statusOptions = ["pending", "preparing", "shipped", "delivered", "cancelled"];
+const statusOptions = ["pending", "inventory_pending", "preparing", "shipped", "delivered", "cancelled"];
 const statusColors = {
-  pending: "#ff9900",
-  preparing: "#00aaff",
-  shipped: "#aa44ff",
-  delivered: "#39ff14",
-  cancelled: "#ff4444",
+  pending: "#f39c12",
+  inventory_pending: "#e74c3c", // Red to highlight manual intervention
+  preparing: "#3498db",
+  shipped: "#9b59b6",
+  delivered: "#2ecc71",
+  cancelled: "#e74c3c",
 };
 
 const JERSEY_TYPES = ["FAN VERSION", "PLAYER VERSION", "RETRO"];
@@ -101,7 +102,7 @@ export default function AdminPage() {
   const inlineLogoInputRef = useRef();
 
   // Stats & users
-  const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalUsers: 0, totalProducts: 0, pendingOrders: 0 });
+  const [stats, setStats] = useState({ totalRevenue: 0, gmv: 0, cashCollected: 0, pendingCash: 0, totalOrders: 0, totalUsers: 0, totalProducts: 0, pendingOrders: 0 });
   const [usersList, setUsersList] = useState([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -379,14 +380,14 @@ export default function AdminPage() {
 
       fetchUsers(token, 1, userSearch);
 
-      supabase.from("orders").select("*").order("created_at", { ascending: false })
-        .then(({ data }) => { if (data) setOrders(data); });
-
-      supabase.from("products").select("*, teams(id, name, logo_url, sport)").order("name")
-        .then(({ data }) => { if (data) setProducts(data); });
-
-      supabase.from("teams").select("*").order("sport,name")
-        .then(({ data }) => { if (data) setAllTeams(data); });
+      const [ordersRes, productsRes, teamsRes] = await Promise.all([
+        supabase.from("orders").select("id, status, total, amount_paid, balance_due, pay_method, created_at, admin_notes, items, customer_name, customer_email, address, city, state, pincode").order("created_at", { ascending: false }).limit(200),
+        supabase.from("products").select("id, name, price, stock, size_stock, status, image_url, type, team_id, featured, is_26_27, is_clearance, teams(id, name, logo_url, sport)").order("name"),
+        supabase.from("teams").select("id, name, logo_url, sport").order("sport,name")
+      ]);
+      if (ordersRes.data) setOrders(ordersRes.data);
+      if (productsRes.data) setProducts(productsRes.data);
+      if (teamsRes.data) setAllTeams(teamsRes.data);
         
       fetch(`${API_BASE}/api/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json()).then(d => { if (d && d.featured_category_name) setFeaturedCategoryName(d.featured_category_name); })
@@ -485,8 +486,22 @@ export default function AdminPage() {
       const totalRev = updated
         .filter(o => o.status !== "cancelled")
         .reduce((acc, order) => acc + (order.total ?? 0), 0);
+        
+      const cashCollected = updated.reduce((acc, order) => {
+        const paid = order.amount_paid != null ? Number(order.amount_paid) : ((String(order.pay_method).toLowerCase() === 'cod') ? 149 : (Number(order.total) || 0));
+        return acc + paid;
+      }, 0);
+
+      const pendingCash = updated
+        .filter(o => o.status !== "cancelled")
+        .reduce((acc, order) => {
+          const paid = order.amount_paid != null ? Number(order.amount_paid) : ((String(order.pay_method).toLowerCase() === 'cod') ? 149 : (Number(order.total) || 0));
+          const bal = order.balance_due != null ? Number(order.balance_due) : Math.max(0, (Number(order.total) || 0) - paid);
+          return acc + bal;
+        }, 0);
+
       const pendingCount = updated.filter(o => o.status === "pending").length;
-      setStats(s => ({ ...s, totalRevenue: totalRev, pendingOrders: pendingCount }));
+      setStats(s => ({ ...s, totalRevenue: totalRev, gmv: totalRev, cashCollected, pendingCash, pendingOrders: pendingCount }));
       return updated;
     });
     setUpdatingId(null);
@@ -1020,14 +1035,16 @@ export default function AdminPage() {
         {/* STATS */}
         <div className="stats-grid">
           {[
-            ["REVENUE", `₹${stats.totalRevenue.toLocaleString()}`, "#fff", "#39ff14"],
+            ["GMV (REVENUE)", `₹${(stats.gmv || stats.totalRevenue || 0).toLocaleString()}`, "#fff", "#39ff14"],
+            ["CASH COLLECTED", `₹${(stats.cashCollected || 0).toLocaleString()}`, "#fff", "#00aaff"],
+            ["PENDING CASH", `₹${(stats.pendingCash || 0).toLocaleString()}`, "#fff", "#ff9900"],
             ["ORDERS", stats.totalOrders, "#39ff14", "#39ff14"],
             ["PENDING", stats.pendingOrders, "#ff9900", "#ff9900"],
             ["USERS", stats.totalUsers, "#00aaff", "#00aaff"],
           ].map(([label, val, valColor, borderColor]) => (
             <div key={label} className="stat-card" style={{ borderLeftColor: borderColor }}>
               <div style={{ fontSize: 12, letterSpacing: 3, color: "#555", marginBottom: 8 }}>{label}</div>
-              <div style={{ fontSize: 36, fontWeight: 900, color: valColor }}>{val}</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: valColor }}>{val}</div>
             </div>
           ))}
         </div>
@@ -1060,6 +1077,12 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <div style={{ color: "#888", fontSize: 13, fontFamily: "'Barlow',sans-serif", lineHeight: 1.8 }}>
+                      {order.status === "inventory_pending" && order.admin_notes && (
+                        <div style={{ background: "rgba(231, 76, 60, 0.15)", border: "1px solid rgba(231, 76, 60, 0.4)", padding: "10px", margin: "10px 0", borderRadius: 4, color: "#e74c3c" }}>
+                          <strong style={{ display: "block", marginBottom: 4, letterSpacing: 1 }}>⚠️ ACTION REQUIRED: INVENTORY CONFLICT</strong>
+                          <pre style={{ margin: 0, fontSize: 11, whiteSpace: "pre-wrap", color: "#ff9999", fontFamily: "monospace" }}>{order.admin_notes}</pre>
+                        </div>
+                      )}
                       <div>👤 <strong style={{ color: "#fff" }}>{order.customer_name}</strong></div>
                       <div>📧 {order.customer_email}</div>
                       <div>📞 {order.customer_phone}</div>

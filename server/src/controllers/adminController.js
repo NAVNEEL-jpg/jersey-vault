@@ -5,15 +5,41 @@ export const getStats = async (req, res) => {
     // 1. Revenue & Orders
     const { data: orders, error: orderError } = await supabase
       .from('orders')
-      .select('total, status');
+      .select('total, status, amount_paid, balance_due, pay_method');
 
     if (orderError) throw orderError;
 
     const totalOrders = orders.length;
-    const totalRevenue = orders
-      .filter(o => o.status !== 'cancelled')
-      .reduce((acc, order) => acc + (order.total ?? 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
+
+    // GMV: Total value of all non-cancelled orders
+    const gmv = orders
+      .filter(o => o.status !== 'cancelled')
+      .reduce((acc, order) => acc + (Number(order.total) || 0), 0);
+
+    // Cash Collected: Money successfully collected across ALL orders
+    const cashCollected = orders.reduce((acc, order) => {
+      const paid = order.amount_paid != null 
+        ? Number(order.amount_paid) 
+        : (String(order.pay_method).toLowerCase() === 'cod' ? 149 : (Number(order.total) || 0));
+      return acc + paid;
+    }, 0);
+
+    // Pending Cash: Money expected on delivery for active orders
+    const pendingCash = orders
+      .filter(o => o.status !== 'cancelled')
+      .reduce((acc, order) => {
+        const paid = order.amount_paid != null 
+          ? Number(order.amount_paid) 
+          : (String(order.pay_method).toLowerCase() === 'cod' ? 149 : (Number(order.total) || 0));
+        const bal = order.balance_due != null 
+          ? Number(order.balance_due) 
+          : Math.max(0, (Number(order.total) || 0) - paid);
+        return acc + bal;
+      }, 0);
+
+    // Map GMV to legacy totalRevenue field for safety, though we'll return all new fields
+    const totalRevenue = gmv;
 
     // 2. Total Users
     const { count: totalUsers, error: userError } = await supabase
@@ -31,6 +57,9 @@ export const getStats = async (req, res) => {
 
     res.json({
       totalRevenue,
+      gmv,
+      cashCollected,
+      pendingCash,
       totalOrders,
       totalUsers,
       totalProducts,

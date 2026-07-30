@@ -36,14 +36,25 @@ export function generatePDFBuffer(order) {
       const subtotal = Number(order.subtotal ?? order.items_price ?? 0);
       const shipping = Number(order.shipping ?? order.shipping_price ?? 0);
       const total = Number(order.total ?? order.total_price ?? subtotal + shipping);
-      const codFee = Number(order.cod_fee ?? 30);
 
-      const isCOD = ['COD', 'CASH ON DELIVERY'].some(
+      // Legacy compatibility fallback for old orders missing amount_paid
+      const isLegacyCOD = ['COD', 'CASH ON DELIVERY'].some(
         (k) => payMethod.includes(k) || (order.payment_type || '').toUpperCase() === 'COD'
       );
+      
+      let amountPaidOnline;
+      if (order.amount_paid != null) {
+        amountPaidOnline = Number(order.amount_paid);
+      } else {
+        amountPaidOnline = isLegacyCOD ? 149 : total;
+      }
 
-      const amountPaidOnline = isCOD ? COD_DEPOSIT : total;
-      const balanceDue = isCOD ? Math.max(0, total - amountPaidOnline) : 0;
+      let balanceDue;
+      if (order.balance_due != null) {
+        balanceDue = Number(order.balance_due);
+      } else {
+        balanceDue = Math.max(0, total - amountPaidOnline);
+      }
 
       // Header
       doc.fillColor('#39ff14').fontSize(24).text('JERSEYVAULT', 50, 50);
@@ -125,15 +136,14 @@ export function generatePDFBuffer(order) {
       doc.text('Shipping:', 400, summaryY + 30).text(`₹${shipping}`, 495, summaryY + 30);
 
       let nextY = summaryY + 45;
-      if (isCOD) {
-        doc.text('COD Deposit:', 400, nextY).text(`₹${COD_DEPOSIT}`, 495, nextY);
-        nextY += 15;
-        doc.text('Amount Paid Online:', 400, nextY).text(`₹${COD_DEPOSIT}`, 495, nextY);
-        nextY += 20;
+      
+      doc.text('Amount Paid Online:', 400, nextY).text(`₹${amountPaidOnline}`, 495, nextY);
+      nextY += 20;
+
+      if (balanceDue > 0) {
         doc.fillColor('#000000').font('Helvetica-Bold').fontSize(12).text('BALANCE DUE ON DELIVERY:', 280, nextY);
         doc.text(`₹${balanceDue}`, 495, nextY);
       } else {
-        nextY += 15;
         doc.fillColor('#000000').font('Helvetica-Bold').fontSize(12).text('PAID IN FULL:', 350, nextY);
         doc.text(`₹${total}`, 495, nextY);
       }

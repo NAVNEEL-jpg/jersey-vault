@@ -195,7 +195,12 @@ export default function CheckoutPage() {
         return;
       }
 
-      const onStatusChange = (status) => setPaymentStatus(status);
+      const onStatusChange = (status) => {
+        setPaymentStatus(status);
+        if (status === 'error' || status === 'failed' || status === 'dismissed') {
+          setLoading(false);
+        }
+      };
 
       if (payMethod === 'cod') {
         initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, 'cod', onStatusChange);
@@ -204,7 +209,7 @@ export default function CheckoutPage() {
       } else {
         initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, 'online', onStatusChange);
       }
-    } finally {
+    } catch (err) {
       setLoading(false);
     }
   };

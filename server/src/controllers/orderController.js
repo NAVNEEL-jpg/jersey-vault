@@ -62,7 +62,7 @@ export const trackOrder = async (req, res) => {
 // @route   POST /api/orders
 export const createOrder = async (req, res) => {
   try {
-    const {
+    let {
       user_id,
       orderItems,
       shippingAddress,
@@ -74,6 +74,14 @@ export const createOrder = async (req, res) => {
       isPaid: isPaidBody,
       paymentResult,
     } = req.body;
+
+    // SECURITY FIX: Prevent Mass Assignment & BOLA.
+    // Never trust client-supplied user_id or payment status for non-admins.
+    if (req.user?.role !== 'admin') {
+      user_id = req.user?.id;
+      isPaidBody = false;
+      paymentResult = {};
+    }
 
     if (orderItems && orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
@@ -186,13 +194,44 @@ export const getOrders = async (req, res) => {
 // @route   PUT /api/orders/:id/status
 export const updateOrderStatus = async (req, res) => {
   try {
-    const updateData = {
-      status: req.body.status
-    };
+    const newStatus = req.body.status;
+    const updateData = { status: newStatus };
 
-    if (req.body.status === 'delivered') {
+    if (newStatus === 'delivered') {
       updateData.is_delivered = true;
       updateData.delivered_at = new Date();
+    }
+
+    // Fetch existing order to determine if we need to restore inventory
+    const { data: existingOrder, error: fetchError } = await supabase
+      .from('orders')
+      .select('status, items')
+      .eq('id', req.params.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Perform Inventory Restoration ONLY if transitioning from non-cancelled to cancelled
+    if (newStatus === 'cancelled' && existingOrder.status !== 'cancelled') {
+      const items = Array.isArray(existingOrder.items) ? existingOrder.items : [];
+      for (const item of items) {
+        const productId = item.id || item.product;
+        const qty = Number(item.qty) || 1;
+        const size = item.size;
+
+        if (productId && size) {
+          const { data: rpcData, error: rpcError } = await supabase.rpc('update_size_stock', {
+            p_product_id: productId,
+            p_size: size,
+            p_qty_change: qty
+          });
+          if (rpcError) {
+            console.error(`Failed to increment size_stock for product ${productId}, size ${size}:`, rpcError);
+          } else if (rpcData && !rpcData.success) {
+            console.error(`RPC reported failure for product ${productId}, size ${size}:`, rpcData.message);
+          }
+        }
+      }
     }
 
     const { data, error } = await supabase

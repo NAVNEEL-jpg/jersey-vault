@@ -110,9 +110,14 @@ export async function addProductReview(productId, reviewObj) {
 
 export async function toggleReviewPublishStatus(productId, reviewId, isPublished) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
     const res = await fetch(`${API_BASE}/api/products/reviews/toggle`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({
         productId,
         reviewId,
@@ -141,8 +146,11 @@ export async function toggleReviewPublishStatus(productId, reviewId, isPublished
 
 export async function deleteProductReview(productId, reviewId) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
     const res = await fetch(`${API_BASE}/api/products/reviews/${productId}/${reviewId}`, {
       method: 'DELETE',
+      headers: { ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
     });
 
     if (res.ok) {
@@ -166,9 +174,14 @@ export async function deleteProductReview(productId, reviewId) {
 
 export async function updateProductReview(productId, reviewId, reviewObj, oldProductId = null) {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
     const res = await fetch(`${API_BASE}/api/products/reviews`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
       body: JSON.stringify({
         productId,
         oldProductId: oldProductId || productId,

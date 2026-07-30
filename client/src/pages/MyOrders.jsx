@@ -210,19 +210,23 @@ export default function MyOrders() {
 
                   {(() => {
                     const payMethodStr = String(order.pay_method || '').toUpperCase();
-                    const isPartialCod = payMethodStr.includes('PARTIAL');
-                    if (!isPartialCod) return null;
-                    const subtotal = order.subtotal || (Array.isArray(order.items) ? order.items.reduce((s, i) => s + (i.price * i.qty), 0) : order.total);
-                    const halfJerseyPrice = Math.ceil(subtotal / 2);
-                    const shippingFee = order.shipping !== undefined ? order.shipping : (subtotal > 1099 ? 0 : 99);
-                    const calculatedUpfront = shippingFee + halfJerseyPrice;
-                    const upfrontPaid = Number(order.amount_paid || order.upfront_shipping || calculatedUpfront);
-                    const doorstepRemaining = Math.max(0, (order.total || (subtotal + shippingFee)) - upfrontPaid);
+                    const isLegacyCOD = ['COD', 'CASH ON DELIVERY'].some(k => payMethodStr.includes(k) || (order.payment_type || '').toUpperCase() === 'COD');
+                    
+                    const amountPaidOnline = order.amount_paid != null 
+                      ? Number(order.amount_paid) 
+                      : (isLegacyCOD ? 149 : (Number(order.total) || 0));
+                    
+                    const balanceDue = order.balance_due != null 
+                      ? Number(order.balance_due) 
+                      : Math.max(0, (Number(order.total) || 0) - amountPaidOnline);
+
+                    if (balanceDue <= 0) return null;
+                    
                     return (
                       <div style={{ background: "rgba(57, 255, 20, 0.06)", border: "1px solid rgba(57, 255, 20, 0.2)", padding: "8px 12px", marginTop: 10, borderRadius: 3, fontSize: 12 }}>
-                        <div style={{ color: "#39ff14", fontWeight: 800 }}>🤝 PARTIAL COD PAYMENT SUMMARY</div>
-                        <div style={{ color: "#aaa", marginTop: 2 }}>Paid Online Upfront: <strong style={{ color: "#fff" }}>₹{upfrontPaid.toLocaleString()}</strong></div>
-                        <div style={{ color: "#ffea00", fontWeight: 800, marginTop: 2 }}>Pay in Cash at Doorstep: ₹{doorstepRemaining.toLocaleString()}</div>
+                        <div style={{ color: "#39ff14", fontWeight: 800 }}>🤝 PAYMENT SUMMARY</div>
+                        <div style={{ color: "#aaa", marginTop: 2 }}>Paid Online Upfront: <strong style={{ color: "#fff" }}>₹{amountPaidOnline.toLocaleString()}</strong></div>
+                        <div style={{ color: "#ffea00", fontWeight: 800, marginTop: 2 }}>Pay in Cash at Doorstep: ₹{balanceDue.toLocaleString()}</div>
                       </div>
                     );
                   })()}

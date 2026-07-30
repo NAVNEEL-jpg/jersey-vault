@@ -12,15 +12,30 @@ const ADMIN_EMAIL = 'navneeldutta@gmail.com';
  *   - isAdmin: boolean
  *   - enableNotifications: async function — call on a button click to request permission + subscribe
  */
+// ── Global Singleton for Realtime Channel ───────────────────────
+let globalChannel = null;
+let activeHookInstances = 0;
+
 export function useAdminOrderNotifications() {
-  const channelRef = useRef(null);
   const [permissionStatus, setPermissionStatus] = useState(() => {
     if (!('Notification' in window)) return 'unsupported';
     return Notification.permission; // 'default' | 'granted' | 'denied'
   });
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(!!globalChannel);
   const [isAdmin, setIsAdmin] = useState(false);
   const isAdminRef = useRef(false);
+
+  // ── Track Hook Instances for Safe Cleanup ─────────────────────
+  useEffect(() => {
+    activeHookInstances++;
+    return () => {
+      activeHookInstances--;
+      if (activeHookInstances === 0 && globalChannel) {
+        supabase.removeChannel(globalChannel);
+        globalChannel = null;
+      }
+    };
+  }, []);
 
   // ── Check if logged-in user is admin (on mount) ───────────────
   useEffect(() => {
@@ -66,11 +81,14 @@ export function useAdminOrderNotifications() {
 
   // ── Subscribe to Supabase Realtime ────────────────────────────
   function subscribeRealtime() {
-    if (channelRef.current) return; // already subscribed
+    if (globalChannel) {
+      setIsSubscribed(true);
+      return; // Already subscribed by another hook instance
+    }
 
     registerSW();
 
-    const channel = supabase
+    globalChannel = supabase
       .channel('admin-order-notifications')
       .on(
         'postgres_changes',
@@ -85,8 +103,6 @@ export function useAdminOrderNotifications() {
           setIsSubscribed(true);
         }
       });
-
-    channelRef.current = channel;
   }
 
   // ── Called when admin clicks "Enable Notifications" button ────
@@ -101,16 +117,6 @@ export function useAdminOrderNotifications() {
     if (result === 'granted') {
       subscribeRealtime();
     }
-  }, []);
-
-  // ── Cleanup on unmount ────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
   }, []);
 
   return { permissionStatus, isSubscribed, isAdmin, enableNotifications };
