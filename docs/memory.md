@@ -50,7 +50,7 @@ See `architecture.md` for the full visual map. The application uses a decoupled 
 ## 7. Backend Architecture
 - **Controllers**: Thin controllers that execute business logic.
 - **Security**: The backend bypasses Row Level Security (RLS) using the Supabase Service Role Key. This ensures the frontend cannot spoof prices or order statuses.
-- **Payment Verification**: `paymentController.verifyPayment` securely calculates the HMAC-SHA256 signature using the `RAZORPAY_KEY_SECRET` to ensure payment authenticity before saving the order.
+- **Payment & Inventory Atomicity**: `paymentController.verifyPayment` securely calculates the HMAC-SHA256 signature using the `RAZORPAY_KEY_SECRET`. Upon verification, the `orders` table acts as the Single Source of Truth for financials. Inventory is mutated via a PostgreSQL RPC (`update_size_stock`) which guarantees atomicity through `FOR UPDATE` row locks, preventing race conditions and lost updates.
 
 ## 8. Data Flow Diagrams
 **Checkout Flow**:
@@ -61,8 +61,11 @@ See `architecture.md` for the full visual map. The application uses a decoupled 
 5. User completes payment in the modal.
 6. Razorpay returns `payment_id` and `signature` to the frontend.
 7. Frontend sends these to `POST /api/payment/verify`.
-8. Backend verifies the signature, saves the `order` and `order_items` in Supabase, and returns success.
-9. Frontend clears the cart and redirects to `/success`.
+8. Backend verifies the signature and records the `order` and `order_items` in Supabase.
+9. Backend attempts an atomic stock decrement via `update_size_stock` RPC.
+10. If stock is successfully reserved, the order is marked `confirmed`. If a conflict occurs, it is marked `inventory_pending` with an explanatory `admin_notes` to preserve the payment without promising shipment.
+11. Admin notifications are pushed via a reference-counted Supabase Realtime singleton.
+12. Frontend clears the cart and redirects to `/success`.
 
 ## 9. Environment Variables
 **Frontend (`client/.env`)**:

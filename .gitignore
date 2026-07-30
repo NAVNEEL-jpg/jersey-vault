@@ -21,3 +21,5 @@ graphify-out/
 test-results/
 tests/screenshots/
 supabase/.temp/
+.vercel
+.env*

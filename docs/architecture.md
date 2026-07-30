@@ -13,7 +13,9 @@
 2. `protect` middleware validates the JWT and attaches `req.user`.
 3. Controllers perform business logic and interact with Supabase tables.
 4. Payment flow creates a pending order, Razorpay processes payment, `verify` endpoint finalises the order.
-5. Post‑processing decrements stock and invokes `smooth‑worker`.
+5. Post‑processing utilizes an atomic PostgreSQL RPC (`update_size_stock`) to deduct inventory and prevent race conditions.
+6. If an inventory conflict occurs during payment verification, the order is safely persisted as `inventory_pending` and flagged with `admin_notes` to prevent silent failures.
+7. Real-time admin notifications are broadcasted via Supabase Realtime (managed by a reference-counted singleton to prevent React StrictMode collisions) and the `smooth-worker` sends emails/SMS.
 
 ## Key Decisions (unchanged)
 - Shipping zones, COD fees, pricing logic remain in `orderController.js`.
