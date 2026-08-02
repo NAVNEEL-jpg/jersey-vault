@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import BrandLogo from "../components/BrandLogo";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -42,12 +43,14 @@ export default function MyOrders() {
       setLoading(false);
     };
     fetchOrders();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalSpent = orders.filter(o => o.status !== "cancelled").reduce((s, o) => s + (o.total || 0), 0);
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
+      <Helmet><meta name="robots" content="noindex,nofollow" /><title>My Orders | The Jersey Vault</title></Helmet>
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }

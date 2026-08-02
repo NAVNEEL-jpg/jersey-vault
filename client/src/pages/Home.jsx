@@ -1,5 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { COLLECTION_MAPPING } from "../utils/collection-mapping";
+import { generateProductSlug } from "../utils/product-slugs";
 import jordanlogo from "../assets/brands/jordan.png";
 import nikelogo from "../assets/brands/nike.png";
 import adidaslogo from "../assets/brands/adidas.png";
@@ -19,7 +21,7 @@ import wc26Bg from "../assets/WC26.jpeg";
 import wc26Video from "../assets/WC26(1).mp4";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
-
+import ProductSEO from "../components/ProductSEO";
 const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "24px" }) {
   const images = getProductImages(imageUrl);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -408,7 +410,8 @@ const filterButtons = [
   { key: "RETRO", label: "RETRO" },
 ];
 
-export default function JerseyStore() {
+export default function JerseyStore({ collectionSlug, productSlug, isStandaloneProductPage }) {
+  const isCollectionPage = Boolean(collectionSlug);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [jerseys, setJerseys] = useState([]);
@@ -644,11 +647,10 @@ export default function JerseyStore() {
     setSelectedJersey(jersey);
     setSelectedSize("M");
     setModalQty(1);
-    if (jersey && jersey.id) {
+    if (jersey && jersey.name) {
       try {
-        const url = new URL(window.location.href);
-        url.searchParams.set("product", jersey.id);
-        window.history.replaceState({}, "", url.toString());
+        const slug = generateProductSlug(jersey.name);
+        window.history.replaceState({}, "", `/product/${slug}`);
       } catch (_) {}
     }
     ReactGA.event("view_item", {
@@ -667,12 +669,14 @@ export default function JerseyStore() {
     setSelectedJersey(null);
     setShowSizeChart(false);
     try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("product");
-      url.searchParams.delete("id");
-      window.history.replaceState({}, "", url.toString());
+      if (isStandaloneProductPage) {
+         navigate(collectionSlug ? `/collections/${collectionSlug}` : "/");
+      } else {
+         const returnUrl = collectionSlug ? `/collections/${collectionSlug}` : "/";
+         window.history.replaceState({}, "", returnUrl);
+      }
     } catch (_) {}
-  }, []);
+  }, [isStandaloneProductPage, collectionSlug, navigate]);
 
   const handleCopyShareLink = useCallback((jersey, e) => {
     if (e) e.stopPropagation();
@@ -706,28 +710,58 @@ export default function JerseyStore() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   }, []);
 
-  // Cart validation runs only when searchParams changes (i.e. when products load).
   useEffect(() => {
     let cancelled = false;
     let scrollTimer;
 
-    const teamId = searchParams.get("team");
-    if (teamId) {
-      supabase.from("teams").select("name").eq("id", teamId).single()
-        .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
-    } else {
-      setActiveTeamName("");
-    }
+    async function loadData() {
+      const collectionData = collectionSlug ? COLLECTION_MAPPING[collectionSlug] : null;
+      let query = supabase.from("products").select("*").eq("status", "active");
 
-    let query = supabase.from("products").select("*").eq("status", "active");
-    if (teamId) query = query.eq("team_id", teamId);
+      if (collectionData) {
+        if (collectionData.type === "team") {
+          const { data: tData } = await supabase.from("teams").select("id, name").ilike("name", collectionData.matchName).single();
+          if (tData) {
+            query = query.eq("team_id", tData.id);
+            if (!cancelled) setActiveTeamName(tData.name);
+          }
+        } else if (collectionData.type === "league") {
+          const { data: allTeams } = await supabase.from("teams").select("id, name");
+          if (allTeams) {
+            const leagueTeamIds = allTeams.filter(t => collectionData.matchNames.includes(t.name.toUpperCase())).map(t => t.id);
+            if (leagueTeamIds.length > 0) {
+              query = query.in("team_id", leagueTeamIds);
+            }
+          }
+          if (!cancelled) setActiveTeamName(collectionData.title);
+        } else if (collectionData.type === "category") {
+          if (!cancelled) setActiveFilter(collectionData.matchName);
+        }
+      } else {
+        const teamId = searchParams.get("team");
+        if (teamId) {
+          supabase.from("teams").select("name").eq("id", teamId).single()
+            .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
+          query = query.eq("team_id", teamId);
+        } else {
+          setActiveTeamName("");
+        }
+      }
 
-    query.then(({ data, error }) => {
+      const { data, error } = await query;
       if (cancelled) return;
       if (!error && data) {
         setJerseys(data);
 
-        // Auto open product modal if product ID in URL
+        if (productSlug) {
+          const found = data.find(p => generateProductSlug(p.name) === productSlug);
+          if (found) {
+            setSelectedJersey(found);
+            setSelectedSize("M");
+            setModalQty(1);
+          }
+        }
+
         const targetId = searchParams.get("product") || searchParams.get("id");
         if (targetId) {
           const found = data.find(p => String(p.id) === String(targetId));
@@ -738,7 +772,7 @@ export default function JerseyStore() {
           }
         }
 
-        if (teamId) {
+        if (searchParams.get("team") || collectionSlug) {
           scrollTimer = setTimeout(() => {
             document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
           }, 100);
@@ -755,13 +789,14 @@ export default function JerseyStore() {
         });
       }
       setLoadingProducts(false);
-    });
+    }
+    loadData();
 
     return () => {
       cancelled = true;
       if (scrollTimer) clearTimeout(scrollTimer);
     };
-  }, [searchParams, showToast]);
+  }, [searchParams, collectionSlug, showToast]);
 
   useEffect(() => {
     const catParam = searchParams.get("cat") || searchParams.get("filter");
@@ -1036,6 +1071,86 @@ export default function JerseyStore() {
 
   return (
     <>
+      {isCollectionPage && COLLECTION_MAPPING[collectionSlug] ? (
+        <Helmet>
+          <title>{COLLECTION_MAPPING[collectionSlug].title} | The Jersey Vault</title>
+          <meta name="description" content={COLLECTION_MAPPING[collectionSlug].desc} />
+          <link rel="canonical" href={`https://www.thejerseyvault.in/collections/${collectionSlug}`} />
+          <meta property="og:title" content={`${COLLECTION_MAPPING[collectionSlug].title} | The Jersey Vault`} />
+          <meta property="og:description" content={COLLECTION_MAPPING[collectionSlug].desc} />
+          <meta property="og:url" content={`https://www.thejerseyvault.in/collections/${collectionSlug}`} />
+          <meta name="twitter:title" content={`${COLLECTION_MAPPING[collectionSlug].title} | The Jersey Vault`} />
+          <meta name="twitter:description" content={COLLECTION_MAPPING[collectionSlug].desc} />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.thejerseyvault.in/" },
+                  { "@type": "ListItem", "position": 2, "name": "Collections", "item": "https://www.thejerseyvault.in/collections" },
+                  { "@type": "ListItem", "position": 3, "name": COLLECTION_MAPPING[collectionSlug].title, "item": `https://www.thejerseyvault.in/collections/${collectionSlug}` }
+                ]
+              })
+            }}
+          />
+        </Helmet>
+      ) : isStandaloneProductPage && selectedJersey ? (
+        <Helmet>
+          <title>{selectedJersey.name} | The Jersey Vault</title>
+          <meta name="description" content={selectedJersey.description || `Buy ${selectedJersey.name} online in India at The Jersey Vault.`} />
+          <link rel="canonical" href={`https://www.thejerseyvault.in/product/${productSlug}`} />
+          <meta property="og:title" content={`${selectedJersey.name} | The Jersey Vault`} />
+          <meta property="og:description" content={selectedJersey.description || `Buy ${selectedJersey.name} online in India at The Jersey Vault.`} />
+          <meta property="og:type" content="product" />
+          <meta property="og:url" content={`https://www.thejerseyvault.in/product/${productSlug}`} />
+          <meta property="og:image" content={selectedJersey.image_url} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={`${selectedJersey.name} | The Jersey Vault`} />
+          <meta name="twitter:description" content={selectedJersey.description || `Buy ${selectedJersey.name} online in India at The Jersey Vault.`} />
+          <meta name="twitter:image" content={selectedJersey.image_url} />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Product",
+                "name": selectedJersey.name,
+                "image": selectedJersey.image_url,
+                "description": selectedJersey.description || `Buy ${selectedJersey.name} online in India.`,
+                "brand": {
+                  "@type": "Brand",
+                  "name": "The Jersey Vault"
+                },
+                "offers": {
+                  "@type": "Offer",
+                  "url": `https://www.thejerseyvault.in/product/${productSlug}`,
+                  "priceCurrency": "INR",
+                  "price": selectedJersey.price,
+                  "itemCondition": "https://schema.org/NewCondition",
+                  "availability": selectedJersey.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+                }
+              })
+            }}
+          />
+        </Helmet>
+      ) : (
+        <Helmet>
+          <title>The Jersey Vault | Buy Authentic Football Jerseys in India</title>
+          <meta name="description" content="Buy premium quality player version, fan version, and retro football jerseys online in India. Authentic club and national team kits at The Jersey Vault." />
+          <link rel="canonical" href="https://www.thejerseyvault.in/" />
+          <meta property="og:title" content="The Jersey Vault | Buy Authentic Football Jerseys" />
+          <meta property="og:description" content="Buy premium quality player version, fan version, and retro football jerseys online in India." />
+          <meta property="og:type" content="website" />
+          <meta property="og:url" content="https://www.thejerseyvault.in/" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content="The Jersey Vault | Buy Authentic Football Jerseys" />
+          <meta name="twitter:description" content="Buy premium quality player version, fan version, and retro football jerseys online in India." />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({"@context":"https://schema.org","@type":"WebSite","name":"The Jersey Vault","url":"https://www.thejerseyvault.in/","potentialAction":{"@type":"SearchAction","target":"https://www.thejerseyvault.in/?search={search_term_string}","query-input":"required name=search_term_string"}}) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({"@context":"https://schema.org","@type":"Organization","name":"The Jersey Vault","url":"https://www.thejerseyvault.in/","logo":"https://www.thejerseyvault.in/logo192.png","sameAs":["https://www.instagram.com/thejerseyvault.in/"]}) }} />
+        </Helmet>
+      )}
       <div id="jv-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
         <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&family=Bebas+Neue&display=swap');
@@ -1881,7 +1996,8 @@ letter-spacing: 4px !important;
 `}</style>
 
         {/* NAVBAR */}
-        <nav className="site-nav">
+        <header>
+          <nav className="site-nav" aria-label="Main Navigation">
           <button type="button" className={`hamburger${mobileMenuOpen ? " open" : ""}`} onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu" style={{ marginLeft: 0 }}>
             {mobileMenuOpen ? (
               <svg width="26" height="26" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1901,7 +2017,7 @@ letter-spacing: 4px !important;
             <div style={{ position: 'relative', width: '100%' }}>
               <input
                 className="search-input"
-                placeholder="SEARCH JERSEYS..."
+                placeholder="SEARCH CLUBS OR PLAYERS..."
                 aria-label="Search jerseys"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -2024,7 +2140,7 @@ letter-spacing: 4px !important;
             <div style={{ position: 'relative', marginBottom: '8px' }}>
               <input
                 className="search-input h-search-input mobile-search-gap"
-                placeholder="SEARCH JERSEYS..."
+                placeholder="SEARCH CLUBS OR PLAYERS..."
                 aria-label="Search jerseys"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -2304,26 +2420,28 @@ letter-spacing: 4px !important;
               setCartOpen={setCartOpen}
             />
           </div>
-        </nav>
+          </nav>
+        </header>
+        <main style={{ display: isStandaloneProductPage ? "none" : "block" }}>
 
         <Ticker />
         <BrandLogos />
         <div className="section-divider" />
 
         {/* HERO */}
-        <section className="hero-section" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
+        <section className="hero-section" aria-label="Hero" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
           <div className="hero-overlay" />
-          <p className="hero-eyebrow">THE ULTIMATE COLLECTION</p>
+          <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
           <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 1 }}>
             <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
             <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
           </h1>
-          <p className="hero-subtitle">Official jerseys from football, cricket &amp; basketball</p>
+          <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
           <div className="hero-cta-row">
-            <button type="button" className="hero-btn-primary" onClick={scrollToShop}>
+            <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
               SHOP NOW
             </button>
-            <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")}>
+            <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
               VIEW TEAMS
             </button>
           </div>
@@ -2331,14 +2449,14 @@ letter-spacing: 4px !important;
         </section>
 
         {/* STATS */}
-        <div className="stats-grid">
+        <section className="stats-grid" aria-label="Store Statistics">
           {[["100+", "JERSEYS"], ["5K+", "CUSTOMERS"], ["100%", "AUTHENTIC"]].map(([num, label]) => (
             <div key={label} className="stat-cell">
               <div className="stat-num">{num}</div>
               <div className="stat-label">{label}</div>
             </div>
           ))}
-        </div>
+        </section>
         <div className="section-divider" />
 
         {/* SHOP */}
@@ -2475,12 +2593,7 @@ letter-spacing: 4px !important;
                   style={{ animation: `fadeUp 0.5s ease ${i * 0.07}s both`, cursor: jersey.stock > 0 ? "pointer" : "default" }}
                   onClick={() => {
                     if (jersey.stock > 0) {
-                      ReactGA.event("view_item", {
-                        currency: "INR", value: jersey.price,
-                        items: [{ item_id: jersey.id, item_name: jersey.name, price: jersey.price, item_category: jersey.type }]
-                      });
-                      setSelectedJersey(jersey);
-                      setSelectedSize("M");
+                      openQuickView(jersey);
                     }
                   }}
                 >
@@ -2643,13 +2756,13 @@ letter-spacing: 4px !important;
 
         {/* FEATURES */}
         <section style={{ background: "#070707", padding: "60px 16px", borderTop: "1px solid #111" }}>
-          <h2 style={{ fontSize: 30, fontWeight: 900, fontStyle: "italic", textAlign: "center", marginBottom: 40, letterSpacing: 2 }}>WHY <span style={{ color: "#39ff14" }}>JERSEYVAULT</span></h2>
+          <h2 style={{ fontSize: 30, fontWeight: 900, fontStyle: "italic", textAlign: "center", marginBottom: 40, letterSpacing: 2 }}>WHY CHOOSE <span style={{ color: "#39ff14" }}>JERSEYVAULT</span></h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 1 }}>
             {[
-              ["🏅", "LICENSED AUTHENTIC", "Every jersey is officially licensed and verified"],
-              ["🚚", "FAST DELIVERY", "Ships within 24–48 hours across India"],
-              ["↩️", "30-DAY RETURNS", "No questions asked easy returns"],
-              ["🔒", "SECURE PAYMENTS", "Razorpay — UPI, Cards, Netbanking"],
+              ["🏅", "PREMIUM QUALITY", "High-grade breathable materials & precise embroidery detailing"],
+              ["🚚", "PAN-INDIA SHIPPING", "Cash on Delivery available with reliable tracking"],
+              ["↩️", "EASY EXCHANGES", "Hassle-free size exchanges for peace of mind"],
+              ["🔒", "SECURE PAYMENTS", "100% safe checkout via Razorpay & UPI"],
             ].map(([icon, title, desc]) => (
               <div key={title} style={{ background: "#0a0a0a", border: "1px solid #111", padding: "28px 24px", textAlign: "center", transition: "border-color 0.3s, background 0.3s" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#39ff14"; e.currentTarget.style.background = "#0c0c0c"; }}
@@ -2663,9 +2776,41 @@ letter-spacing: 4px !important;
         </section>
         <div className="section-divider" />
 
+        {/* COLLECTION OR FINAL SEO CONTENT BLOCK */}
+        {collectionSlug && COLLECTION_MAPPING[collectionSlug] ? (
+          <section style={{ background: "#050505", padding: "60px 24px", textAlign: "center" }}>
+            <div style={{ maxWidth: 800, margin: "0 auto" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 900, fontStyle: "italic", marginBottom: 16, letterSpacing: 2, color: "#fff" }}>
+                {COLLECTION_MAPPING[collectionSlug].h1}
+              </h2>
+              <p style={{ color: "#aaa", fontSize: 14, fontFamily: "'Barlow',sans-serif", lineHeight: 1.8 }}>
+                {COLLECTION_MAPPING[collectionSlug].desc}
+              </p>
+            </div>
+          </section>
+        ) : (
+          <section style={{ background: "#050505", padding: "60px 24px", textAlign: "center" }}>
+            <div style={{ maxWidth: 800, margin: "0 auto" }}>
+              <h2 style={{ fontSize: 24, fontWeight: 900, fontStyle: "italic", marginBottom: 16, letterSpacing: 2, color: "#fff" }}>
+                YOUR DESTINATION FOR <span style={{ color: "#39ff14" }}>PREMIUM FOOTBALL JERSEYS</span> IN INDIA
+              </h2>
+              <p style={{ color: "#aaa", fontSize: 14, fontFamily: "'Barlow',sans-serif", lineHeight: 1.8, marginBottom: 12 }}>
+                Whether you're gearing up for match day or expanding your collection, finding reliable football kits shouldn't be difficult. We specialize in delivering high-grade fan version and elite player version jerseys directly to fans across India. Every shirt in our catalog is crafted with premium quality materials and detailed embroidery designed to last.
+              </p>
+              <p style={{ color: "#aaa", fontSize: 14, fontFamily: "'Barlow',sans-serif", lineHeight: 1.8 }}>
+                Explore our extensive range of club jerseys spanning giants like Real Madrid, Barcelona, Manchester United, Arsenal, Liverpool, Chelsea, PSG, Bayern Munich, AC Milan, and Inter Milan. Prefer international football? Support your nation with kits from Argentina, Brazil, Portugal, and France. With Cash on Delivery available and hassle-free size exchanges, you can shop for both modern designs and classic retro jerseys with complete peace of mind.
+              </p>
+            </div>
+          </section>
+        )}
+
+        </main>
         {/* FOOTER */}
         <footer style={{ background: "#040404", borderTop: "1px solid #111", padding: "40px 24px", textAlign: "center" }}>
           <div style={{ fontWeight: 900, fontSize: 26, letterSpacing: 5, marginBottom: 8, fontFamily: "'Bebas Neue',sans-serif" }}>JERSEY<span style={{ color: "#39ff14" }}>VAULT</span></div>
+          <p style={{ color: "#888", fontSize: 13, fontFamily: "'Barlow',sans-serif", maxWidth: 600, margin: "0 auto 16px", lineHeight: 1.5 }}>
+            The Jersey Vault is your ultimate destination to buy premium football &amp; sports jerseys in India. From fan versions to elite player issue kits, find top gear for clubs like Real Madrid, Barcelona, Manchester United, Arsenal, and international giants like Argentina and Brazil. Enjoy detailed embroidery, reliable quality, and Cash on Delivery across the nation.
+          </p>
           <p style={{ color: "#555", fontSize: 12, letterSpacing: 3 }}>© 2026 JERSEYVAULT. ALL RIGHTS RESERVED.</p>
           <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 16, flexWrap: "wrap" }}>
             {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["FAQ", "/faq"]].map(([l, h]) => (
@@ -2675,17 +2820,20 @@ letter-spacing: 4px !important;
           </div>
         </footer>
 
-        {/* SIZE PICKER MODAL */}
+        {/* SIZE PICKER MODAL OR STANDALONE PRODUCT RENDER */}
         {selectedJersey && (
-          <div className="modal-bg">
-            <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={closeQuickView} />
-            <div className="modal" style={{ position: "relative" }}>
+          <div className={isStandaloneProductPage ? "standalone-product" : "modal-bg"}>
+            {!isStandaloneProductPage && (
+              <button type="button" className="modal-bg-dismiss" aria-label="Close size picker" onClick={closeQuickView} />
+            )}
+            <div className={isStandaloneProductPage ? "standalone-modal-container" : "modal"} style={{ position: "relative" }}>
               {/* Top Left Compact Back Button */}
-              <button
-                type="button"
-                className="modal-back-btn"
-                onClick={closeQuickView}
-                style={{
+              {!isStandaloneProductPage && (
+                <button
+                  type="button"
+                  className="modal-back-btn"
+                  onClick={closeQuickView}
+                  style={{
                   position: "absolute",
                   top: "10px",
                   left: "10px",
@@ -2710,6 +2858,7 @@ letter-spacing: 4px !important;
                 <span style={{ fontSize: "12px", lineHeight: 1 }}>←</span>
                 <span>BACK</span>
               </button>
+              )}
               <div className="modal-img-wrap" style={{ position: "relative" }}>
                 <ProductCarousel
                   imageUrl={selectedJersey.image_url}
@@ -3323,7 +3472,7 @@ letter-spacing: 4px !important;
                   ) : jerseyReviews.length === 0 ? (
                     <div style={{ background: "#080808", border: "1px dashed #222", padding: "20px", textAlign: "center", borderRadius: "4px" }}>
                       <div style={{ fontSize: 22, marginBottom: 4 }}>💬</div>
-                      <div style={{ color: "#aaa", fontSize: 13, letterSpacing: 1, fontWeight: 600 }}>No reviews for this jersey yet</div>
+                      <div style={{ color: "#aaa", fontSize: 13, letterSpacing: 1, fontWeight: 600 }}>Be the first to review this premium jersey</div>
                       <div style={{ color: "#555", fontSize: 11, letterSpacing: 0.5, marginTop: 4 }}>Verified customer reviews will appear here.</div>
                     </div>
                   ) : (
@@ -3401,6 +3550,12 @@ letter-spacing: 4px !important;
                 </div>
               </div>
             </div>
+
+            {/* STANDALONE PRODUCT SEO BLOCK (RENDERED IF isStandaloneProductPage IS TRUE) */}
+            {/* STANDALONE PRODUCT SEO BLOCK */}
+            {isStandaloneProductPage && (
+              <ProductSEO jersey={selectedJersey} reviews={jerseyReviews} />
+            )}
           </div>
         )}
 
@@ -3712,7 +3867,7 @@ letter-spacing: 4px !important;
             </div>
           </div>
         )}
-        <AnnouncementPopup />
+      <AnnouncementPopup />
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
@@ -104,7 +105,7 @@ export default function AdminPage() {
   // Stats & users
   const [stats, setStats] = useState({ totalRevenue: 0, gmv: 0, cashCollected: 0, pendingCash: 0, totalOrders: 0, totalUsers: 0, totalProducts: 0, pendingOrders: 0 });
   const [usersList, setUsersList] = useState([]);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const [, setLoadingStats] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [usersMeta, setUsersMeta] = useState({ page: 1, limit: 50, total: 0 });
@@ -149,7 +150,7 @@ export default function AdminPage() {
     } finally {
       setLoadingReviews(false);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === "reviews") {
@@ -357,15 +358,16 @@ export default function AdminPage() {
   // ── Auth check ──
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user;
+      if (!supabase || !supabase.auth) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) { setChecking(false); navigate("/"); return; }
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       if (profile?.role === "admin") { setAuthed(true); setChecking(false); }
       else { setChecking(false); navigate("/"); }
     };
     checkAdmin();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fetch all data ──
   useEffect(() => {
@@ -475,7 +477,7 @@ export default function AdminPage() {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ──
   const updateStatus = async (orderId, newStatus) => {
@@ -758,6 +760,8 @@ export default function AdminPage() {
 
   if (checking) return (
     <div className="admin-loading">
+      <Helmet><meta name="robots" content="noindex,nofollow" /><title>Admin Dashboard | The Jersey Vault</title></Helmet>
+
       CHECKING ACCESS...
     </div>
   );

@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { downloadInvoice } from "../utils/downloadInvoice";
@@ -453,6 +454,8 @@ function Confetti() {
 
   return (
     <>
+      <Helmet><meta name="robots" content="noindex,nofollow" /><title>Order Successful | The Jersey Vault</title></Helmet>
+
       {particles.map((p) => (
         <div
           key={p.id}

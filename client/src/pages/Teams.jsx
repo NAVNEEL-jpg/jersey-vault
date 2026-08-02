@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
+import { REVERSE_TEAM_MAPPING } from "../utils/collection-mapping";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
 import heroBg from "../assets/hero-bg.jpeg";
@@ -204,6 +205,19 @@ export default function Teams() {
 
   return (
     <>
+      <Helmet>
+        <title>Football Teams & Clubs | The Jersey Vault</title>
+        <meta name="description" content="Shop premium football jerseys by team. Find official club and national team kits at The Jersey Vault." />
+        <link rel="canonical" href="https://www.thejerseyvault.in/teams" />
+        <meta property="og:title" content="Football Teams & Clubs | The Jersey Vault" />
+        <meta property="og:description" content="Shop premium football jerseys by team. Find official club and national team kits at The Jersey Vault." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.thejerseyvault.in/teams" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Football Teams & Clubs | The Jersey Vault" />
+        <meta name="twitter:description" content="Shop premium football jerseys by team. Find official club and national team kits at The Jersey Vault." />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thejerseyvault.in/"},{"@type":"ListItem","position":2,"name":"Teams","item":"https://www.thejerseyvault.in/teams"}]}) }} />
+      </Helmet>
       <div id="jv-teams-root" style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff", overflowX: "hidden" }}>
 
         {/* ════════════════════ STYLES ════════════════════ */}
@@ -520,7 +534,8 @@ export default function Teams() {
                         type="button"
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          navigate(`/?team=${t.id}`);
+                          const slug = REVERSE_TEAM_MAPPING[(t.name || "").toUpperCase()];
+                          navigate(slug ? `/collections/${slug}` : `/?team=${t.id}`);
                         }}
                         style={{
                           textAlign: "left",
@@ -700,7 +715,7 @@ export default function Teams() {
               {filtered.map((team, i) => (
                 <Link
                   key={team.id}
-                  to={`/?team=${team.id}`}
+                  to={REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()] ? `/collections/${REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()]}` : `/?team=${team.id}`}
                   className="t-team-card"
                   style={{ animation:`teamCardIn 0.5s ease ${i * 0.06}s both` }}
                 >

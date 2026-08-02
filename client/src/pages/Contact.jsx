@@ -29,10 +29,9 @@ const InstagramIcon = () => (
 export default function Contact() {
   return (
     <div style={{ fontFamily:"'Barlow Condensed', sans-serif", background:"#0a0a0a", minHeight:"100vh", color:"#fff" }}>
-      <Helmet>
-  <link rel="canonical" href="https://www.thejerseyvault.in/contact" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</Helmet>
+      <Helmet><title>Contact Us | The Jersey Vault</title><meta name="description" content="Get in touch with The Jersey Vault for customer support and queries." /><link rel="canonical" href="https://www.thejerseyvault.in/contact" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({"@context":"https://schema.org","@type":"Organization","name":"The Jersey Vault","url":"https://www.thejerseyvault.in/","contactPoint":{"@type":"ContactPoint","contactType":"customer support"}}) }} />
+      </Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }

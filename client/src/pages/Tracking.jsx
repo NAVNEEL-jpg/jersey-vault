@@ -61,7 +61,7 @@ export default function TrackingPage() {
 
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
-      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/tracking" /></Helmet>
+      <Helmet><title>Track Your Order | The Jersey Vault</title><meta name="robots" content="noindex,nofollow" /><meta name="description" content="Track your football jersey order status at The Jersey Vault." /><link rel="canonical" href="https://www.thejerseyvault.in/tracking" /></Helmet>
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
         .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }

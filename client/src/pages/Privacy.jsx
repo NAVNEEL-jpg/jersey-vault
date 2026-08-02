@@ -80,7 +80,7 @@ const sections = [
 export default function Privacy() {
   return (
     <div style={{ fontFamily: "'Barlow Condensed', sans-serif", background: "#0a0a0a", minHeight: "100vh", color: "#fff" }}>
-      <Helmet><link rel="canonical" href="https://www.thejerseyvault.in/privacy" /></Helmet>
+      <Helmet><title>Privacy Policy | The Jersey Vault</title><meta name="description" content="Read the privacy policy for The Jersey Vault." /><link rel="canonical" href="https://www.thejerseyvault.in/privacy" /></Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }

@@ -35,13 +35,14 @@ export function useAdminOrderNotifications() {
         globalChannel = null;
       }
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Check if logged-in user is admin (on mount) ───────────────
   useEffect(() => {
     let cancelled = false;
 
     async function checkAdmin() {
+      if (!supabase || !supabase.auth) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user || cancelled) return;
 
@@ -66,7 +67,7 @@ export function useAdminOrderNotifications() {
 
     checkAdmin().catch(console.error);
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Register Service Worker ───────────────────────────────────
   async function registerSW() {
@@ -117,7 +118,7 @@ export function useAdminOrderNotifications() {
     if (result === 'granted') {
       subscribeRealtime();
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { permissionStatus, isSubscribed, isAdmin, enableNotifications };
 }

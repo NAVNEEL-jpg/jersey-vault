@@ -132,10 +132,7 @@ export default function Reviews() {
 
   return (
     <div style={{ background: "#0a0a0a", minHeight: "100vh", color: "#fff", fontFamily: "'Barlow', sans-serif" }}>
-      <Helmet>
-        <title>Customer Reviews & Photos | JERSEY VAULT</title>
-        <meta name="description" content="Read real customer reviews and photos of premium football jerseys from Jersey Vault." />
-      </Helmet>
+      <Helmet><title>Customer Reviews & Photos | JERSEY VAULT</title><meta name="description" content="Read real customer reviews and photos of premium football jerseys from Jersey Vault." /><link rel="canonical" href="https://www.thejerseyvault.in/reviews" /></Helmet>
 
       <Navbar />
 

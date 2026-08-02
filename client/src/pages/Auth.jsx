@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
@@ -166,7 +167,7 @@ export default function AuthPage() {
       const el = document.getElementById("jv-auth-styles");
       if (el) el.remove();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -193,7 +194,7 @@ export default function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data?.session) navigate(redirectUrl, { replace: true });
     });
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const validate = () => {
     const e = {};
@@ -227,7 +228,7 @@ export default function AuthPage() {
       setLoading(false);
       navigate(redirectUrl, { replace: true });
     } else {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: form.password,
         options: { data: { full_name: form.name.trim(), phone: `${form.countryCode}${form.phone}` } }
@@ -317,6 +318,8 @@ export default function AuthPage() {
       background: "#0a0a0a", minHeight: "100vh", color: "#fff",
       display: "flex", flexDirection: "column"
     }}>
+      <Helmet><meta name="robots" content="noindex,nofollow" /><title>Login / Register | The Jersey Vault</title></Helmet>
+
 
       {/* NAV */}
       <nav className="auth-nav">

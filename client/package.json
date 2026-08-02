@@ -41,6 +41,11 @@
     ]
   },
   "devDependencies": {
-    "cross-env": "^10.1.0"
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/register": "^8.0.1",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.28.1",
+    "react-test-renderer": "^19.2.8"
   }
 }

@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /myorders
+Disallow: /auth
+Disallow: /success
 
 Sitemap: https://www.thejerseyvault.in/sitemap.xml

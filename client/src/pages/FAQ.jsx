@@ -115,9 +115,11 @@ export default function FAQ() {
   return (
     <div style={{ fontFamily:"'Barlow Condensed', sans-serif", background:"#0a0a0a", minHeight:"100vh", color:"#fff" }}>
       <Helmet>
-  <link rel="canonical" href="https://www.thejerseyvault.in/faq" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</Helmet>
+        <title>FAQ | The Jersey Vault</title>
+        <meta name="description" content="Frequently asked questions regarding shipping, delivery, and orders." />
+        <link rel="canonical" href="https://www.thejerseyvault.in/faq" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [] }) }} />
+      </Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
