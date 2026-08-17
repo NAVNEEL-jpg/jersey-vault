@@ -16,12 +16,12 @@ const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || 'sb_publishable_iTI05L
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DOMAIN = 'https://www.thejerseyvault.in';
-const APP_JS = path.join(__dirname, 'client', 'src', 'App.js');
-const COLLECTION_MAPPING_FILE = path.join(__dirname, 'client', 'src', 'utils', 'collection-mapping.js');
-const SITEMAP = path.join(__dirname, 'client', 'public', 'sitemap.xml');
+const appJsPath = path.join(__dirname, '..', 'client', 'src', 'App.js');
+const mappingPath = path.join(__dirname, '..', 'client', 'src', 'utils', 'collection-mapping.js');
+const sitemapPath = path.join(__dirname, '..', 'client', 'public', 'sitemap.xml');
+const envPath = path.join(__dirname, '..', 'client', '.env');
 
-// 1. Get Static Routes from App.js
-let appJsContent = fs.readFileSync(APP_JS, 'utf8');
+const appContent = fs.readFileSync(appJsPath, 'utf8');
 let routeRegex = /<Route\s+path="([^"]+)"/g;
 let matches;
 let urls = new Set();
@@ -42,7 +42,7 @@ const setUrl = (url, priority, freq) => {
 setUrl('/', '1.0', 'daily');
 
 // Parse App.js
-while ((matches = routeRegex.exec(appJsContent)) !== null) {
+while ((matches = routeRegex.exec(appContent)) !== null) {
   let r = matches[1];
   
   let priority = '0.5';
@@ -63,7 +63,7 @@ while ((matches = routeRegex.exec(appJsContent)) !== null) {
 }
 
 // 2. Get Dynamic Collections from collection-mapping.js
-let collContent = fs.readFileSync(COLLECTION_MAPPING_FILE, 'utf8');
+let collContent = fs.readFileSync(mappingPath, 'utf8');
 const objRegex = /"([^"]+)"\s*:\s*\{/g;
 let collMatches;
 while ((collMatches = objRegex.exec(collContent)) !== null) {
@@ -109,7 +109,7 @@ async function buildSitemap() {
 
   xml += `</urlset>`;
 
-  fs.writeFileSync(SITEMAP, xml, 'utf8');
+  fs.writeFileSync(sitemapPath, xml, 'utf8');
   console.log('Sitemap successfully written to client/public/sitemap.xml');
   console.log(`Total URLs: ${urlConfig.size}`);
 }
