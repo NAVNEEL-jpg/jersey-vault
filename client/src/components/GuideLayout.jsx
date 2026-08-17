@@ -10,14 +10,16 @@ export default function GuideLayout({
   children, 
   faqs = [], 
   lastUpdated = "2026-08-01",
-  author = "Jersey Vault Team" 
+  author = "Jersey Vault Team",
+  readingTime = "5 min read",
+  reviewDate = null
 }) {
   const schemaBreadcrumbs = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.thejerseyvault.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://www.thejerseyvault.in/pages" },
+      { "@type": "ListItem", "position": 2, "name": "Guides", "item": "https://www.thejerseyvault.in/pages/guides" },
       { "@type": "ListItem", "position": 3, "name": title, "item": canonicalUrl }
     ]
   };
@@ -34,6 +36,28 @@ export default function GuideLayout({
       }
     }))
   } : null;
+
+  const schemaArticle = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": title,
+    "description": metaDescription,
+    "author": {
+      "@type": "Organization",
+      "name": author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Jersey Vault",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.thejerseyvault.in/logo.png"
+      }
+    },
+    "datePublished": "2024-01-01T00:00:00Z",
+    "dateModified": `${lastUpdated}T00:00:00Z`,
+    "mainEntityOfPage": canonicalUrl
+  };
 
   return (
     <>
@@ -58,6 +82,7 @@ export default function GuideLayout({
         {schemaFaq && (
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaFaq) }} />
         )}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaArticle) }} />
       </Helmet>
 
       <main style={{ padding: "60px 24px", background: "#0a0a0a", minHeight: "100vh", color: "#ddd", marginTop: "64px" }}>
@@ -67,6 +92,8 @@ export default function GuideLayout({
           <nav aria-label="breadcrumb" style={{ marginBottom: "24px", fontSize: "13px", fontFamily: "'Barlow', sans-serif" }}>
             <Link to="/" style={{ color: "#39ff14", textDecoration: "none" }}>Home</Link> 
             <span style={{ margin: "0 8px", color: "#555" }}>/</span>
+            <Link to="/pages/guides" style={{ color: "#39ff14", textDecoration: "none" }}>Guides</Link>
+            <span style={{ margin: "0 8px", color: "#555" }}>/</span>
             <span style={{ color: "#aaa" }}>{title}</span>
           </nav>
 
@@ -75,9 +102,17 @@ export default function GuideLayout({
               {h1}
             </h1>
             <div style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "14px", color: "#888", fontFamily: "'Barlow', sans-serif" }}>
-              <span>By <strong>{author}</strong></span>
+              <span>By <strong style={{color: '#fff'}}>{author}</strong></span>
               <span>•</span>
               <span>Updated: {lastUpdated}</span>
+              <span>•</span>
+              <span>{readingTime}</span>
+              {reviewDate && (
+                <>
+                  <span>•</span>
+                  <span>Reviewed: {reviewDate}</span>
+                </>
+              )}
             </div>
           </header>
 

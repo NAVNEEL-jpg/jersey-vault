@@ -17,6 +17,7 @@ import Reviews from "./pages/Reviews";
 import SupportChat from "./components/SupportChat";
 import Collection from "./pages/Collection";
 import ProductPage from "./pages/ProductPage";
+import { GlobalDataProvider } from "./context/GlobalDataContext";
 
 const SizeGuide = lazy(() => import("./pages/guides/SizeGuide"));
 const PlayerVsFan = lazy(() => import("./pages/guides/PlayerVsFan"));
@@ -370,9 +371,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <GlobalDataProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </GlobalDataProvider>
   );
 }
 

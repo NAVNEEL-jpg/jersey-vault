@@ -26,6 +26,7 @@ export default function ProductSEO({ jersey, reviews = [] }) {
     "@type": "Product",
     "name": jersey.name,
     "image": jersey.image_url,
+    "sku": jersey.id || `JV-${generateProductSlug(jersey.name).substring(0, 10).toUpperCase()}`,
     "description": jersey.description || `Buy the official ${jersey.name} in India. Premium quality ${jerseyType} football kit with secure delivery.`,
     "brand": {
       "@type": "Brand",
@@ -233,14 +234,28 @@ export default function ProductSEO({ jersey, reviews = [] }) {
         </div>
       </section>
 
-      {/* Internal Linking to Guides */}
-      <section style={{ background: "#0c0c0c", padding: "20px", borderRadius: "6px", border: "1px solid #222" }}>
-        <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 16, color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1 }}>HELPFUL GUIDES</h3>
-        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
-          <Link to="/pages/player-version-vs-fan-version" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Player vs Fan Version →</Link>
-          <Link to="/pages/size-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Complete Size Guide →</Link>
-          <Link to="/pages/care-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Washing & Care Guide →</Link>
-          <Link to="/pages/returns-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Returns Policy →</Link>
+      {/* Internal Linking to Guides & Collections */}
+      <section style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginTop: "20px" }}>
+        <div style={{ flex: "1 1 300px", background: "#0c0c0c", padding: "20px", borderRadius: "6px", border: "1px solid #222" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 16, color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1 }}>HELPFUL GUIDES</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <Link to="/pages/player-vs-fan" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Player vs Fan Version →</Link>
+            <Link to="/pages/size-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Complete Size Guide →</Link>
+            <Link to="/pages/care-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Washing & Care Guide →</Link>
+            <Link to="/pages/returns-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Returns Policy →</Link>
+            <Link to="/pages/materials-guide" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Materials Guide →</Link>
+          </div>
+        </div>
+
+        <div style={{ flex: "1 1 300px", background: "#0c0c0c", padding: "20px", borderRadius: "6px", border: "1px solid #222" }}>
+          <h3 style={{ fontSize: 16, fontWeight: 900, marginBottom: 16, color: "#fff", fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1 }}>EXPLORE COLLECTIONS</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <Link to="/collections/retro" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Retro Classic Kits →</Link>
+            <Link to="/collections/player-version" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Elite Player Editions →</Link>
+            <Link to="/collections/premier-league" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>Premier League →</Link>
+            <Link to="/collections/la-liga" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>La Liga →</Link>
+            <Link to="/collections/international" style={{ color: "#39ff14", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}>International Teams →</Link>
+          </div>
         </div>
       </section>
 

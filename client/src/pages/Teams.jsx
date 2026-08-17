@@ -1,3 +1,4 @@
+import { useGlobalData } from "../context/GlobalDataContext";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { REVERSE_TEAM_MAPPING } from "../utils/collection-mapping";
@@ -95,6 +96,7 @@ const sportTabs = [
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export default function Teams() {
+  const { teams: globalTeams } = useGlobalData();
   const navigate = useNavigate();
   const [user,           setUser]           = useState(null);
   const [isAdmin,        setIsAdmin]        = useState(false);
