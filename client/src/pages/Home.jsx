@@ -23,6 +23,7 @@ import wc26Video from "../assets/WC26(1).mp4";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
 import ProductSEO from "../components/ProductSEO";
+import { API_BASE } from "../config/api";
 const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "24px" }) {
   const images = getProductImages(imageUrl);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -716,67 +717,132 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     let scrollTimer;
 
     async function loadData() {
-      
-      if (isStandaloneProductPage && productSlugMap) {
-        const match = productSlugMap.find(p => p.slug === productSlug);
-        if (match) {
-          const { data, error } = await supabase.from("products").select("*").eq("id", match.id).single();
-          if (!error && data) {
-            if (!cancelled) {
-              setJerseys([data]);
-              setSelectedJersey(data);
-              setSelectedSize("M");
-              setLoadingProducts(false);
-              
-            }
-          } else {
-            if (!cancelled) setLoadingProducts(false);
+      if (isStandaloneProductPage) {
+        let singleProduct = null;
+        if (productSlugMap) {
+          const match = productSlugMap.find(p => p.slug === productSlug);
+          if (match) {
+            try {
+              const { data, error } = await supabase.from("products").select("*").eq("id", match.id).single();
+              if (!error && data) singleProduct = data;
+            } catch (_) {}
           }
         }
+
+        if (!singleProduct) {
+          try {
+            const res = await fetch(`${API_BASE}/api/products`);
+            if (res.ok) {
+              const prods = await res.json();
+              singleProduct = prods.find(p => generateProductSlug(p.name) === productSlug || String(p.id) === productSlug);
+            }
+          } catch (e) {
+            console.warn("Backend single product fallback failed:", e);
+          }
+        }
+
+        if (singleProduct && !cancelled) {
+          setJerseys([singleProduct]);
+          setSelectedJersey(singleProduct);
+          setSelectedSize("M");
+        }
+        if (!cancelled) setLoadingProducts(false);
         return;
       }
       
       const collectionData = collectionSlug ? COLLECTION_MAPPING[collectionSlug] : null;
 
-      let query = supabase.from("products").select("id, name, price, stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
+      let fetchedData = null;
 
-      if (collectionData) {
-        if (collectionData.type === "team") {
-          const { data: tData } = await supabase.from("teams").select("id, name").ilike("name", collectionData.matchName).single();
-          if (tData) {
-            query = query.eq("team_id", tData.id);
-            if (!cancelled) setActiveTeamName(tData.name);
-          }
-        } else if (collectionData.type === "league") {
-          const { data: allTeams } = await supabase.from("teams").select("id, name");
-          if (allTeams) {
-            const leagueTeamIds = allTeams.filter(t => collectionData.matchNames.includes(t.name.toUpperCase())).map(t => t.id);
-            if (leagueTeamIds.length > 0) {
-              query = query.in("team_id", leagueTeamIds);
+      // 1. Try Supabase
+      try {
+        let query = supabase.from("products").select("id, name, price, stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
+
+        if (collectionData) {
+          if (collectionData.type === "team") {
+            const { data: tData } = await supabase.from("teams").select("id, name").ilike("name", collectionData.matchName).single();
+            if (tData) {
+              query = query.eq("team_id", tData.id);
+              if (!cancelled) setActiveTeamName(tData.name);
             }
+          } else if (collectionData.type === "league") {
+            const { data: allTeams } = await supabase.from("teams").select("id, name");
+            if (allTeams) {
+              const leagueTeamIds = allTeams.filter(t => collectionData.matchNames.includes(t.name.toUpperCase())).map(t => t.id);
+              if (leagueTeamIds.length > 0) {
+                query = query.in("team_id", leagueTeamIds);
+              }
+            }
+            if (!cancelled) setActiveTeamName(collectionData.title);
+          } else if (collectionData.type === "category") {
+            if (!cancelled) setActiveFilter(collectionData.matchName);
           }
-          if (!cancelled) setActiveTeamName(collectionData.title);
-        } else if (collectionData.type === "category") {
-          if (!cancelled) setActiveFilter(collectionData.matchName);
-        }
-      } else {
-        const teamId = searchParams.get("team");
-        if (teamId) {
-          supabase.from("teams").select("name").eq("id", teamId).single()
-            .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
-          query = query.eq("team_id", teamId);
         } else {
-          setActiveTeamName("");
+          const teamId = searchParams.get("team");
+          if (teamId) {
+            supabase.from("teams").select("name").eq("id", teamId).single()
+              .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
+            query = query.eq("team_id", teamId);
+          } else {
+            setActiveTeamName("");
+          }
+        }
+
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          fetchedData = data;
+        }
+      } catch (sbErr) {
+        console.warn("[Home.jsx] Supabase product query failed, using backend fallback:", sbErr.message);
+      }
+
+      // 2. Fallback to backend API
+      if (!fetchedData) {
+        try {
+          const res = await fetch(`${API_BASE}/api/products`);
+          if (res.ok) {
+            const allProducts = await res.json();
+            let filtered = Array.isArray(allProducts) ? allProducts.filter(p => p.status === "active" || !p.status) : [];
+
+            if (collectionData) {
+              if (collectionData.type === "team") {
+                if (globalTeams && globalTeams.length > 0) {
+                  const t = globalTeams.find(item => item.name.toUpperCase().includes(collectionData.matchName.toUpperCase()));
+                  if (t) {
+                    filtered = filtered.filter(p => p.team_id === t.id);
+                    if (!cancelled) setActiveTeamName(t.name);
+                  }
+                }
+              } else if (collectionData.type === "category") {
+                if (!cancelled) setActiveFilter(collectionData.matchName);
+              }
+            } else {
+              const teamId = searchParams.get("team");
+              if (teamId) {
+                filtered = filtered.filter(p => p.team_id === teamId);
+                if (globalTeams && globalTeams.length > 0) {
+                  const t = globalTeams.find(item => String(item.id) === String(teamId));
+                  if (!cancelled && t) setActiveTeamName(t.name);
+                }
+              } else {
+                if (!cancelled) setActiveTeamName("");
+              }
+            }
+
+            fetchedData = filtered;
+          }
+        } catch (apiErr) {
+          console.error("[Home.jsx] Backend products fallback failed:", apiErr);
         }
       }
 
-      const { data, error } = await query;
       if (cancelled) return;
-      if (!error && data) {
-        setJerseys(data);
+
+      if (fetchedData && fetchedData.length > 0) {
+        setJerseys(fetchedData);
 
         if (productSlug) {
-          const found = data.find(p => generateProductSlug(p.name) === productSlug);
+          const found = fetchedData.find(p => generateProductSlug(p.name) === productSlug);
           if (found) {
             setSelectedJersey(found);
             setSelectedSize("M");
@@ -786,7 +852,7 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
 
         const targetId = searchParams.get("product") || searchParams.get("id");
         if (targetId) {
-          const found = data.find(p => String(p.id) === String(targetId));
+          const found = fetchedData.find(p => String(p.id) === String(targetId));
           if (found) {
             setSelectedJersey(found);
             setSelectedSize("M");
@@ -799,7 +865,7 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
             document.getElementById("shop")?.scrollIntoView({ behavior: "smooth" });
           }, 100);
         }
-        const validIds = new Set(data.map(p => p.id));
+        const validIds = new Set(fetchedData.map(p => p.id));
         setCart(prevCart => {
           const filteredCart = prevCart.filter(item => validIds.has(item.id));
           if (filteredCart.length !== prevCart.length) {

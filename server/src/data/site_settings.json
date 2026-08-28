@@ -1,0 +1,26 @@
+[
+  {
+    "key": "featured_category_name",
+    "value": "WC 26"
+  },
+  {
+    "key": "jersey_reviews_v1_5d3d8465-f5a7-4518-92d5-39acd3ab59f9",
+    "value": "[{\"id\":\"rev_1785147752233_lc78\",\"product_id\":\"5d3d8465-f5a7-4518-92d5-39acd3ab59f9\",\"reviewer_name\":\"Ashwin Sudhir\",\"rating\":5,\"comment\":\"Great merch came with the shorts too. Awesome steal Deal.\",\"photos\":[\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/reviews/1785147739744_qajpyy.jpeg\"],\"is_published\":true,\"created_at\":\"2026-07-27T10:22:32.233Z\"}]"
+  },
+  {
+    "key": "jersey_reviews_v1_7f6b91d4-e3b4-40ea-bccf-9d308af3e801",
+    "value": "[{\"id\":\"rev_1785065141381_ds2v\",\"product_id\":\"7f6b91d4-e3b4-40ea-bccf-9d308af3e801\",\"reviewer_name\":\"Shounak Mukherjee\",\"rating\":5,\"comment\":\"Amazing quality. The material is comfortable, the print is sharp, the fit is perfect, and the Portugal away jersey looks premium. Highly recommended\",\"photos\":[\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065119021-10bhv4.jpg\"],\"is_published\":true,\"created_at\":\"2026-07-26T11:25:41.381Z\",\"updated_at\":\"2026-07-27T20:09:53.317Z\"}]"
+  },
+  {
+    "key": "jersey_reviews_v1_84e28930-d2f9-4a5c-a2f6-5f76094de6e7",
+    "value": "[{\"id\":\"rev_1785065332356_u56h\",\"product_id\":\"84e28930-d2f9-4a5c-a2f6-5f76094de6e7\",\"reviewer_name\":\"Souvik Hazra\",\"rating\":5,\"comment\":\"Product Quality & Fit is just awesome....embroidery feels premium....comes with lower also....in this price range it's just a steal deal....needs more option in the future .... I funding the away kit of Brazil the jordan one if available please let me know\",\"photos\":[\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065282377-ujdp02.jpg\",\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065288440-e3x4sq.jpg\",\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065293978-g6eqkn.jpg\",\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065300147-eg4hbf.jpg\",\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065305943-6u76dd.jpg\"],\"is_published\":true,\"created_at\":\"2026-07-26T11:28:52.356Z\",\"updated_at\":\"2026-07-27T20:10:14.343Z\"}]"
+  },
+  {
+    "key": "jersey_reviews_v1_ce38bc20-f9a1-4708-afca-9e3dbba7b488",
+    "value": "[]"
+  },
+  {
+    "key": "jersey_reviews_v1_e77c777f-291c-47de-b28b-4ca956ff3b1a",
+    "value": "[{\"id\":\"rev_1785065087500_biz6\",\"product_id\":\"e77c777f-291c-47de-b28b-4ca956ff3b1a\",\"reviewer_name\":\"Satabika Maity\",\"rating\":5,\"comment\":\"The product is so so much good quality and the fit is awesome I totally loved it I'm gonna purchase another soon\",\"photos\":[\"https://clytujskrmcnstzuvuaf.supabase.co/storage/v1/object/public/Jersey%20image/products/1785065052326-74g65x.jpg\"],\"is_published\":true,\"created_at\":\"2026-07-26T11:24:47.500Z\",\"updated_at\":\"2026-07-27T20:10:03.682Z\"}]"
+  }
+]

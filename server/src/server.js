@@ -18,6 +18,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import supportRoutes from './routes/supportRoutes.js';
 import shippingRoutes from './routes/shippingRoutes.js';
+import catalogRoutes from './routes/catalogRoutes.js';
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/api/products', productRoutes);
+app.use('/api/catalog', catalogRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);

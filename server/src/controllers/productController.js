@@ -1,19 +1,51 @@
 import { supabase } from '../config/supabase.js';
+import { getR2Table } from '../services/r2Service.js';
 
 // @desc    Fetch all products
 // @route   GET /api/products
 export const getProducts = async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        category:category_id (name),
-        subcategory:subcategory_id (name)
-      `);
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          category:category_id (name),
+          subcategory:subcategory_id (name)
+        `);
 
-    if (error) throw error;
-    res.json(data);
+      if (error) throw error;
+      return res.json(data);
+    } catch (supabaseError) {
+      console.warn('[productController:getProducts] Supabase unavailable, falling back to Cloudflare R2 backup:', supabaseError.message);
+      let products = await getR2Table('products');
+
+      // Filter by query parameters if provided
+      const { status, category, type, team_id, featured, is_clearance, is_26_27 } = req.query;
+      if (status) {
+        products = products.filter(p => p.status === status);
+      }
+      if (category) {
+        products = products.filter(p => p.category === category || p.category_id === category);
+      }
+      if (type) {
+        products = products.filter(p => p.type === type);
+      }
+      if (team_id) {
+        products = products.filter(p => p.team_id === team_id);
+      }
+      if (featured !== undefined) {
+        products = products.filter(p => String(p.featured) === String(featured));
+      }
+      if (is_clearance !== undefined) {
+        products = products.filter(p => String(p.is_clearance) === String(is_clearance));
+      }
+      if (is_26_27 !== undefined) {
+        products = products.filter(p => String(p.is_26_27) === String(is_26_27));
+      }
+
+      return res.json(products);
+    }
   } catch (error) {
     console.error('productController.js Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
@@ -24,21 +56,31 @@ export const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 export const getProductById = async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        category:category_id (name),
-        subcategory:subcategory_id (name)
-      `)
-      .eq('id', req.params.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          category:category_id (name),
+          subcategory:subcategory_id (name)
+        `)
+        .eq('id', req.params.id)
+        .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') return res.status(404).json({ message: 'Product not found' });
-      throw error;
+      if (error) {
+        if (error.code === 'PGRST116') return res.status(404).json({ message: 'Product not found' });
+        throw error;
+      }
+      return res.json(data);
+    } catch (supabaseError) {
+      console.warn('[productController:getProductById] Supabase unavailable, falling back to Cloudflare R2 backup:', supabaseError.message);
+      const products = await getR2Table('products');
+      const found = products.find(p => String(p.id) === String(req.params.id) || p.slug === req.params.id);
+      if (!found) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      return res.json(found);
     }
-    res.json(data);
   } catch (error) {
     console.error('productController.js Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });

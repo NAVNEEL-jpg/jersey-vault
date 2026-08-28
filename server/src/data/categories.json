@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fan",
+    "name": "FAN VERSION"
+  },
+  {
+    "id": "player",
+    "name": "PLAYER VERSION"
+  },
+  {
+    "id": "retro",
+    "name": "RETRO"
+  },
+  {
+    "id": "clearance",
+    "name": "CLEARANCE SALE"
+  },
+  {
+    "id": "kits2627",
+    "name": "26/27 KITS"
+  }
+]

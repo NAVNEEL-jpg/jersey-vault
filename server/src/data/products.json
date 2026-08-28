@@ -1,0 +1,1277 @@
+[
+  {
+    "id": "00aeecf7-8853-4de9-9c6e-0266e778740b",
+    "name": "Barcelona 26/27 Away Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-2.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-1.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-3.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-away-26-27-jersey-3.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-08-09 20:16:44.179425",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "Premium Fan Edition football jersey imported from Thailand. Features breathable Dry-Fit fabric technology for maximum comfort, high-density embroidered club logos, and comes complete with matching shorts included.",
+    "teams": {
+      "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+      "name": "BARCELONA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "2705c8b3-cdd0-4264-957f-c8612b7de6b8",
+    "name": "Argentina Home WC Jersey (Clearance Sale)",
+    "price": 599,
+    "image_url": "https://clubjerseys.in/wp-content/uploads/2025/11/IMG0210JPG.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-5-768x768.webp",
+    "images": [
+      "https://clubjerseys.in/wp-content/uploads/2025/11/IMG0210JPG.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-jersey-5-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-16 20:08:51.58537",
+    "type": "CLEARANCE SALE",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "7372fdff-673c-442a-80ce-33a376625b82",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": true,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "7372fdff-673c-442a-80ce-33a376625b82",
+      "name": "ARGENTINA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/argentina.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "28326a04-6e80-4814-98f5-50e35e1cd079",
+    "name": "Brazil Away WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway1.webp,https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway3.webp,https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway5.webp,https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway4.webp,https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway2.webp",
+    "images": [
+      "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway1.webp",
+      "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway3.webp",
+      "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway5.webp",
+      "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway4.webp",
+      "https://clubjerseys.in/wp-content/uploads/2025/12/Brazilaway2.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-07-02 13:59:05.591824",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+      "name": "BRAZIL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/brazil.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "29f9a975-2544-4ab0-b614-b635bdec1b73",
+    "name": "Real Madrid 26/27 Third Kit Jersey",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-4.webp,https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-1-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-4.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Real-Madrid-Away-2026-27-Jersey-1-1-768x768.webp"
+    ],
+    "stock": 49,
+    "status": "active",
+    "created_at": "2026-07-22 16:50:43.875154",
+    "type": "26/27 KITS",
+    "size_stock": {
+      "L": 10,
+      "M": 9,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "",
+    "teams": {
+      "id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+      "name": "REAL MADRID",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/real-madrid.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "3754d09b-3b6b-48a3-a00c-5a2e7d49f802",
+    "name": "England Away WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-1-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-3-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-Player-version-jersey-3-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:51:21.90626",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+      "name": "ENGLAND",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/england.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "4988894b-1a3e-4e77-bf64-a9a6bd401b49",
+    "name": "Portugal 25/26 Special Edition Jersey",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-5-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-2-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-5-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Away-2026-World-cup-jersey-2-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-05-03 14:10:38.486024",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+      "name": "PORTUGAL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/portugal.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "4c8f900b-ae01-4c26-b54d-f0f07b386762",
+    "name": "Uruguay Away WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey.webp,https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-2.webp,https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-1.webp,https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-3.webp,https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-4.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-3.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Uruguay-Away-2026-WorldCup-Jersey-4.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:38:42.347044",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+      "name": "URUGUAY",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/uruguay.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "4e6a9c74-064d-4451-ba38-a4a364dfacab",
+    "name": "France Away WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-3-768x768.jpeg,https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-1-768x1024.webp,https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-2-768x1024.webp,https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-4-768x768.jpeg",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-3-768x768.jpeg",
+      "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-1-768x1024.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-2-768x1024.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-Away-2026-player-version-jersey-online-india-4-768x768.jpeg"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:50:02.899634",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+      "name": "FRANCE",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/france.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "5533f900-4a74-4172-a520-ff680736f3e7",
+    "name": "France Away WC Jersey (Clearance Sale)",
+    "price": 599,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey.webp,https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey-3-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/France-away-2026-worldcup-jersey-3-768x768.webp"
+    ],
+    "stock": 39,
+    "status": "active",
+    "created_at": "2026-06-30 04:18:05.488479",
+    "type": "CLEARANCE SALE",
+    "size_stock": {
+      "L": 10,
+      "M": 9,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": true,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+      "name": "FRANCE",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/france.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "555887d3-34e6-480e-bf89-8081c8835f47",
+    "name": "Spain Away WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-3.webp,https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-2.webp,https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-4.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-3.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Spain-Away-2026-worldcup-jersey-4.webp"
+    ],
+    "stock": 39,
+    "status": "active",
+    "created_at": "2026-06-17 18:15:38.54043",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 9,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+      "name": "SPAIN",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/spain.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "5d3d8465-f5a7-4518-92d5-39acd3ab59f9",
+    "name": "Argentina Away WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-World-Cup-jersey-1-768x768.webp,https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-World-Cup-jersey-2-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-World-Cup-jersey-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-World-Cup-jersey-2-768x768.webp"
+    ],
+    "stock": 39,
+    "status": "active",
+    "created_at": "2026-06-14 06:47:32.105292",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 9,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "7372fdff-673c-442a-80ce-33a376625b82",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "7372fdff-673c-442a-80ce-33a376625b82",
+      "name": "ARGENTINA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/argentina.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "5db66604-41b6-48ca-9ba2-029e27b8702e",
+    "name": "Spain Away WC Jersey (Player Version)",
+    "price": 849,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version.webp,https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-1-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-2.webp,https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-3.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/Buy-Spain-Away-2026-Worldcup-jersey-player-version-3.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-12 05:40:01.74971",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": true,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+      "name": "SPAIN",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/spain.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "60edb45f-ef9e-457f-8c51-8acf6d74ced3",
+    "name": "Portugal Home WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-4-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Portugal-Home-2026-World-Cup-jersey-4-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-16 20:04:26.129979",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+      "name": "PORTUGAL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/portugal.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "69fe8ccc-1efb-41c8-8977-a5bd47fabc7b",
+    "name": "Barcelona 26/27 Away Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-1.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-2.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-10.webp,https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-11.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-10.webp",
+      "https://topfootball.in/wp-content/uploads/2026/07/Barcelona-2026-27-Away-Player-Version-Soccer-Jersey-11.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-08-09 20:12:22.717664",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "Authentic Match / Player Edition jersey engineered with Thailand superior ultra-lightweight Dry-Fit performance fabric, heat-transferred authentic rubberised 3D club crests, and precision athletic slim-fit tailoring as worn on pitch by professional players.",
+    "teams": {
+      "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+      "name": "BARCELONA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "7351dc2e-410d-4289-b57f-26b92b57f351",
+    "name": "Spain Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey.webp,https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-1.webp,https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-2.webp,https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-6.webp,https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-7.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-2.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-6.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Spain-home-2026-player-version-worldcup-jersey-7.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:53:52.088832",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
+      "name": "SPAIN",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/spain.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "744241bf-a19f-415d-b0f0-95b034ec7407",
+    "name": "England Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://clubjerseys.in/wp-content/uploads/2026/02/IMG6889JPG-131233134e.webp",
+    "images": [
+      "https://clubjerseys.in/wp-content/uploads/2026/02/IMG6889JPG-131233134e.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:47:37.898429",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+      "name": "ENGLAND",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/england.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "772560be-1776-4b5b-b7d4-1e3f7f39f913",
+    "name": "Uruguay Away WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition.webp,https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-3.webp,https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-2.webp,https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-1.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-3.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Uruguay-Away-2026-worldcup-jersey-player-edition-1.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-12 05:36:45.542247",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+      "name": "URUGUAY",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/uruguay.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "7f29e965-2275-4441-a1cb-f9a9704d311e",
+    "name": "Real Madrid 26/27 Away Jersey (Player Version)",
+    "price": 997,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-3.webp,https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-1.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-3.webp",
+      "https://topfootball.in/wp-content/uploads/2026/08/Real-Madrid-away-26-27-Player-version-Jersey-1.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-08-09 20:09:07.842392",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "Authentic Match / Player Edition jersey engineered with Thailand superior ultra-lightweight Dry-Fit performance fabric, heat-transferred authentic rubberised 3D club crests, and precision athletic slim-fit tailoring as worn on pitch by professional players.",
+    "teams": {
+      "id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+      "name": "REAL MADRID",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/real-madrid.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "7f6b91d4-e3b4-40ea-bccf-9d308af3e801",
+    "name": "Portugal Away WC Jersey (Clearance Sale)",
+    "price": 449,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/02/portugal-away-2026-worlcup-jersey-1.webp,https://topfootball.in/wp-content/uploads/2026/02/portugal-away-2026-worlcup-jersey-3-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/02/portugal-away-2026-worlcup-jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/portugal-away-2026-worlcup-jersey-3-768x768.webp"
+    ],
+    "stock": 37,
+    "status": "active",
+    "created_at": "2026-06-16 20:03:15.672339",
+    "type": "CLEARANCE SALE",
+    "size_stock": {
+      "L": 9,
+      "M": 8,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": true,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+      "name": "PORTUGAL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/portugal.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "84e28930-d2f9-4a5c-a2f6-5f76094de6e7",
+    "name": "Brazil Home WC Jersey (Clearance Sale)",
+    "price": 599,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/04/Brazil-Home-2025-26-Jersey.jpg,https://topfootball.in/wp-content/uploads/2026/01/Brazil-home-2025-kids-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/01/Brazil-home-2025-kids-jersey-2-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/04/Brazil-Home-2025-26-Jersey.jpg",
+      "https://topfootball.in/wp-content/uploads/2026/01/Brazil-home-2025-kids-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/01/Brazil-home-2025-kids-jersey-2-768x768.webp"
+    ],
+    "stock": 37,
+    "status": "active",
+    "created_at": "2026-05-03 17:02:22.134122",
+    "type": "CLEARANCE SALE",
+    "size_stock": {
+      "L": 9,
+      "M": 9,
+      "S": 9,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": true,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+      "name": "BRAZIL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/brazil.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "9100823d-900b-4370-9405-69f62f08830f",
+    "name": "Brazil Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/12/img_8533-scaled.jpeg,https://topfootball.in/wp-content/uploads/2025/12/Brazil-home-2026-worldcup-player-version-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2025/12/Brazil-home-2026-worldcup-player-version-jersey-5-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/12/img_8533-scaled.jpeg",
+      "https://topfootball.in/wp-content/uploads/2025/12/Brazil-home-2026-worldcup-player-version-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Brazil-home-2026-worldcup-player-version-jersey-5-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:55:36.39633",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+      "name": "BRAZIL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/brazil.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "92b2ff01-8dab-4b48-ac52-932096d130b4",
+    "name": "England Away WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey.webp,https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey-2-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/04/England-Away-2026-Worldcup-jersey-2-768x768.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-07-02 13:52:15.602193",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+      "name": "ENGLAND",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/england.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "936a9e10-1ba1-4f02-a1c2-dd721346e5c2",
+    "name": "Germany Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-6-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-4-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-5-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-7.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-6-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-4-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-5-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/germany-home-2025-26-worldcup-Player-version-jersey-7.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-05-03 13:50:08.661507",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "0eeef100-839d-4e6b-bbeb-258a140cc801",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "0eeef100-839d-4e6b-bbeb-258a140cc801",
+      "name": "GERMANY",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/germany.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "a23a1326-516b-4c28-b73d-6e3ed8b7bdb2",
+    "name": "Mexico Home WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/02/Mexico-home-2026-worldcup-jersey-768x768.webp,https://clubjerseys.in/wp-content/uploads/2026/06/76f174b8fda815df.webp,https://clubjerseys.in/wp-content/uploads/2026/06/a86ad4d256108e68.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/02/Mexico-home-2026-worldcup-jersey-768x768.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/06/76f174b8fda815df.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/06/a86ad4d256108e68.webp"
+    ],
+    "stock": 39,
+    "status": "active",
+    "created_at": "2026-06-16 19:49:52.961968",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 9,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "dd68fdef-0721-4ddd-bb88-1cccb45ba013",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "dd68fdef-0721-4ddd-bb88-1cccb45ba013",
+      "name": "MEXICO",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/mexico.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "b879adc7-2218-4c86-b9a7-a3d5ccf965cd",
+    "name": "Barcelona 26/27 Home Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7358JPG.webp,https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7361JPG.webp,https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7360JPG.webp,https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7367JPG.webp",
+    "images": [
+      "https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7358JPG.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7361JPG.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7360JPG.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/07/1D4A7367JPG.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-07-22 16:49:41.254428",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "",
+    "teams": {
+      "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+      "name": "BARCELONA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "bc6244b0-a444-4a23-8a8a-c99a38dc552c",
+    "name": "Barcelona 26/27 Home Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-0-768x768.webp,https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-8-768x768.webp,https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-1-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-0-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-8-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/06/Barcelona-2026-27-Home-Jersey-Soccer-1-768x768.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-07-22 16:48:53.622562",
+    "type": "26/27 KITS",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "",
+    "teams": {
+      "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+      "name": "BARCELONA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "c21205e9-0b9b-47d0-94db-d86b13ea586c",
+    "name": "Real Madrid 26/27 Home Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-768x768.webp,https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-2.webp,https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-1-768x768.webp,https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-3-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-2.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/05/Buy-Real-madrid-home-26-27-jersey-online-india-3-768x768.webp"
+    ],
+    "stock": 50,
+    "status": "active",
+    "created_at": "2026-07-22 16:53:25.306932",
+    "type": "26/27 KITS",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 10
+    },
+    "team_id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": true,
+    "description": "",
+    "teams": {
+      "id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+      "name": "REAL MADRID",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/real-madrid.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "ce38bc20-f9a1-4708-afca-9e3dbba7b488",
+    "name": "Brazil Away WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/03/img_8534-scaled.jpeg",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/03/img_8534-scaled.jpeg"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 14:00:03.95392",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
+      "name": "BRAZIL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/brazil.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "ce61146b-2c39-4a64-a536-719432c14c89",
+    "name": "England Home WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-768x768.webp,https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-2-768x768.webp,https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-1-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-2-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/England-home-2026-worldcup-jersey-1-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-16 19:41:55.402109",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "70792eb1-226a-4b8f-bdea-4e1192616887",
+      "name": "ENGLAND",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/england.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "dde8a532-6085-4901-b8d3-e4ba2de8b70c",
+    "name": "Real Madrid 25/26 Home Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey.jpg,https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey-7.jpg,https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey-2.jpg",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey.jpg",
+      "https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey-7.jpg",
+      "https://topfootball.in/wp-content/uploads/2025/04/Real-Madrid-Home-2025-26-Jersey-2.jpg"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-05-03 14:00:41.189266",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
+      "name": "REAL MADRID",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/real-madrid.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "e77c777f-291c-47de-b28b-4ca956ff3b1a",
+    "name": "Argentina Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-1-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-4-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-5-768x768.webp,https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-2-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-4-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-5-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/11/Argentina-home-2026-worldcup-player-version-jersey-2-768x768.webp"
+    ],
+    "stock": 38,
+    "status": "active",
+    "created_at": "2026-05-03 13:52:29.52997",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 9,
+      "M": 9,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "7372fdff-673c-442a-80ce-33a376625b82",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "7372fdff-673c-442a-80ce-33a376625b82",
+      "name": "ARGENTINA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/argentina.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "e7e8895a-350a-403c-b0ac-4d2e39713ee3",
+    "name": "Portugal Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://th.bing.com/th/id/R.58f1a328b12d255e71d7e2474d7791d8?rik=lowtlidWQuwhhA&riu=http%3a%2f%2ftopgoals.in%2fcdn%2fshop%2ffiles%2f1b28d09a-Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey.webp%3fv%3d1767093742&ehk=%2frf9elGA5JvqB%2bYPvdrXb64IcORNDYQk9ml9aqrvnBY%3d&risl=&pid=ImgRaw&r=0,https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-1-768x768.webp,https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-4-768x768.webp",
+    "images": [
+      "https://th.bing.com/th/id/R.58f1a328b12d255e71d7e2474d7791d8?rik=lowtlidWQuwhhA&riu=http%3a%2f%2ftopgoals.in%2fcdn%2fshop%2ffiles%2f1b28d09a-Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey.webp%3fv%3d1767093742&ehk=%2frf9elGA5JvqB%2bYPvdrXb64IcORNDYQk9ml9aqrvnBY%3d&risl=&pid=ImgRaw&r=0",
+      "https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-1-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2025/12/Portugal-Home-jersey-2026-World-Cup-Player-Version-jersey-4-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-16 20:06:35.298365",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
+      "name": "PORTUGAL",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/portugal.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "e83e635c-88fc-4813-8886-cccd36b7d17b",
+    "name": "Argentina Away WC Jersey (Player Version)",
+    "price": 849,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey.webp,https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey-3-768x768.webp,https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey-1.webp,https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-worldcup-playerversion-jersey-1-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey.webp",
+      "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey-3-768x768.webp",
+      "https://topfootball.in/wp-content/uploads/2026/03/Argentina-Away-2026-Worldcup-Player-version-jersey-1.webp",
+      "https://topfootball.in/wp-content/uploads/2026/02/Argentina-Away-2026-worldcup-playerversion-jersey-1-768x768.webp"
+    ],
+    "stock": 29,
+    "status": "active",
+    "created_at": "2026-06-23 14:04:45.695803",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 9,
+      "M": 0,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "7372fdff-673c-442a-80ce-33a376625b82",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "7372fdff-673c-442a-80ce-33a376625b82",
+      "name": "ARGENTINA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/argentina.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "f6bf55f1-2c2a-463c-acc5-5269182e021a",
+    "name": "Uruguay Home WC Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://clubjerseys.in/wp-content/uploads/2026/02/IMG4503-2240074255.webp,https://clubjerseys.in/wp-content/uploads/2026/02/IMG4504-224007fb02.webp,https://clubjerseys.in/wp-content/uploads/2026/02/IMG4505-2240070542.webp",
+    "images": [
+      "https://clubjerseys.in/wp-content/uploads/2026/02/IMG4503-2240074255.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/02/IMG4504-224007fb02.webp",
+      "https://clubjerseys.in/wp-content/uploads/2026/02/IMG4505-2240070542.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-07-02 13:42:09.163959",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
+      "name": "URUGUAY",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/uruguay.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "fb3f7d4b-1db3-44a4-bf7d-7482b1661827",
+    "name": "France Home WC Jersey (Fan Version)",
+    "price": 699,
+    "image_url": "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-home-2026-Worldcup-jersey-768x768.webp",
+    "images": [
+      "https://topfootball.in/wp-content/uploads/2026/01/Buy-France-home-2026-Worldcup-jersey-768x768.webp"
+    ],
+    "stock": 40,
+    "status": "active",
+    "created_at": "2026-06-16 19:40:02.866239",
+    "type": "FAN VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 10,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+    "featured": true,
+    "isFeatured": true,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "81110aaf-a1da-4323-a836-dc104efae6b0",
+      "name": "FRANCE",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/france.png",
+      "sport": "FOOTBALL"
+    }
+  },
+  {
+    "id": "fc20e9dd-059e-470f-8f39-be91be9160f2",
+    "name": "Barcelona 25/26 Home Jersey (Player Version)",
+    "price": 999,
+    "image_url": "https://soccer-jersey-yupoo.com/wp-content/uploads/2025/04/2526-Player-Barcelona-Home-S-4XL-7.webp",
+    "images": [
+      "https://soccer-jersey-yupoo.com/wp-content/uploads/2025/04/2526-Player-Barcelona-Home-S-4XL-7.webp"
+    ],
+    "stock": 36,
+    "status": "active",
+    "created_at": "2026-05-27 18:47:50.686943",
+    "type": "PLAYER VERSION",
+    "size_stock": {
+      "L": 10,
+      "M": 6,
+      "S": 10,
+      "XL": 10,
+      "XS": 0,
+      "XXL": 0
+    },
+    "team_id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+    "featured": false,
+    "isFeatured": false,
+    "is_clearance": false,
+    "is_26_27": false,
+    "description": "",
+    "teams": {
+      "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
+      "name": "BARCELONA",
+      "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+      "sport": "FOOTBALL"
+    }
+  }
+]

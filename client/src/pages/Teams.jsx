@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { REVERSE_TEAM_MAPPING } from "../utils/collection-mapping";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
+import { API_BASE } from "../config/api";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
 const FLAME_ID = "jv-flame-teams";
@@ -101,10 +102,10 @@ export default function Teams() {
   const [user,           setUser]           = useState(null);
   const [isAdmin,        setIsAdmin]        = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cartCount,      setCartCount]      = useState(() => {
+  const [cartCount] = useState(() => {
     try {
       const saved = sessionStorage.getItem("cart");
-      if (saved) return JSON.parse(saved).reduce((s, i) => s + i.qty, 0);
+      if (saved) return JSON.parse(saved).reduce((s, i) => s + (i.qty || 1), 0);
     } catch {}
     return 0;
   });
@@ -129,17 +130,41 @@ export default function Teams() {
     });
   }, []);
 
-  /* ── Fetch teams from Supabase ── */
+  /* ── Fetch teams ── */
   useEffect(() => {
+    if (globalTeams && globalTeams.length > 0) {
+      setTeams(globalTeams);
+      setLoading(false);
+      return;
+    }
     supabase
       .from("teams")
       .select("*")
       .order("name", { ascending: true })
       .then(({ data, error }) => {
-        if (!error && data) setTeams(data);
-        setLoading(false);
+        if (!error && data && data.length > 0) {
+          setTeams(data);
+          setLoading(false);
+        } else {
+          fetch(`${API_BASE}/api/catalog/teams`)
+            .then(r => r.json())
+            .then(res => {
+              if (res.data) setTeams(res.data);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+        }
+      })
+      .catch(() => {
+        fetch(`${API_BASE}/api/catalog/teams`)
+          .then(r => r.json())
+          .then(res => {
+            if (res.data) setTeams(res.data);
+          })
+          .catch(() => {})
+          .finally(() => setLoading(false));
       });
-  }, []);
+  }, [globalTeams]);
 
   /* ── Resize: close hamburger ── */
   useEffect(() => {
