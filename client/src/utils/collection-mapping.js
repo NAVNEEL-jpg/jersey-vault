@@ -38,8 +38,12 @@ export const COLLECTION_MAPPING = {
   "italy": { type: "team", matchName: "ITALY", title: "Italy Kits & Jerseys", h1: "ITALY JERSEYS", desc: "Shop premium Italy national team kits." },
   "netherlands": { type: "team", matchName: "NETHERLANDS", title: "Netherlands Kits & Jerseys", h1: "NETHERLANDS JERSEYS", desc: "Shop premium Netherlands national team kits." },
   "japan": { type: "team", matchName: "JAPAN", title: "Japan Kits & Jerseys", h1: "JAPAN JERSEYS", desc: "Shop premium Japan national team kits." },
-  "mexico": { type: "team", matchName: "MEXICO", title: "Mexico Kits & Jerseys", h1: "MEXICO JERSEYS", desc: "Shop premium Mexico national team kits." },
   "usa": { type: "team", matchName: "USA", title: "USA Kits & Jerseys", h1: "USA JERSEYS", desc: "Shop premium USA national team kits." },
+
+  // CRICKET TEAMS
+  "india-cricket": { type: "team", matchName: "INDIAN CRICKET TEAM", title: "Indian Cricket Team Jerseys", h1: "INDIAN CRICKET TEAM JERSEYS", desc: "Shop official Indian cricket team kits and jerseys." },
+  "rcb": { type: "team", matchName: "ROYAL CHALLENGERS BANGALORE", title: "Royal Challengers Bangalore Jerseys", h1: "RCB CRICKET JERSEYS", desc: "Shop official Royal Challengers Bangalore cricket jerseys." },
+  "csk": { type: "team", matchName: "CHENNAI SUPER KINGS", title: "Chennai Super Kings Jerseys", h1: "CSK CRICKET JERSEYS", desc: "Shop official Chennai Super Kings cricket jerseys." },
 
   // PLAYERS
   "messi": { type: "player", matchName: "MESSI", title: "Lionel Messi Jerseys", h1: "MESSI JERSEYS", desc: "Shop premium Lionel Messi jerseys and kits." },

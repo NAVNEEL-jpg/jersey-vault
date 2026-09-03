@@ -198,7 +198,13 @@ export default function Teams() {
   /* ── Filtered teams ── */
   const filtered = useMemo(() => teams.filter(t => {
     const matchesSport  = activeTab === "ALL" || (t.sport || "").toUpperCase() === activeTab;
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameLower = (t.name || "").toLowerCase();
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return matchesSport;
+    const matchesSearch = nameLower.includes(q) ||
+      (t.name === "ROYAL CHALLENGERS BANGALORE" && (q === "rcb" || q.includes("rcb"))) ||
+      (t.name === "CHENNAI SUPER KINGS" && (q === "csk" || q.includes("csk"))) ||
+      (t.name === "INDIAN CRICKET TEAM" && (q === "bcci" || q === "india" || q.includes("bcci")));
     return matchesSport && matchesSearch;
   }), [teams, activeTab, searchQuery]);
 
