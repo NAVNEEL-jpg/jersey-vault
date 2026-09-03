@@ -1,24 +1,26 @@
 import { supabase } from '../config/supabase.js';
+import { getR2Table, updateR2Table } from '../services/r2Service.js';
+import { getLiveEdgeLimits } from '../services/edgeMetricsService.js';
 
 export const getStats = async (req, res) => {
   try {
-    // 1. Revenue & Orders
+    // 1. Revenue & Orders from Supabase
     const { data: orders, error: orderError } = await supabase
       .from('orders')
       .select('total, status, amount_paid, balance_due, pay_method');
 
     if (orderError) throw orderError;
 
-    const totalOrders = orders.length;
-    const pendingOrders = orders.filter(o => o.status === 'pending').length;
+    const totalOrders = (orders || []).length;
+    const pendingOrders = (orders || []).filter(o => o.status === 'pending').length;
 
     // GMV: Total value of all non-cancelled orders
-    const gmv = orders
+    const gmv = (orders || [])
       .filter(o => o.status !== 'cancelled')
       .reduce((acc, order) => acc + (Number(order.total) || 0), 0);
 
     // Cash Collected: Money successfully collected across ALL orders
-    const cashCollected = orders.reduce((acc, order) => {
+    const cashCollected = (orders || []).reduce((acc, order) => {
       const paid = order.amount_paid != null 
         ? Number(order.amount_paid) 
         : (String(order.pay_method).toLowerCase() === 'cod' ? 149 : (Number(order.total) || 0));
@@ -26,7 +28,7 @@ export const getStats = async (req, res) => {
     }, 0);
 
     // Pending Cash: Money expected on delivery for active orders
-    const pendingCash = orders
+    const pendingCash = (orders || [])
       .filter(o => o.status !== 'cancelled')
       .reduce((acc, order) => {
         const paid = order.amount_paid != null 
@@ -38,22 +40,18 @@ export const getStats = async (req, res) => {
         return acc + bal;
       }, 0);
 
-    // Map GMV to legacy totalRevenue field for safety, though we'll return all new fields
     const totalRevenue = gmv;
 
-    // 2. Total Users
+    // 2. Total Users from Supabase Profiles
     const { count: totalUsers, error: userError } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true });
 
     if (userError) throw userError;
 
-    // 3. Total Products
-    const { count: totalProducts, error: prodError } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true });
-
-    if (prodError) throw prodError;
+    // 3. Total Products from Cloudflare R2
+    const products = await getR2Table('products');
+    const totalProducts = (products || []).length;
 
     res.json({
       totalRevenue,
@@ -61,17 +59,16 @@ export const getStats = async (req, res) => {
       cashCollected,
       pendingCash,
       totalOrders,
-      totalUsers,
+      totalUsers: totalUsers || 0,
       totalProducts,
       pendingOrders
     });
   } catch (error) {
     console.error("Admin Stats Error:", error);
-    console.error(error?.stack);
     res.status(500).json({
       success: false,
       error: 'An internal server error occurred.'
- });
+    });
   }
 };
 
@@ -104,8 +101,6 @@ export const getAllUsers = async (req, res) => {
     res.json({ success: true, users, page, limit, total: count || 0 });
   } catch (error) {
     console.error('[getAllUsers] Unexpected Error:', error);
-    console.error('[getAllUsers] Stack Trace:', error.stack);
-    
     res.status(500).json({ 
       success: false, 
       error: 'An internal server error occurred.' 
@@ -138,27 +133,25 @@ export const deleteUser = async (req, res) => {
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.error('[deleteUser] Error:', error);
-    console.error('adminController.js Error:', error);
     res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };
 
 export const getSettings = async (req, res) => {
   try {
-    const { data, error } = await supabase.from('site_settings').select('*');
-    if (error) throw error;
-    
+    const data = await getR2Table('site_settings');
     const settings = {};
-    if (data) {
+    if (Array.isArray(data)) {
       data.forEach(item => {
-        settings[item.key] = item.value;
+        if (item.key) {
+          settings[item.key] = item.value;
+        }
       });
     }
     
     res.json(settings);
   } catch (error) {
     console.error("Get Settings Error:", error);
-    console.error('adminController.js Error:', error);
     res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };
@@ -170,20 +163,35 @@ export const updateSettings = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid settings payload' });
     }
     
-    const updates = Object.keys(settings).map(key => ({
-      key,
-      value: String(settings[key])
-    }));
-    
-    if (updates.length > 0) {
-      const { error } = await supabase.from('site_settings').upsert(updates, { onConflict: 'key' });
-      if (error) throw error;
+    const current = await getR2Table('site_settings');
+    const settingsMap = new Map();
+
+    if (Array.isArray(current)) {
+      current.forEach(item => {
+        if (item.key) settingsMap.set(item.key, item.value);
+      });
     }
-    
+
+    Object.keys(settings).forEach(key => {
+      settingsMap.set(key, String(settings[key]));
+    });
+
+    const updatedList = Array.from(settingsMap.entries()).map(([key, value]) => ({ key, value }));
+    await updateR2Table('site_settings', updatedList);
+
     res.json({ success: true, message: 'Settings updated' });
   } catch (error) {
     console.error("Update Settings Error:", error);
-    console.error('adminController.js Error:', error);
     res.status(500).json({ success: false, message: 'An internal server error occurred.' });
+  }
+};
+
+export const getEdgeLimits = async (req, res) => {
+  try {
+    const limits = await getLiveEdgeLimits();
+    res.json(limits);
+  } catch (error) {
+    console.error("getEdgeLimits Error:", error);
+    res.status(500).json({ success: false, message: 'Failed to fetch live edge limits' });
   }
 };

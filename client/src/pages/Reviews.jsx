@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
-import { supabase } from "../supabase";
+import { API_BASE } from "../config/api";
 import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
 
 export default function Reviews() {
@@ -32,12 +32,13 @@ export default function Reviews() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load products for review form dropdown
-      const { data: productsData } = await supabase
-        .from("products")
-        .select("id, name, image_url")
-        .eq("status", "active");
-      if (productsData) setJerseysList(productsData);
+      // Load products for review form dropdown from Cloudflare R2 backend
+      const res = await fetch(`${API_BASE}/api/products`);
+      if (res.ok) {
+        const productsData = await res.json();
+        const active = (productsData || []).filter(p => p.status === 'active' || !p.status);
+        setJerseysList(active);
+      }
 
       // Load all reviews
       const reviewsData = await fetchProductReviews("all");

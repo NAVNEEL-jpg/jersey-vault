@@ -17,41 +17,8 @@ export async function fetchProductReviews(productId = null) {
       }
     }
   } catch (err) {
-    console.error('API fetchProductReviews error, attempting Supabase fallback:', err);
+    console.error('API fetchProductReviews error, attempting localStorage fallback:', err);
   }
-
-  // Supabase Direct Fallback
-  try {
-    if (productId) {
-      const key = `${REVIEWS_KEY_PREFIX}${productId}`;
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', key)
-        .maybeSingle();
-
-      if (!error && data?.value) {
-        const list = JSON.parse(data.value);
-        if (Array.isArray(list)) return list;
-      }
-    } else {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key, value')
-        .like('key', `${REVIEWS_KEY_PREFIX}%`);
-
-      if (!error && data) {
-        let allReviews = [];
-        data.forEach(row => {
-          try {
-            const list = JSON.parse(row.value);
-            if (Array.isArray(list)) allReviews = allReviews.concat(list);
-          } catch (_) {}
-        });
-        return allReviews;
-      }
-    }
-  } catch (_) {}
 
   // LocalStorage Fallback
   try {
@@ -101,6 +68,7 @@ export async function addProductReview(productId, reviewObj) {
     is_published: reviewObj.is_published !== false,
     created_at: new Date().toISOString(),
   };
+
   const updated = [newReview, ...current];
   try {
     localStorage.setItem(`${REVIEWS_KEY_PREFIX}${productId}`, JSON.stringify(updated));
@@ -240,18 +208,20 @@ export async function updateProductReview(productId, reviewId, reviewObj, oldPro
   return { success: true, review: updatedReviewObj };
 }
 
-
 export async function uploadReviewImage(file) {
   try {
-    const ext = file.name ? file.name.split('.').pop() : 'jpg';
-    const fileName = `reviews/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('Jersey image').upload(fileName, file, { upsert: true });
-    if (!uploadError) {
-      const { data: urlData } = supabase.storage.from('Jersey image').getPublicUrl(fileName);
-      if (urlData?.publicUrl) return urlData.publicUrl;
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(`${API_BASE}/api/upload?folder=reviews`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) return data.url;
     }
   } catch (e) {
-    console.warn('Supabase storage upload failed, using DataURL fallback:', e);
+    console.warn('Backend Cloudflare R2 upload failed, using DataURL fallback:', e);
   }
 
   return new Promise((resolve, reject) => {
@@ -293,4 +263,3 @@ export async function uploadReviewImage(file) {
     reader.readAsDataURL(file);
   });
 }
-

@@ -11,8 +11,8 @@ const generateProductSlug = (name) => {
     .replace(/(^-|-$)+/g, '');
 };
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://clytujskrmcnstzuvuaf.supabase.co';
-const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || 'sb_publishable_iTI05LkGPnhWrcwB74-Mug_iOHcZ7xt';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://gpyzxpefddvxmjzxyhzy.supabase.co';
+const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdweXp4cGVmZGR2eG1qenh5aHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MDIzNTYsImV4cCI6MjEwMzk3ODM1Nn0.9DzJOrDNIXYJAmTzdVfHPmqkk8w0TFiLqpUS282KOIY';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DOMAIN = 'https://www.thejerseyvault.in';

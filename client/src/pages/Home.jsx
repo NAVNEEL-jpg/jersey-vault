@@ -14,6 +14,7 @@ import hummellogo from "../assets/brands/hummel.png";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useGlobalData } from "../context/GlobalDataContext";
 import { supabase } from '../supabase';
+import { express } from '../express';
 import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
@@ -722,23 +723,14 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
         if (productSlugMap) {
           const match = productSlugMap.find(p => p.slug === productSlug);
           if (match) {
-            try {
-              const { data, error } = await supabase.from("products").select("*").eq("id", match.id).single();
-              if (!error && data) singleProduct = data;
-            } catch (_) {}
+            const { data } = await express.from("products").select("*").eq("id", match.id).single();
+            if (data) singleProduct = data;
           }
         }
 
         if (!singleProduct) {
-          try {
-            const res = await fetch(`${API_BASE}/api/products`);
-            if (res.ok) {
-              const prods = await res.json();
-              singleProduct = prods.find(p => generateProductSlug(p.name) === productSlug || String(p.id) === productSlug);
-            }
-          } catch (e) {
-            console.warn("Backend single product fallback failed:", e);
-          }
+          const { data } = await express.from("products").select("*");
+          singleProduct = (data || []).find(p => generateProductSlug(p.name) === productSlug || String(p.id) === productSlug);
         }
 
         if (singleProduct && !cancelled) {
@@ -751,22 +743,20 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
       }
       
       const collectionData = collectionSlug ? COLLECTION_MAPPING[collectionSlug] : null;
-
       let fetchedData = null;
 
-      // 1. Try Supabase
       try {
-        let query = supabase.from("products").select("id, name, price, stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
+        let query = express.from("products").select("id, name, price, stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
 
         if (collectionData) {
           if (collectionData.type === "team") {
-            const { data: tData } = await supabase.from("teams").select("id, name").ilike("name", collectionData.matchName).single();
+            const { data: tData } = await express.from("teams").select("id, name").ilike("name", collectionData.matchName).single();
             if (tData) {
               query = query.eq("team_id", tData.id);
               if (!cancelled) setActiveTeamName(tData.name);
             }
           } else if (collectionData.type === "league") {
-            const { data: allTeams } = await supabase.from("teams").select("id, name");
+            const { data: allTeams } = await express.from("teams").select("id, name");
             if (allTeams) {
               const leagueTeamIds = allTeams.filter(t => collectionData.matchNames.includes(t.name.toUpperCase())).map(t => t.id);
               if (leagueTeamIds.length > 0) {
@@ -780,7 +770,7 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
         } else {
           const teamId = searchParams.get("team");
           if (teamId) {
-            supabase.from("teams").select("name").eq("id", teamId).single()
+            express.from("teams").select("name").eq("id", teamId).single()
               .then(({ data }) => { if (!cancelled && data) setActiveTeamName(data.name); });
             query = query.eq("team_id", teamId);
           } else {
@@ -788,52 +778,12 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
           }
         }
 
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
+        const { data } = await query;
+        if (data && data.length > 0) {
           fetchedData = data;
         }
-      } catch (sbErr) {
-        console.warn("[Home.jsx] Supabase product query failed, using backend fallback:", sbErr.message);
-      }
-
-      // 2. Fallback to backend API
-      if (!fetchedData) {
-        try {
-          const res = await fetch(`${API_BASE}/api/products`);
-          if (res.ok) {
-            const allProducts = await res.json();
-            let filtered = Array.isArray(allProducts) ? allProducts.filter(p => p.status === "active" || !p.status) : [];
-
-            if (collectionData) {
-              if (collectionData.type === "team") {
-                if (globalTeams && globalTeams.length > 0) {
-                  const t = globalTeams.find(item => item.name.toUpperCase().includes(collectionData.matchName.toUpperCase()));
-                  if (t) {
-                    filtered = filtered.filter(p => p.team_id === t.id);
-                    if (!cancelled) setActiveTeamName(t.name);
-                  }
-                }
-              } else if (collectionData.type === "category") {
-                if (!cancelled) setActiveFilter(collectionData.matchName);
-              }
-            } else {
-              const teamId = searchParams.get("team");
-              if (teamId) {
-                filtered = filtered.filter(p => p.team_id === teamId);
-                if (globalTeams && globalTeams.length > 0) {
-                  const t = globalTeams.find(item => String(item.id) === String(teamId));
-                  if (!cancelled && t) setActiveTeamName(t.name);
-                }
-              } else {
-                if (!cancelled) setActiveTeamName("");
-              }
-            }
-
-            fetchedData = filtered;
-          }
-        } catch (apiErr) {
-          console.error("[Home.jsx] Backend products fallback failed:", apiErr);
-        }
+      } catch (err) {
+        console.error("[Home.jsx] Product query failed:", err);
       }
 
       if (cancelled) return;
@@ -924,18 +874,28 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (data?.session) {
-        const sessionUser = data.session.user;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", sessionUser.id)
-          .single();
-        setUser(sessionUser);
-        if (profile?.role === "admin") setIsAdmin(true);
+    const handleAuthUser = (sessionUser) => {
+      if (sessionUser) {
+        const isNavneel = sessionUser.email?.toLowerCase() === "navneeldutta@gmail.com";
+        setUser({ ...sessionUser, role: isNavneel ? "admin" : "customer" });
+        setIsAdmin(isNavneel);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
       }
+    };
+
+    supabase.auth.getSession().then(({ data }) => {
+      handleAuthUser(data?.session?.user || null);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthUser(session?.user || null);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

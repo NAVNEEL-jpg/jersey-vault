@@ -46,14 +46,7 @@ export function useAdminOrderNotifications() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user || cancelled) return;
 
-      const userEmail = session.user.email;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      const admin = userEmail === ADMIN_EMAIL && profile?.role === 'admin';
+      const admin = session.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
       if (!cancelled) {
         setIsAdmin(admin);
         isAdminRef.current = admin;

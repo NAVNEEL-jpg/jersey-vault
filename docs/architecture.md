@@ -2,25 +2,21 @@
 
 ## High‑Level Components
 
-- **Client (React)** – Source under `client/src/`. Uses React Router, React Query (planned), and `react-hot-toast` for notifications. Entry point: `client/src/App.js` (includes `<Toaster/>`).
+- **Client (React)** – Source under `client/src/`. Uses React Router and `react-hot-toast` for notifications. Consumes products, teams, reviews, and settings via the Express REST API (backed by Cloudflare R2), and authentication/orders via Supabase.
 - **Server (Express)** – Source under `server/src/`. Exposes REST APIs under `/api/`. Middleware `protect` validates Supabase JWTs; `adminOnly` restricts admin routes.
-- **Supabase** – Primary PostgreSQL store and auth provider. Interacted with via `supabase-js` (`src/config/supabase.js`).
-- **Razorpay Integration** – Two‑step order creation: pending order saved in DB before invoking Razorpay; verification updates the order status.
-- **Background Workers** – Supabase Edge Function `smooth‑worker` runs after order finalisation (emails/SMS). 
+- **Cloudflare R2** – Stores product catalog, teams, categories, site settings, reviews, and all media/image uploads. Accessed via `@aws-sdk/client-s3` in `server/src/services/r2Service.js` with in-memory caching and local filesystem fallback (`server/src/data/`).
+- **Supabase** – Dedicated Authentication & Order Management engine:
+  - `auth.users` & `public.profiles` for customer and admin auth.
+  - `public.orders` for order tracking, payment confirmation, and status lifecycles.
+- **Razorpay Integration** – Two‑step order creation and verification against Supabase `orders` with pricing re-verification against Cloudflare R2 products.
+- **Delhivery Logistics** – Dynamic rate calculation and shipment tracking for orders.
 
 ## Data Flow
-1. UI triggers API calls (e.g., order creation, product management).
-2. `protect` middleware validates the JWT and attaches `req.user`.
-3. Controllers perform business logic and interact with Supabase tables.
-4. Payment flow creates a pending order, Razorpay processes payment, `verify` endpoint finalises the order.
-5. Post‑processing utilizes an atomic PostgreSQL RPC (`update_size_stock`) to deduct inventory and prevent race conditions.
-6. If an inventory conflict occurs during payment verification, the order is safely persisted as `inventory_pending` and flagged with `admin_notes` to prevent silent failures.
-7. Real-time admin notifications are broadcasted via Supabase Realtime (managed by a reference-counted singleton to prevent React StrictMode collisions) and the `smooth-worker` sends emails/SMS.
-
-## Key Decisions (unchanged)
-- Shipping zones, COD fees, pricing logic remain in `orderController.js`.
-- UI styling, colors, layout, and branding are untouched.
-- No changes to environment variables, deployment scripts, or Supabase migrations.
+1. **Catalog & Browsing**: The React client queries `/api/catalog/all`, `/api/products`, and `/api/catalog/teams` directly backed by Cloudflare R2.
+2. **Authentication**: Client performs sign up, sign in, OTP, and session management using Supabase Auth, validating user roles via `profiles`.
+3. **Cart & Payment**: `recalculateCart` verifies current product pricing against Cloudflare R2. Razorpay payment verification updates order status in Supabase `orders`.
+4. **Inventory**: Stock checks and deductions occur in Cloudflare R2 (`products.json`) upon order placement; cancelled orders restore stock.
+5. **Media Storage**: Product and team images upload directly to Cloudflare R2 via `/api/upload` and serve through the public CDN URL (`R2_PUBLIC_URL`).
 
 ---
-*Generated on 2026‑07‑30*
+*Updated on 2026-09-03*

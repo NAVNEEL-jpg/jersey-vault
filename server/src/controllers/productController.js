@@ -1,51 +1,42 @@
-import { supabase } from '../config/supabase.js';
-import { getR2Table } from '../services/r2Service.js';
+import {
+  getR2Table,
+  updateR2Table,
+  createProductInR2,
+  updateProductInR2,
+  deleteProductInR2,
+} from '../services/r2Service.js';
 
 // @desc    Fetch all products
 // @route   GET /api/products
 export const getProducts = async (req, res) => {
   try {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          category:category_id (name),
-          subcategory:subcategory_id (name)
-        `);
+    let products = await getR2Table('products');
 
-      if (error) throw error;
-      return res.json(data);
-    } catch (supabaseError) {
-      console.warn('[productController:getProducts] Supabase unavailable, falling back to Cloudflare R2 backup:', supabaseError.message);
-      let products = await getR2Table('products');
-
-      // Filter by query parameters if provided
-      const { status, category, type, team_id, featured, is_clearance, is_26_27 } = req.query;
-      if (status) {
-        products = products.filter(p => p.status === status);
-      }
-      if (category) {
-        products = products.filter(p => p.category === category || p.category_id === category);
-      }
-      if (type) {
-        products = products.filter(p => p.type === type);
-      }
-      if (team_id) {
-        products = products.filter(p => p.team_id === team_id);
-      }
-      if (featured !== undefined) {
-        products = products.filter(p => String(p.featured) === String(featured));
-      }
-      if (is_clearance !== undefined) {
-        products = products.filter(p => String(p.is_clearance) === String(is_clearance));
-      }
-      if (is_26_27 !== undefined) {
-        products = products.filter(p => String(p.is_26_27) === String(is_26_27));
-      }
-
-      return res.json(products);
+    // Filter by query parameters if provided
+    const { status, category, type, team_id, featured, is_clearance, is_26_27 } = req.query;
+    if (status) {
+      products = products.filter(p => p.status === status);
     }
+    if (category) {
+      products = products.filter(p => p.category === category || p.category_id === category);
+    }
+    if (type) {
+      products = products.filter(p => p.type === type);
+    }
+    if (team_id) {
+      products = products.filter(p => p.team_id === team_id);
+    }
+    if (featured !== undefined) {
+      products = products.filter(p => String(p.featured) === String(featured) || String(p.isFeatured) === String(featured));
+    }
+    if (is_clearance !== undefined) {
+      products = products.filter(p => String(p.is_clearance) === String(is_clearance));
+    }
+    if (is_26_27 !== undefined) {
+      products = products.filter(p => String(p.is_26_27) === String(is_26_27));
+    }
+
+    return res.json(products);
   } catch (error) {
     console.error('productController.js Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
@@ -56,31 +47,12 @@ export const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 export const getProductById = async (req, res) => {
   try {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          category:category_id (name),
-          subcategory:subcategory_id (name)
-        `)
-        .eq('id', req.params.id)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') return res.status(404).json({ message: 'Product not found' });
-        throw error;
-      }
-      return res.json(data);
-    } catch (supabaseError) {
-      console.warn('[productController:getProductById] Supabase unavailable, falling back to Cloudflare R2 backup:', supabaseError.message);
-      const products = await getR2Table('products');
-      const found = products.find(p => String(p.id) === String(req.params.id) || p.slug === req.params.id);
-      if (!found) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-      return res.json(found);
+    const products = await getR2Table('products');
+    const found = products.find(p => String(p.id) === String(req.params.id) || p.slug === req.params.id);
+    if (!found) {
+      return res.status(404).json({ message: 'Product not found' });
     }
+    return res.json(found);
   } catch (error) {
     console.error('productController.js Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
@@ -91,38 +63,10 @@ export const getProductById = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
   try {
-    const { name, price, originalPrice, description, images, image, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured, featured } = req.body;
-
-    const imgList = Array.isArray(images) && images.length > 0
-      ? images
-      : (image ? [image] : []);
-
-    const slugFinal = slug || `${String(name || 'item').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${Date.now()}`;
-
-    const { data, error } = await supabase
-      .from('products')
-      .insert([{
-        name,
-        price,
-        originalPrice,
-        description: description || '—',
-        images: imgList,
-        category_id,
-        subcategory_id,
-        stock: stock !== undefined ? Number(stock) : 0,
-        sizes,
-        discountPercent,
-        slug: slugFinal,
-        isFeatured: isFeatured || false,
-        featured: featured || false,
-      }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    res.status(201).json(data);
+    const newProduct = await createProductInR2(req.body);
+    res.status(201).json(newProduct);
   } catch (error) {
-    console.error('productController.js Error:', error);
+    console.error('createProduct Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
@@ -131,36 +75,13 @@ export const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
   try {
-    const { name, price, originalPrice, description, images, category_id, subcategory_id, stock, sizes, discountPercent, slug, isFeatured, featured } = req.body;
-
-    const { data, error } = await supabase
-      .from('products')
-      .update({
-        name,
-        price,
-        originalPrice,
-        description,
-        images,
-        category_id,
-        subcategory_id,
-        stock,
-        sizes,
-        discountPercent,
-        slug,
-        isFeatured,
-        featured,
-      })
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return res.status(404).json({ message: 'Product not found' });
-      throw error;
+    const updated = await updateProductInR2(req.params.id, req.body);
+    if (!updated) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-    res.json(data);
+    res.json(updated);
   } catch (error) {
-    console.error('productController.js Error:', error);
+    console.error('updateProduct Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
@@ -168,63 +89,45 @@ export const updateProduct = async (req, res) => {
 // @desc    Delete a product
 // @route   DELETE /api/products/:id
 export const deleteProduct = async (req, res) => {
-  console.log("ATTEMPTING DELETE for ID:", req.params.id);
   try {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', req.params.id);
-
-    if (error) {
-      console.error("SUPABASE DELETE ERROR:", error);
-      throw error;
+    const deleted = await deleteProductInR2(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-
-    console.log("DELETE SUCCESSFUL");
     res.json({ message: 'Product removed' });
   } catch (error) {
-    console.error("DELETE CONTROLLER ERROR:", error);
-    console.error('productController.js Error:', error);
+    console.error('deleteProduct Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
   }
 };
 
-// ─── REVIEWS CONTROLLER ───────────────────────────────────────────────────
+// ─── REVIEWS CONTROLLER (Stored in Cloudflare R2 site_settings) ─────────────
 const REVIEWS_KEY_PREFIX = 'jersey_reviews_v1_';
 
 export const getReviews = async (req, res) => {
   try {
     const { productId } = req.params;
+    const settings = await getR2Table('site_settings');
+    const settingsList = Array.isArray(settings) ? settings : [];
+
     if (productId && productId !== 'all') {
       const key = `${REVIEWS_KEY_PREFIX}${productId}`;
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', key)
-        .maybeSingle();
-
-      if (error) throw error;
+      const found = settingsList.find(s => s.key === key);
       let reviews = [];
-      if (data?.value) {
-        try { reviews = JSON.parse(data.value); } catch (_) {}
+      if (found?.value) {
+        try { reviews = JSON.parse(found.value); } catch (_) {}
       }
       return res.json({ success: true, reviews: Array.isArray(reviews) ? reviews : [] });
     } else {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key, value')
-        .like('key', `${REVIEWS_KEY_PREFIX}%`);
-
-      if (error) throw error;
       let allReviews = [];
-      if (data) {
-        data.forEach(row => {
+      settingsList
+        .filter(s => s.key && s.key.startsWith(REVIEWS_KEY_PREFIX))
+        .forEach(row => {
           try {
             const list = JSON.parse(row.value);
             if (Array.isArray(list)) allReviews = allReviews.concat(list);
           } catch (_) {}
         });
-      }
       return res.json({ success: true, reviews: allReviews });
     }
   } catch (error) {
@@ -239,15 +142,13 @@ export const addReview = async (req, res) => {
     if (!productId) return res.status(400).json({ success: false, message: 'productId is required' });
 
     const key = `${REVIEWS_KEY_PREFIX}${productId}`;
-    const { data: existingData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', key)
-      .maybeSingle();
+    const settings = await getR2Table('site_settings');
+    const settingsList = Array.isArray(settings) ? [...settings] : [];
 
+    const existingIndex = settingsList.findIndex(s => s.key === key);
     let current = [];
-    if (existingData?.value) {
-      try { current = JSON.parse(existingData.value); } catch (_) {}
+    if (existingIndex !== -1 && settingsList[existingIndex].value) {
+      try { current = JSON.parse(settingsList[existingIndex].value); } catch (_) {}
     }
 
     const newReview = {
@@ -263,11 +164,13 @@ export const addReview = async (req, res) => {
 
     const updated = [newReview, ...(Array.isArray(current) ? current : [])];
 
-    const { error: upsertError } = await supabase
-      .from('site_settings')
-      .upsert({ key, value: JSON.stringify(updated) }, { onConflict: 'key' });
+    if (existingIndex !== -1) {
+      settingsList[existingIndex] = { key, value: JSON.stringify(updated) };
+    } else {
+      settingsList.push({ key, value: JSON.stringify(updated) });
+    }
 
-    if (upsertError) throw upsertError;
+    await updateR2Table('site_settings', settingsList);
 
     res.json({ success: true, review: newReview, reviews: updated });
   } catch (error) {
@@ -282,24 +185,19 @@ export const toggleReview = async (req, res) => {
     if (!productId || !reviewId) return res.status(400).json({ success: false, message: 'Missing fields' });
 
     const key = `${REVIEWS_KEY_PREFIX}${productId}`;
-    const { data: existingData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', key)
-      .maybeSingle();
+    const settings = await getR2Table('site_settings');
+    const settingsList = Array.isArray(settings) ? [...settings] : [];
+
+    const existingIndex = settingsList.findIndex(s => s.key === key);
+    if (existingIndex === -1) return res.status(404).json({ success: false, message: 'Reviews not found' });
 
     let current = [];
-    if (existingData?.value) {
-      try { current = JSON.parse(existingData.value); } catch (_) {}
-    }
+    try { current = JSON.parse(settingsList[existingIndex].value); } catch (_) {}
 
     const updated = current.map(r => r.id === reviewId ? { ...r, is_published: !!is_published } : r);
+    settingsList[existingIndex] = { key, value: JSON.stringify(updated) };
 
-    const { error: upsertError } = await supabase
-      .from('site_settings')
-      .upsert({ key, value: JSON.stringify(updated) }, { onConflict: 'key' });
-
-    if (upsertError) throw upsertError;
+    await updateR2Table('site_settings', settingsList);
 
     res.json({ success: true, reviews: updated });
   } catch (error) {
@@ -314,24 +212,19 @@ export const deleteReview = async (req, res) => {
     if (!productId || !reviewId) return res.status(400).json({ success: false, message: 'Missing fields' });
 
     const key = `${REVIEWS_KEY_PREFIX}${productId}`;
-    const { data: existingData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', key)
-      .maybeSingle();
+    const settings = await getR2Table('site_settings');
+    const settingsList = Array.isArray(settings) ? [...settings] : [];
+
+    const existingIndex = settingsList.findIndex(s => s.key === key);
+    if (existingIndex === -1) return res.status(404).json({ success: false, message: 'Reviews not found' });
 
     let current = [];
-    if (existingData?.value) {
-      try { current = JSON.parse(existingData.value); } catch (_) {}
-    }
+    try { current = JSON.parse(settingsList[existingIndex].value); } catch (_) {}
 
     const updated = current.filter(r => r.id !== reviewId);
+    settingsList[existingIndex] = { key, value: JSON.stringify(updated) };
 
-    const { error: upsertError } = await supabase
-      .from('site_settings')
-      .upsert({ key, value: JSON.stringify(updated) }, { onConflict: 'key' });
-
-    if (upsertError) throw upsertError;
+    await updateR2Table('site_settings', settingsList);
 
     res.json({ success: true, reviews: updated });
   } catch (error) {
@@ -347,38 +240,29 @@ export const updateReview = async (req, res) => {
 
     const targetProductId = String(productId);
     const originalProductId = String(oldProductId || productId);
+    const settings = await getR2Table('site_settings');
+    const settingsList = Array.isArray(settings) ? [...settings] : [];
 
     if (targetProductId !== originalProductId) {
       // 1. Remove from old product key
       const oldKey = `${REVIEWS_KEY_PREFIX}${originalProductId}`;
-      const { data: oldData } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', oldKey)
-        .maybeSingle();
-
+      const oldIndex = settingsList.findIndex(s => s.key === oldKey);
       let oldReviews = [];
-      if (oldData?.value) {
-        try { oldReviews = JSON.parse(oldData.value); } catch (_) {}
+      if (oldIndex !== -1 && settingsList[oldIndex].value) {
+        try { oldReviews = JSON.parse(settingsList[oldIndex].value); } catch (_) {}
       }
       const existingReview = oldReviews.find(r => r.id === reviewId);
       const filteredOld = oldReviews.filter(r => r.id !== reviewId);
-
-      await supabase
-        .from('site_settings')
-        .upsert({ key: oldKey, value: JSON.stringify(filteredOld) }, { onConflict: 'key' });
+      if (oldIndex !== -1) {
+        settingsList[oldIndex] = { key: oldKey, value: JSON.stringify(filteredOld) };
+      }
 
       // 2. Add updated review to new product key
       const newKey = `${REVIEWS_KEY_PREFIX}${targetProductId}`;
-      const { data: newData } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', newKey)
-        .maybeSingle();
-
+      const newIndex = settingsList.findIndex(s => s.key === newKey);
       let newReviews = [];
-      if (newData?.value) {
-        try { newReviews = JSON.parse(newData.value); } catch (_) {}
+      if (newIndex !== -1 && settingsList[newIndex].value) {
+        try { newReviews = JSON.parse(settingsList[newIndex].value); } catch (_) {}
       }
 
       const updatedReview = {
@@ -394,24 +278,21 @@ export const updateReview = async (req, res) => {
       };
 
       const updatedNew = [updatedReview, ...newReviews.filter(r => r.id !== reviewId)];
+      if (newIndex !== -1) {
+        settingsList[newIndex] = { key: newKey, value: JSON.stringify(updatedNew) };
+      } else {
+        settingsList.push({ key: newKey, value: JSON.stringify(updatedNew) });
+      }
 
-      await supabase
-        .from('site_settings')
-        .upsert({ key: newKey, value: JSON.stringify(updatedNew) }, { onConflict: 'key' });
-
+      await updateR2Table('site_settings', settingsList);
       return res.json({ success: true, review: updatedReview, reviews: updatedNew });
     } else {
       // Update in place for same product ID
       const key = `${REVIEWS_KEY_PREFIX}${targetProductId}`;
-      const { data: existingData } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', key)
-        .maybeSingle();
-
+      const existingIndex = settingsList.findIndex(s => s.key === key);
       let current = [];
-      if (existingData?.value) {
-        try { current = JSON.parse(existingData.value); } catch (_) {}
+      if (existingIndex !== -1 && settingsList[existingIndex].value) {
+        try { current = JSON.parse(settingsList[existingIndex].value); } catch (_) {}
       }
 
       let updatedReview = null;
@@ -432,12 +313,13 @@ export const updateReview = async (req, res) => {
         return r;
       });
 
-      const { error: upsertError } = await supabase
-        .from('site_settings')
-        .upsert({ key, value: JSON.stringify(updated) }, { onConflict: 'key' });
+      if (existingIndex !== -1) {
+        settingsList[existingIndex] = { key, value: JSON.stringify(updated) };
+      } else {
+        settingsList.push({ key, value: JSON.stringify(updated) });
+      }
 
-      if (upsertError) throw upsertError;
-
+      await updateR2Table('site_settings', settingsList);
       return res.json({ success: true, review: updatedReview, reviews: updated });
     }
   } catch (error) {
@@ -445,4 +327,3 @@ export const updateReview = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-

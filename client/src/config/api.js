@@ -1,4 +1,4 @@
-export const API_BASE = process.env.REACT_APP_API_URL ?? "";
+export const API_BASE = process.env.REACT_APP_API_URL ?? (typeof window === "undefined" ? "http://localhost:5000" : "");
 
 export const invoiceUrl = (orderId, admin = false) => {
   const path = admin

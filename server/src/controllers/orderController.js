@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { calculateDelhiveryRate, calculateLiveDeliveryRate, trackDelhiveryShipment } from '../services/delhivery.service.js';
+import { getR2Table, updateSizeStockInR2 } from '../services/r2Service.js';
 
 // Fallback COD Fee
 const COD_FEE = 30;
@@ -87,16 +88,15 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
-    // Check stock for all items
+    // Check stock for all items from Cloudflare R2
+    const currentProducts = await getR2Table('products');
     for (const it of orderItems) {
-      const { data: p, error: pError } = await supabase
-        .from('products')
-        .select('stock, name')
-        .eq('id', it.product)
-        .single();
+      const prodId = it.product || it.id;
+      const p = (currentProducts || []).find(prod => String(prod.id) === String(prodId));
       
-      if (pError || !p) return res.status(400).json({ message: `Product not found: ${it.name || it.product}` });
-      if ((p.stock || 0) < (it.qty || 0)) return res.status(400).json({ message: `Insufficient stock for ${p.name}` });
+      if (!p) return res.status(400).json({ message: `Product not found: ${it.name || prodId}` });
+      const sizeQty = it.size && p.size_stock ? (p.size_stock[it.size] || 0) : (p.stock || 0);
+      if (sizeQty < (it.qty || 0)) return res.status(400).json({ message: `Insufficient stock for ${p.name}` });
     }
 
     const shippingPrice = req.body.shippingPrice !== undefined 
@@ -110,22 +110,27 @@ export const createOrder = async (req, res) => {
     const pt = paymentType || 'PREPAID';
     const isPaid = typeof isPaidBody === 'boolean' ? isPaidBody : pt !== 'COD';
 
-    // Insert Order
+    // Insert Order into Supabase
     const { data: createdOrder, error: orderError } = await supabase
       .from('orders')
       .insert([{
-        user_id,
+        user_id: user_id || null,
+        customer_id: user_id || null,
+        customer_name: shippingAddress?.name || req.user?.full_name || req.user?.name || '',
+        customer_email: shippingAddress?.email || req.user?.email || '',
+        customer_phone: shippingAddress?.phone || req.user?.phone || '',
+        address: shippingAddress?.address || shippingAddress?.street || '',
+        city: shippingAddress?.city || '',
+        state: shippingAddress?.state || '',
+        pincode: shippingAddress?.pincode || shippingAddress?.postalCode || '',
         items: orderItems,
-        shipping_address: shippingAddress,
-        payment_method: paymentMethod,
-        payment_result: paymentResult || {},
-        tax_price: taxPrice || 0,
-        shipping_price: shippingPrice,
-        total_price: calculatedTotal,
-        cod_fee: codFee,
-        payment_type: pt,
-        is_paid: isPaid,
-        paid_at: isPaid ? new Date() : null,
+        subtotal: itemsPrice || 0,
+        shipping: shippingPrice || 0,
+        total: calculatedTotal,
+        amount_paid: isPaid ? calculatedTotal : 0,
+        balance_due: isPaid ? 0 : calculatedTotal,
+        pay_method: pt,
+        payment_captured: isPaid,
         status: 'pending'
       }])
       .select()
@@ -133,12 +138,12 @@ export const createOrder = async (req, res) => {
 
     if (orderError) throw orderError;
 
-    // Update Stock
+    // Update Stock in Cloudflare R2
     for (const it of orderItems) {
-      await supabase.rpc('decrement_stock', { 
-        product_id: it.product, 
-        quantity: it.qty 
-      });
+      const prodId = it.product || it.id;
+      const size = it.size || 'M';
+      const qty = Number(it.qty) || 1;
+      await updateSizeStockInR2(prodId, size, -qty);
     }
 
     res.status(201).json(createdOrder);
@@ -176,10 +181,7 @@ export const getOrders = async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('orders')
-      .select(`
-        *,
-        profiles:user_id (full_name, email, phone)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -217,19 +219,10 @@ export const updateOrderStatus = async (req, res) => {
       for (const item of items) {
         const productId = item.id || item.product;
         const qty = Number(item.qty) || 1;
-        const size = item.size;
+        const size = item.size || 'M';
 
-        if (productId && size) {
-          const { data: rpcData, error: rpcError } = await supabase.rpc('update_size_stock', {
-            p_product_id: productId,
-            p_size: size,
-            p_qty_change: qty
-          });
-          if (rpcError) {
-            console.error(`Failed to increment size_stock for product ${productId}, size ${size}:`, rpcError);
-          } else if (rpcData && !rpcData.success) {
-            console.error(`RPC reported failure for product ${productId}, size ${size}:`, rpcData.message);
-          }
+        if (productId) {
+          await updateSizeStockInR2(productId, size, qty);
         }
       }
     }

@@ -112,8 +112,9 @@ export default function SupportChat() {
     setLoading(true);
 
     try {
-      const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || 'sb_publishable_iTI05LkGPnhWrcwB74-Mug_iOHcZ7xt';
-      const response = await fetch('https://clytujskrmcnstzuvuaf.supabase.co/functions/v1/chatbot', {
+      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+      const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || '';
+      const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

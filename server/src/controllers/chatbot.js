@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getR2Table } from '../services/r2Service.js';
 
 // Admin panel stores status as strings: pending, preparing, shipped, delivered
 const statusLabels = {
@@ -10,11 +11,11 @@ const statusLabels = {
 };
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL || 'https://clytujskrmcnstzuvuaf.supabase.co';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://gpyzxpefddvxmjzxyhzy.supabase.co';
 // Use service role key if available, otherwise fall back to the public anon key for auth-based querying
 const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_SERVICE_ROLE_KEY.includes('YOUR_'))
   ? process.env.SUPABASE_SERVICE_ROLE_KEY
-  : 'sb_publishable_iTI05LkGPnhWrcwB74-Mug_iOHcZ7xt';
+  : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdweXp4cGVmZGR2eG1qenh5aHp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MDIzNTYsImV4cCI6MjEwMzk3ODM1Nn0.9DzJOrDNIXYJAmTzdVfHPmqkk8w0TFiLqpUS282KOIY';
 
 const localSupabase = createClient(supabaseUrl, supabaseKey);
 
@@ -108,18 +109,16 @@ async function findAvailableJerseys(terms) {
   if (terms.length === 0) return [];
   
   try {
-    const orQuery = terms.map(t => `name.ilike.%${t}%`).join(',');
-    const { data, error } = await localSupabase
-      .from('products')
-      .select('id, name, price, type, stock, status')
-      .eq('status', 'active')
-      .or(orQuery)
-      .limit(5);
-      
-    if (error) throw error;
-    return data || [];
+    const products = await getR2Table('products');
+    const matched = (products || []).filter(p => {
+      if (p.status !== 'active') return false;
+      const name = (p.name || '').toLowerCase();
+      return terms.some(t => name.includes(t.toLowerCase()));
+    }).slice(0, 5);
+    
+    return matched;
   } catch (err) {
-    console.error('Error searching products in database:', err);
+    console.error('Error searching products in Cloudflare R2:', err);
     return [];
   }
 }

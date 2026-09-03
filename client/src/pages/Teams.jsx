@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { REVERSE_TEAM_MAPPING } from "../utils/collection-mapping";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
+import { express } from "../express";
 import { API_BASE } from "../config/api";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
@@ -119,15 +120,28 @@ export default function Teams() {
 
   /* ── Auth ── */
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (data?.session) {
-        const u = data.session.user;
-        const { data: profile } = await supabase
-          .from("profiles").select("role").eq("id", u.id).maybeSingle();
-        setUser(u);
-        if (profile?.role === "admin") setIsAdmin(true);
+    const handleAuthUser = (u) => {
+      if (u) {
+        const isNavneel = u.email?.toLowerCase() === "navneeldutta@gmail.com";
+        setUser({ ...u, role: isNavneel ? "admin" : "customer" });
+        setIsAdmin(isNavneel);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
       }
+    };
+
+    supabase.auth.getSession().then(({ data }) => {
+      handleAuthUser(data?.session?.user || null);
     });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleAuthUser(session?.user || null);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   /* ── Fetch teams ── */
@@ -137,33 +151,15 @@ export default function Teams() {
       setLoading(false);
       return;
     }
-    supabase
+    express
       .from("teams")
       .select("*")
       .order("name", { ascending: true })
-      .then(({ data, error }) => {
-        if (!error && data && data.length > 0) {
-          setTeams(data);
-          setLoading(false);
-        } else {
-          fetch(`${API_BASE}/api/catalog/teams`)
-            .then(r => r.json())
-            .then(res => {
-              if (res.data) setTeams(res.data);
-            })
-            .catch(() => {})
-            .finally(() => setLoading(false));
-        }
+      .then(({ data }) => {
+        if (data) setTeams(data);
       })
-      .catch(() => {
-        fetch(`${API_BASE}/api/catalog/teams`)
-          .then(r => r.json())
-          .then(res => {
-            if (res.data) setTeams(res.data);
-          })
-          .catch(() => {})
-          .finally(() => setLoading(false));
-      });
+      .catch((err) => console.error("Error loading teams:", err))
+      .finally(() => setLoading(false));
   }, [globalTeams]);
 
   /* ── Resize: close hamburger ── */
@@ -580,7 +576,20 @@ export default function Teams() {
                         }}
                       >
                         {t.logo_url ? (
-                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }} />
+                          <img
+                            src={t.logo_url}
+                            alt=""
+                            style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }}
+                            onError={(e) => {
+                              if (t.logo_url?.includes('teams/')) {
+                                const fn = t.logo_url.split('teams/')[1];
+                                if (!e.currentTarget.dataset.retried) {
+                                  e.currentTarget.dataset.retried = '1';
+                                  e.currentTarget.src = `/teams/${fn}`;
+                                }
+                              }
+                            }}
+                          />
                         ) : (
                           <span style={{ fontSize: 14 }}>🛡️</span>
                         )}
@@ -756,7 +765,20 @@ export default function Teams() {
                   {/* Logo */}
                   <div className="t-team-logo-wrap">
                     {team.logo_url ? (
-                      <img src={team.logo_url} alt={team.name} className="t-team-logo" />
+                      <img
+                        src={team.logo_url}
+                        alt={team.name}
+                        className="t-team-logo"
+                        onError={(e) => {
+                          if (team.logo_url?.includes('teams/')) {
+                            const fn = team.logo_url.split('teams/')[1];
+                            if (!e.currentTarget.dataset.retried) {
+                              e.currentTarget.dataset.retried = '1';
+                              e.currentTarget.src = `/teams/${fn}`;
+                            }
+                          }
+                        }}
+                      />
                     ) : (
                       <span className="t-team-logo-placeholder">
                         {sportIcon[team.sport?.toUpperCase()] || "🛡️"}

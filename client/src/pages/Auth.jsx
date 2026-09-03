@@ -210,34 +210,50 @@ export default function AuthPage() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
+    setErrors({});
     const normalizedEmail = form.email.trim().toLowerCase();
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: form.password });
-      if (error) { 
-        if (error.message.toLowerCase().includes("email not confirmed")) {
-           setErrors({ email: "Please verify your email before signing in." });
-           setMode("otp");
-           setLoading(false);
-           return;
-        }
-        setErrors({ email: error.message }); 
-        setLoading(false); 
-        return; 
-      }
-      ReactGA.event("login", { method: "Email" });
-      setLoading(false);
-      navigate(redirectUrl, { replace: true });
-    } else {
-      const { error } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password: form.password,
-        options: { data: { full_name: form.name.trim(), phone: `${form.countryCode}${form.phone}` } }
-      });
-      if (error) { setErrors({ email: error.message }); setLoading(false); return; }
+    const isNavneel = normalizedEmail === "navneeldutta@gmail.com";
+    const targetDestination = (redirectUrl === "/admin" && !isNavneel) ? "/" : redirectUrl;
 
-      ReactGA.event("sign_up", { method: "Email" });
+    try {
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password: form.password });
+        if (error) { 
+          if (error.message.toLowerCase().includes("email not confirmed")) {
+             setErrors({ email: "Please verify your email before signing in. Check your inbox for the confirmation link." });
+             setMode("otp");
+             return;
+          }
+          setErrors({ email: error.message }); 
+          return; 
+        }
+        ReactGA.event("login", { method: "Email" });
+        navigate(targetDestination, { replace: true });
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password: form.password,
+          options: {
+            data: { full_name: form.name.trim(), phone: `${form.countryCode}${form.phone}` },
+            emailRedirectTo: `${window.location.origin}/auth`
+          }
+        });
+        if (error) { setErrors({ email: error.message }); return; }
+
+        ReactGA.event("sign_up", { method: "Email" });
+        
+        // If session is immediately returned (e.g. auto-confirm enabled in Supabase)
+        if (data?.session) {
+          navigate(targetDestination, { replace: true });
+        } else {
+          setMode("otp");
+        }
+      }
+    } catch (err) {
+      console.error("[Auth] Submit error:", err);
+      setErrors({ email: err.message || "An unexpected error occurred. Please try again." });
+    } finally {
       setLoading(false);
-      setMode("otp");
     }
   };
 
@@ -247,34 +263,47 @@ export default function AuthPage() {
       return;
     }
     setOtpLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      email: form.email.trim().toLowerCase(),
-      token: otp,
-      type: "signup"
-    });
-    
-    if (error) {
-      setErrors({ otp: error.message });
+    setErrors({});
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: form.email.trim().toLowerCase(),
+        token: otp,
+        type: "signup"
+      });
+      
+      if (error) {
+        setErrors({ otp: error.message });
+        return;
+      }
+      setSuccess(true);
+    } catch (err) {
+      setErrors({ otp: err.message || "Failed to verify code" });
+    } finally {
       setOtpLoading(false);
-      return;
     }
-    setOtpLoading(false);
-    setSuccess(true);
   };
 
   const handleResendOtp = async () => {
     if (resendCooldown > 0) return;
     setOtpLoading(true);
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: form.email.trim().toLowerCase(),
-    });
-    setOtpLoading(false);
-    if (error) {
-      setErrors({ otp: error.message });
-    } else {
-      setResendCooldown(60);
-      setErrors({ otp: "Code resent successfully" });
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: form.email.trim().toLowerCase(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`
+        }
+      });
+      if (error) {
+        setErrors({ otp: error.message });
+      } else {
+        setResendCooldown(60);
+        setErrors({ otp: "Verification email resent successfully. Please check your inbox." });
+      }
+    } catch (err) {
+      setErrors({ otp: err.message || "Failed to resend code" });
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -283,18 +312,29 @@ export default function AuthPage() {
     const normalizedEmail = forgotEmail.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setErrors({ forgot: "Enter a valid email" }); return; }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
-    if (error) { setErrors({ forgot: error.message }); setLoading(false); return; }
-    setLoading(false);
-    setForgotSent(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/auth`
+      });
+      if (error) { setErrors({ forgot: error.message }); return; }
+      setForgotSent(true);
+    } catch (err) {
+      setErrors({ forgot: err.message || "Failed to send reset link" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } }
-    });
-    if (error) setErrors({ email: error.message });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } }
+      });
+      if (error) setErrors({ email: error.message });
+    } catch (err) {
+      setErrors({ email: err.message || "Google sign in error" });
+    }
   };
 
   const switchMode = (m) => {

@@ -1,42 +1,38 @@
 import express from 'express';
+import fs from 'fs';
 import upload from '../middlewares/uploadMiddleware.js';
-import { protect } from '../middlewares/authMiddleware.js';
-import { supabase } from '../config/supabase.js';
+import { uploadFileToR2 } from '../services/r2Service.js';
 
 const router = express.Router();
 
-router.post('/', protect, upload.single('image'), async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image provided' });
     }
 
     const file = req.file;
-    const fileExt = file.originalname.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `products/${fileName}`;
+    const fileExt = file.originalname ? file.originalname.split('.').pop() : 'jpg';
+    const folder = req.query.folder || (req.body && req.body.folder) || 'products';
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const key = `${folder}/${fileName}`;
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('Jersey image')
-      .upload(filePath, file.buffer, {
-        contentType: file.mimetype,
-        upsert: false
-      });
-
-    if (error) {
-      throw error;
+    let buffer = file.buffer;
+    if (!buffer && file.path) {
+      buffer = fs.readFileSync(file.path);
+      try {
+        fs.unlinkSync(file.path); // Clean up temporary disk upload
+      } catch (_) {}
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('Jersey image')
-      .getPublicUrl(filePath);
+    if (!buffer) {
+      return res.status(400).json({ message: 'Unable to process image data' });
+    }
 
-    res.json({ url: publicUrl });
+    const publicUrl = await uploadFileToR2(buffer, key, file.mimetype || 'image/jpeg');
+    res.json({ url: publicUrl, success: true });
   } catch (error) {
     console.error('Upload Error:', error);
-    console.error('uploadRoutes.js Error:', error);
     res.status(500).json({ message: 'An internal server error occurred.' });
   }
 });

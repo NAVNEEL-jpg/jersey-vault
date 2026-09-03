@@ -3,112 +3,112 @@
     "id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
     "name": "URUGUAY",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/uruguay.png",
+    "logo_url": "/api/db/storage/teams/1787436900791-uruguay-dac23acd.svg",
     "created_at": "2026-06-12 05:21:58.138783+00"
   },
   {
     "id": "0eeef100-839d-4e6b-bbeb-258a140cc801",
     "name": "GERMANY",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/germany.png",
+    "logo_url": "/api/db/storage/teams/1787436889432-germany-4be52834.png",
     "created_at": "2026-05-28 19:35:40.860482+00"
   },
   {
     "id": "1f34cedf-3e40-43de-ac49-ac7a8a1c4dc3",
     "name": "BARCELONA",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/barcelona.png",
+    "logo_url": "/api/db/storage/teams/1787436881344-barcelona-423ba008.png",
     "created_at": "2026-05-28 19:28:08.19253+00"
   },
   {
     "id": "3d83fc06-bcb0-428f-a707-dce736e5f560",
     "name": "REAL MADRID",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/real-madrid.png",
+    "logo_url": "/api/db/storage/teams/1787436883054-real-madrid-881ed308.png",
     "created_at": "2026-05-28 19:34:30.213654+00"
   },
   {
     "id": "53f03ef0-2112-46e9-8e37-fdc747e5e93b",
     "name": "USA",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/usa.png",
+    "logo_url": "/api/db/storage/teams/1787436892341-usa-9333a578.png",
     "created_at": "2026-06-16 19:29:32.117283+00"
   },
   {
     "id": "5b5a4365-9483-41ac-8578-a1c4a4abeeb7",
     "name": "NETHERLANDS",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/netherlands.png",
+    "logo_url": "/api/db/storage/teams/1787436895589-netherlands-509c674a.png",
     "created_at": "2026-06-16 19:33:58.190421+00"
   },
   {
     "id": "70792eb1-226a-4b8f-bdea-4e1192616887",
     "name": "ENGLAND",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/england.png",
+    "logo_url": "/api/db/storage/teams/1787436894391-england-d93e5e46.png",
     "created_at": "2026-06-16 19:33:35.174913+00"
   },
   {
     "id": "7372fdff-673c-442a-80ce-33a376625b82",
     "name": "ARGENTINA",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/argentina.png",
+    "logo_url": "/api/db/storage/teams/1787436885278-argentina-71fd9c68.png",
     "created_at": "2026-05-28 19:34:47.346827+00"
   },
   {
     "id": "801075ff-6c90-4c4c-8ae5-2b4f16eac9a5",
     "name": "BRAZIL",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/brazil.png",
+    "logo_url": "/api/db/storage/teams/1787436887996-brazil-9ad903f4.png",
     "created_at": "2026-05-28 19:35:26.279658+00"
   },
   {
     "id": "81110aaf-a1da-4323-a836-dc104efae6b0",
     "name": "FRANCE",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/france.png",
+    "logo_url": "/api/db/storage/teams/1787436893166-france-f1713487.png",
     "created_at": "2026-06-16 19:33:17.722812+00"
   },
   {
     "id": "83c5c241-1429-4d4b-a097-07785f6b88e9",
     "name": "CROATIA",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/croatia.png",
+    "logo_url": "/api/db/storage/teams/1787436898269-croatia-5628e3fb.png",
     "created_at": "2026-06-16 19:46:25.904879+00"
   },
   {
     "id": "a4b55db3-d311-456a-880a-c49864d45f03",
     "name": "NORWAY",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/norway.png",
+    "logo_url": "/api/db/storage/teams/1787436897059-norway-68f8090c.png",
     "created_at": "2026-06-16 19:34:17.625585+00"
   },
   {
     "id": "bb793f49-ecc0-4807-8889-c5b61d69a44e",
     "name": "PORTUGAL",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/portugal.png",
+    "logo_url": "/api/db/storage/teams/1787436890564-portugal-a6cf3cd4.png",
     "created_at": "2026-05-28 19:35:54.092927+00"
   },
   {
     "id": "ca3e38a2-be40-430d-a1fb-261d08889d5e",
     "name": "SPAIN",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/spain.png",
+    "logo_url": "/api/db/storage/teams/1787436891397-spain-49b8c26f.png",
     "created_at": "2026-06-12 05:30:02.725295+00"
   },
   {
     "id": "d9190fbd-288c-4a4a-9535-f92635794b74",
     "name": "AS ROMA",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/as-roma.png",
+    "logo_url": "/api/db/storage/teams/1787436886398-as-roma-d2de6060.png",
     "created_at": "2026-05-28 19:35:10.894448+00"
   },
   {
     "id": "dd68fdef-0721-4ddd-bb88-1cccb45ba013",
     "name": "MEXICO",
     "sport": "FOOTBALL",
-    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/team-logos/mexico.png",
+    "logo_url": "/api/db/storage/teams/1787436899443-mexico-cb252187.png",
     "created_at": "2026-06-16 19:49:34.392632+00"
   }
 ]

@@ -61,6 +61,14 @@ This document lists all active Express.js endpoints configured in `server.js`.
 - `GET /api/admin/settings` – Retrieve site settings.
 - `PUT /api/admin/settings` – Update site settings.
 
+## Database & Cloudflare Query API (`/api/db`)
+*Direct query interface mirroring Supabase syntax to interact with Cloudflare R2 tables and media storage.*
+- `GET /api/db/:table` – Query table records with filters (`eq`, `neq`, `in`, `ilike`), ordering (`order`), field selection (`select`), and limits (`limit`).
+- `POST /api/db/:table` – Insert record into table.
+- `PATCH /api/db/:table` or `PUT /api/db/:table` – Update record in table.
+- `DELETE /api/db/:table` – Delete record from table.
+- `POST /api/db/storage/:bucket/upload` – Upload file to Cloudflare R2 bucket.
+
 ## Other
 - `GET /api/test` – Health check endpoint to verify API is running.
 

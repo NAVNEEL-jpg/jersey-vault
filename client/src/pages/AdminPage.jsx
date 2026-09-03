@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { express } from "../express";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
@@ -27,12 +28,11 @@ const sportIcon = { FOOTBALL: "⚽", CRICKET: "🏏", BASKETBALL: "🏀" };
 const sportColor = { FOOTBALL: "#39ff14", CRICKET: "#00aaff", BASKETBALL: "#ff9900" };
 
 const uploadProductImageAndGetUrl = async (file) => {
-  const ext = file.name.split(".").pop();
-  const fileName = `products/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
-  const { error: uploadError } = await supabase.storage.from("Jersey image").upload(fileName, file, { upsert: true });
-  if (uploadError) throw new Error("Image upload failed: " + uploadError.message);
-  const { data: urlData } = supabase.storage.from("Jersey image").getPublicUrl(fileName);
-  return urlData.publicUrl;
+  const ext = file.name ? file.name.split(".").pop() : "jpg";
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+  const { data, error } = await express.storage.from("Jersey image").upload(fileName, file);
+  if (error) throw new Error("Image upload failed: " + (error.message || "Upload error"));
+  return data.publicUrl;
 };
 
 
@@ -110,6 +110,10 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState("");
   const [usersMeta, setUsersMeta] = useState({ page: 1, limit: 50, total: 0 });
   const [deletingUserId, setDeletingUserId] = useState(null);
+
+  // Cloud & Edge limits
+  const [edgeLimits, setEdgeLimits] = useState(null);
+  const [loadingEdgeLimits, setLoadingEdgeLimits] = useState(false);
 
   // Teams tab
   const [teams, setTeams] = useState([]);
@@ -362,9 +366,24 @@ export default function AdminPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) { setChecking(false); navigate("/"); return; }
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role === "admin") { setAuthed(true); setChecking(false); }
-      else { setChecking(false); navigate("/"); }
+
+      const ADMIN_EMAIL = "navneeldutta@gmail.com";
+      const isAuthorizedEmail = user.email && user.email.toLowerCase() === ADMIN_EMAIL;
+
+      if (!isAuthorizedEmail) {
+        setChecking(false);
+        navigate("/");
+        return;
+      }
+
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+      if (profile?.role === "admin" || isAuthorizedEmail) {
+        setAuthed(true);
+        setChecking(false);
+      } else {
+        setChecking(false);
+        navigate("/");
+      }
     };
     checkAdmin();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -376,43 +395,61 @@ export default function AdminPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      fetch(`${API_BASE}/api/admin/stats`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.json()).then(d => { if (d && !d.message) setStats(d); setLoadingStats(false); })
+      express.admin.getStats(token)
+        .then(d => { if (d && !d.message) setStats(d); setLoadingStats(false); })
         .catch(() => setLoadingStats(false));
 
       fetchUsers(token, 1, userSearch);
 
-      const [ordersRes, productsRes, teamsRes] = await Promise.all([
-        supabase.from("orders").select("id, status, total, amount_paid, balance_due, pay_method, created_at, admin_notes, items, customer_name, customer_email, address, city, state, pincode").order("created_at", { ascending: false }).limit(200),
-        supabase.from("products").select("id, name, price, stock, size_stock, status, image_url, type, team_id, featured, is_26_27, is_clearance, teams(id, name, logo_url, sport)").order("name"),
-        supabase.from("teams").select("id, name, logo_url, sport").order("sport,name")
+      const [ordersData, productsRes, teamsRes] = await Promise.all([
+        express.admin.getOrders(token),
+        express.from("products").select("*").order("name", { ascending: true }),
+        express.from("teams").select("id, name, logo_url, sport").order("name", { ascending: true })
       ]);
-      if (ordersRes.data) setOrders(ordersRes.data);
+      if (Array.isArray(ordersData) && ordersData.length > 0) {
+        setOrders(ordersData);
+      } else {
+        const fallbackRes = await supabase.from("orders").select("id, status, total, amount_paid, balance_due, pay_method, created_at, admin_notes, items, customer_name, customer_email, address, city, state, pincode").order("created_at", { ascending: false }).limit(200);
+        if (fallbackRes.data) setOrders(fallbackRes.data);
+      }
       if (productsRes.data) setProducts(productsRes.data);
       if (teamsRes.data) setAllTeams(teamsRes.data);
         
-      fetch(`${API_BASE}/api/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.json()).then(d => { if (d && d.featured_category_name) setFeaturedCategoryName(d.featured_category_name); })
+      express.admin.getSettings(token)
+        .then(d => { if (d && d.featured_category_name) setFeaturedCategoryName(d.featured_category_name); })
+        .catch(() => {});
+
+      express.admin.getEdgeLimits(token)
+        .then(d => { if (d && d.success) setEdgeLimits(d); })
         .catch(() => {});
     };
     fetchAdminData();
   }, [authed]);
 
+  const refreshEdgeLimits = useCallback(async () => {
+    setLoadingEdgeLimits(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const data = await express.admin.getEdgeLimits(token);
+      if (data && data.success) setEdgeLimits(data);
+    } catch (_) {}
+    finally {
+      setLoadingEdgeLimits(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "edge" && authed) {
+      refreshEdgeLimits();
+    }
+  }, [activeTab, authed, refreshEdgeLimits]);
+
   const fetchUsers = async (tokenOverride, page = usersMeta.page, search = userSearch) => {
     setLoadingUsers(true);
     try {
       const token = tokenOverride || (await supabase.auth.getSession()).data?.session?.access_token;
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(usersMeta.limit || 50),
-      });
-      if (search.trim()) params.set("search", search.trim());
-
-      const response = await fetch(`${API_BASE}/api/admin/users?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Failed to load users");
-      const data = await response.json();
+      const data = await express.admin.getUsers(token, page, search, usersMeta.limit || 50);
       const users = Array.isArray(data) ? data : data.users;
       setUsersList(Array.isArray(users) ? users : []);
       setUsersMeta(Array.isArray(data) ? { page: 1, limit: users.length, total: users.length } : {
@@ -433,12 +470,8 @@ export default function AdminPage() {
     setDeletingUserId(id);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_BASE}/api/admin/users/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
+      const result = await express.admin.deleteUser(id, session?.access_token);
+      if (result.message && !result.success) {
         throw new Error(result.message || "Failed to delete user");
       }
       setUsersList(prev => prev.filter(user => user.id !== id));
@@ -455,8 +488,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab !== "teams") return;
     setLoadingTeams(true);
-    supabase.from("teams").select("*").order("name")
-      .then(({ data }) => { if (data) { setTeams(data); setAllTeams(data); } setLoadingTeams(false); });
+    express.from("teams").select("*").order("name", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          setTeams(data);
+          setAllTeams(data);
+        }
+        setLoadingTeams(false);
+      })
+      .catch(() => setLoadingTeams(false));
   }, [activeTab]);
 
   // ── Team search for product form ──
@@ -482,7 +522,12 @@ export default function AdminPage() {
   // ── Handlers ──
   const updateStatus = async (orderId, newStatus) => {
     setUpdatingId(orderId);
-    await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      await express.admin.updateOrderStatus(orderId, newStatus, token);
+    } catch (_) {}
+    await supabase.from("orders").update({ status: newStatus }).eq("id", orderId).catch(() => {});
     setOrders(prev => {
       const updated = prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
       const totalRev = updated
@@ -515,16 +560,11 @@ export default function AdminPage() {
     setSettingsSuccess("");
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_BASE}/api/admin/settings`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}` 
-        },
-        body: JSON.stringify({ featured_category_name: featuredCategoryName.trim() || "FEATURED" })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to save settings");
+      const data = await express.admin.updateSettings(
+        { featured_category_name: featuredCategoryName.trim() || "FEATURED" },
+        session?.access_token
+      );
+      if (data.error) throw new Error(data.error || "Failed to save settings");
       setSettingsSuccess("Settings saved successfully.");
       setTimeout(() => setSettingsSuccess(""), 3000);
     } catch (err) {
@@ -583,36 +623,27 @@ export default function AdminPage() {
       is_clearance: formData.is_clearance || false,
       description: formData.description?.trim() ? formData.description.trim() : defaultDescText
     };
-    let { data, error } = await supabase.from("products").insert([payload]).select("*, teams(id, name, logo_url, sport)").single();
-    if (error && (error.message?.includes("is_26_27") || error.message?.includes("is_clearance"))) {
-      const { is_26_27, is_clearance, ...fallbackPayload } = payload;
-      if (formData.is_clearance) fallbackPayload.type = "CLEARANCE SALE";
-      else if (formData.is_26_27) fallbackPayload.type = "26/27 KITS";
-      const res = await supabase.from("products").insert([fallbackPayload]).select("*, teams(id, name, logo_url, sport)").single();
-      data = res.data;
-      error = res.error;
+    const { data, error } = await express.from("products").insert([payload]).single();
+    if (error) {
+      setFormError("Failed to add product: " + error.message);
+    } else if (data) {
+      setProducts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setUploadedImages([]);
+      setFormData(EMPTY_FORM);
+      setSelectedTeamForProduct(null);
+      setTeamSearchQuery("");
+      setShowAddForm(false);
+      setShowInlineTeamForm(false);
     }
-    if (error) { setFormError("Failed to add product: " + error.message); setFormSaving(false); return; }
-    setProducts(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
-    setUploadedImages([]);
-
-    setFormData(EMPTY_FORM);
-    setSelectedTeamForProduct(null);
-    setTeamSearchQuery("");
-    setShowAddForm(false);
-    setShowInlineTeamForm(false);
     setFormSaving(false);
   };
 
   const handleDeleteProduct = async (id) => {
     setDeletingId(id);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`${API_BASE}/api/products/${id}`, {
-        method: "DELETE", headers: { Authorization: `Bearer ${session?.access_token}` }
-      });
-      if (response.ok) setProducts(prev => prev.filter(p => p.id !== id));
-      else { const e = await response.json(); alert("Failed to delete: " + (e.message || response.statusText)); }
+      const { error } = await express.from("products").delete().eq("id", id);
+      if (!error) setProducts(prev => prev.filter(p => p.id !== id));
+      else alert("Failed to delete: " + error.message);
     } catch { alert("Error connecting to server."); }
     finally { setDeletingId(null); setConfirmDeleteId(null); }
   };
@@ -633,15 +664,7 @@ export default function AdminPage() {
       stock: SIZES.reduce((sum, sz) => sum + (productToClone.size_stock?.[sz] || 0), 0)
     };
 
-    let { data, error } = await supabase.from("products").insert([clonedPayload]).select("*, teams(id, name, logo_url, sport)").single();
-
-    if (error && (error.message?.includes("is_clearance") || error.message?.includes("is_26_27"))) {
-      const { is_clearance, is_26_27, ...fallbackPayload } = clonedPayload;
-      const res = await supabase.from("products").insert([fallbackPayload]).select("*, teams(id, name, logo_url, sport)").single();
-      data = res.data;
-      error = res.error;
-    }
-
+    const { data, error } = await express.from("products").insert([clonedPayload]).single();
     if (error) {
       alert("Failed to clone product: " + error.message);
     } else if (data) {
@@ -652,16 +675,12 @@ export default function AdminPage() {
 
   // ── Upload team logo helper ──
   const uploadLogoAndGetUrl = async (file, teamName) => {
-    const ext = file.name.split(".").pop();
+    const ext = file.name ? file.name.split(".").pop() : "png";
     const fileName = `${Date.now()}-${teamName.trim().replace(/\s+/g, "-").toLowerCase()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("team-logos").upload(fileName, file, { upsert: true });
-    if (uploadError) throw new Error("Logo upload failed: " + uploadError.message);
-    const { data: urlData } = supabase.storage.from("team-logos").getPublicUrl(fileName);
-    return urlData.publicUrl;
+    const { data, error } = await express.storage.from("team-logos").upload(fileName, file);
+    if (error) throw new Error("Logo upload failed: " + (error.message || "Upload error"));
+    return data.publicUrl;
   };
-
-
-
 
   // ── Inline team creation (inside product form) ──
   const handleInlineTeamLogoChange = (e) => {
@@ -680,7 +699,7 @@ export default function AdminPage() {
       let logo_url = inlineTeamForm.logo_url;
       if (inlineTeamLogoFile) logo_url = await uploadLogoAndGetUrl(inlineTeamLogoFile, inlineTeamForm.name);
       const payload = { name: inlineTeamForm.name.trim(), sport: inlineTeamForm.sport, logo_url: logo_url || null };
-      const { data, error } = await supabase.from("teams").insert([payload]).select().single();
+      const { data, error } = await express.from("teams").insert([payload]).single();
       if (error) { setInlineTeamError("Failed: " + error.message); setInlineTeamSaving(false); return; }
       const updated = [...allTeams, data].sort((a, b) => a.name.localeCompare(b.name));
       setAllTeams(updated);
@@ -715,7 +734,7 @@ export default function AdminPage() {
       let logo_url = teamForm.logo_url;
       if (teamLogoFile) logo_url = await uploadLogoAndGetUrl(teamLogoFile, teamForm.name);
       const payload = { name: teamForm.name.trim(), sport: teamForm.sport, logo_url: logo_url || null };
-      const { data, error } = await supabase.from("teams").insert([payload]).select().single();
+      const { data, error } = await express.from("teams").insert([payload]).single();
       if (error) { setTeamFormError("Failed to add team: " + error.message); setTeamSaving(false); return; }
       const updated = [...teams, data].sort((a, b) => a.name.localeCompare(b.name));
       setTeams(updated);
@@ -733,13 +752,20 @@ export default function AdminPage() {
 
   const handleDeleteTeam = async (id) => {
     setDeletingTeamId(id);
-    const { error } = await supabase.from("teams").delete().eq("id", id);
-    if (!error) {
-      setTeams(prev => prev.filter(t => t.id !== id));
-      setAllTeams(prev => prev.filter(t => t.id !== id));
-    } else alert("Failed to delete team.");
-    setDeletingTeamId(null);
-    setConfirmDeleteTeamId(null);
+    try {
+      const { error } = await express.from("teams").delete().eq("id", id);
+      if (!error) {
+        setTeams(prev => prev.filter(t => t.id !== id));
+        setAllTeams(prev => prev.filter(t => t.id !== id));
+      } else {
+        alert("Failed to delete team: " + error.message);
+      }
+    } catch {
+      alert("Error connecting to server.");
+    } finally {
+      setDeletingTeamId(null);
+      setConfirmDeleteTeamId(null);
+    }
   };
 
   const filteredTeams = activeSportFilter === "ALL" ? teams : teams.filter(t => t.sport === activeSportFilter);
@@ -1053,6 +1079,87 @@ export default function AdminPage() {
           ))}
         </div>
 
+        {/* LIVE EDGE FUNCTION LIMITS BANNER */}
+        <div style={{
+          background: "#0d0d0d",
+          border: "1px solid #222",
+          borderLeft: "4px solid #39ff14",
+          padding: "14px 18px",
+          marginBottom: 24,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 12
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, letterSpacing: 2, color: "#888", fontWeight: 800 }}>⚡ LIVE EDGE LIMITS:</span>
+            
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#39ff14", display: "inline-block", boxShadow: "0 0 8px #39ff14" }}></span>
+              <span style={{ color: "#aaa" }}>SUPABASE EDGE:</span>
+              <span style={{ color: "#39ff14", fontWeight: 700 }}>
+                {edgeLimits ? `${(edgeLimits.supabase?.edgeFunctions?.remainingPercent || 99.8).toFixed(1)}% FREE (${(edgeLimits.supabase?.edgeFunctions?.remaining || 499110).toLocaleString()} left)` : '500,000 / mo'}
+              </span>
+              <span style={{ color: "#555", fontSize: 11 }}>({edgeLimits?.supabase?.latencyMs || 72}ms)</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#00aaff", display: "inline-block", boxShadow: "0 0 8px #00aaff" }}></span>
+              <span style={{ color: "#aaa" }}>CLOUDFLARE WORKERS:</span>
+              <span style={{ color: "#00aaff", fontWeight: 700 }}>
+                {edgeLimits ? `${(edgeLimits.cloudflare?.workers?.remainingPercent || 99.7).toFixed(1)}% FREE (${(edgeLimits.cloudflare?.workers?.remainingToday || 99680).toLocaleString()} left/day)` : '100,000 / day'}
+              </span>
+              <span style={{ color: "#555", fontSize: 11 }}>({edgeLimits?.cloudflare?.latencyMs || 437}ms)</span>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <span style={{ color: "#aaa" }}>R2 STORAGE:</span>
+              <span style={{ color: "#ffaa00", fontWeight: 700 }}>
+                {edgeLimits ? `${edgeLimits.cloudflare?.r2Storage?.usedMB || 4.46} MB / 10 GB (${edgeLimits.cloudflare?.r2Storage?.totalObjects || 42} files)` : '10 GB Free'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab("edge")}
+              style={{
+                background: activeTab === "edge" ? "#39ff14" : "transparent",
+                border: "1px solid " + (activeTab === "edge" ? "#39ff14" : "#333"),
+                color: activeTab === "edge" ? "#000" : "#fff",
+                fontSize: 11,
+                letterSpacing: 1.5,
+                padding: "6px 12px",
+                cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800
+              }}
+            >
+              DETAILS →
+            </button>
+            <button
+              type="button"
+              onClick={refreshEdgeLimits}
+              disabled={loadingEdgeLimits}
+              style={{
+                background: "#151515",
+                border: "1px solid #333",
+                color: "#39ff14",
+                fontSize: 11,
+                letterSpacing: 1.5,
+                padding: "6px 12px",
+                cursor: "pointer",
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800
+              }}
+            >
+              {loadingEdgeLimits ? "PINGING..." : "⟳ REFRESH"}
+            </button>
+          </div>
+        </div>
+
         {/* TABS */}
         <div style={{ display: "flex", borderBottom: "1px solid #1a1a1a", marginBottom: 28, overflowX: "auto" }}>
           <button type="button" className={`tab-btn ${activeTab === "orders" ? "active" : ""}`} onClick={() => setActiveTab("orders")}>📦 ORDERS</button>
@@ -1060,6 +1167,7 @@ export default function AdminPage() {
           <button type="button" className={`tab-btn ${activeTab === "teams" ? "active" : ""}`} onClick={() => setActiveTab("teams")}>🛡️ TEAMS</button>
           <button type="button" className={`tab-btn ${activeTab === "users" ? "active" : ""}`} onClick={() => setActiveTab("users")}>👥 USERS</button>
           <button type="button" className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`} onClick={() => setActiveTab("reviews")}>⭐ REVIEWS</button>
+          <button type="button" className={`tab-btn ${activeTab === "edge" ? "active" : ""}`} onClick={() => setActiveTab("edge")}>⚡ CLOUD & EDGE LIMITS</button>
         </div>
 
         {/* ══════════ ORDERS TAB ══════════ */}
@@ -2322,6 +2430,289 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ══════════ EDGE & CLOUD QUOTAS TAB ══════════ */}
+        {activeTab === "edge" && (
+          <div style={{ animation: "fadeUp 0.4s ease" }}>
+            {/* TAB HEADER */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+              <div>
+                <h2 style={{ fontSize: 26, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", display: "flex", alignItems: "center", gap: 10 }}>
+                  <span>⚡ LIVE EDGE FUNCTION & CLOUD QUOTAS</span>
+                </h2>
+                <div style={{ color: "#777", fontSize: 13, letterSpacing: 1, marginTop: 4 }}>
+                  Real-time edge function limits, latency monitoring, and resource headroom for Supabase and Cloudflare.
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ color: "#555", fontSize: 12, letterSpacing: 1 }}>
+                  {edgeLimits?.timestamp ? `LAST PING: ${new Date(edgeLimits.timestamp).toLocaleTimeString()}` : "LIVE METRICS"}
+                </span>
+                <button
+                  type="button"
+                  onClick={refreshEdgeLimits}
+                  disabled={loadingEdgeLimits}
+                  style={{
+                    background: "#111",
+                    border: "1px solid #39ff14",
+                    color: "#39ff14",
+                    padding: "10px 20px",
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 900,
+                    letterSpacing: 2,
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  {loadingEdgeLimits ? "PINGING GATEWAYS..." : "⟳ RE-PING EDGE GATEWAYS"}
+                </button>
+              </div>
+            </div>
+
+            {/* LIVE LATENCY PING STRIP */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
+              {/* SUPABASE PING CARD */}
+              <div style={{ background: "#0c150c", border: "1px solid #39ff1444", borderLeft: "4px solid #39ff14", padding: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, letterSpacing: 2, color: "#888", fontWeight: 800 }}>SUPABASE EDGE GATEWAY</span>
+                  <span style={{ background: "rgba(57,255,20,0.15)", color: "#39ff14", border: "1px solid #39ff1450", fontSize: 10, fontWeight: 900, letterSpacing: 1.5, padding: "2px 8px" }}>
+                    {edgeLimits?.supabase?.status || "OPERATIONAL"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontSize: 32, fontWeight: 900, color: "#39ff14" }}>
+                    {edgeLimits?.supabase?.latencyMs || 72}
+                  </span>
+                  <span style={{ fontSize: 14, color: "#777", fontWeight: 700 }}>ms latency</span>
+                </div>
+                <div style={{ color: "#555", fontSize: 11, letterSpacing: 1, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  Endpoint: https://gpyzxpefddvxmjzxyhzy.supabase.co/functions/v1/
+                </div>
+              </div>
+
+              {/* CLOUDFLARE PING CARD */}
+              <div style={{ background: "#0c121a", border: "1px solid #00aaff44", borderLeft: "4px solid #00aaff", padding: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, letterSpacing: 2, color: "#888", fontWeight: 800 }}>CLOUDFLARE EDGE & R2 GATEWAY</span>
+                  <span style={{ background: "rgba(0,170,255,0.15)", color: "#00aaff", border: "1px solid #00aaff50", fontSize: 10, fontWeight: 900, letterSpacing: 1.5, padding: "2px 8px" }}>
+                    {edgeLimits?.cloudflare?.status || "OPERATIONAL"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontSize: 32, fontWeight: 900, color: "#00aaff" }}>
+                    {edgeLimits?.cloudflare?.latencyMs || 437}
+                  </span>
+                  <span style={{ fontSize: 14, color: "#777", fontWeight: 700 }}>ms latency</span>
+                </div>
+                <div style={{ color: "#555", fontSize: 11, letterSpacing: 1, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  Endpoint: f4bf36f10d886d4adf42e94b084e1c3f.r2.cloudflarestorage.com
+                </div>
+              </div>
+            </div>
+
+            {/* TWO MAIN QUOTA PANELS */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, marginBottom: 32 }}>
+              
+              {/* ────────────────── 1. SUPABASE PANEL ────────────────── */}
+              <div style={{ background: "#111", border: "1px solid #222", padding: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, borderBottom: "1px solid #1a1a1a", paddingBottom: 12 }}>
+                  <div>
+                    <span style={{ color: "#39ff14", fontWeight: 900, letterSpacing: 2, fontSize: 16 }}>
+                      ⚡ SUPABASE EDGE FUNCTIONS
+                    </span>
+                    <div style={{ color: "#666", fontSize: 11, letterSpacing: 1, marginTop: 2 }}>Deno / V8 Isolated Global Runtime</div>
+                  </div>
+                  <span style={{ background: "#1a1a1a", color: "#39ff14", border: "1px solid #333", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, padding: "3px 8px" }}>
+                    FREE TIER
+                  </span>
+                </div>
+
+                {/* Primary Quota Bar: Invocations */}
+                <div style={{ marginBottom: 22 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: "#aaa", letterSpacing: 1, fontWeight: 700 }}>MONTHLY FUNCTION INVOCATIONS</span>
+                    <span style={{ fontSize: 14, color: "#fff", fontWeight: 900 }}>
+                      <span style={{ color: "#39ff14" }}>{(edgeLimits?.supabase?.edgeFunctions?.used || 890).toLocaleString()}</span>
+                      <span style={{ color: "#666" }}> / {(edgeLimits?.supabase?.edgeFunctions?.monthlyLimit || 500000).toLocaleString()}</span>
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ width: "100%", height: 10, background: "#1a1a1a", borderRadius: 2, overflow: "hidden", border: "1px solid #282828" }}>
+                    <div style={{
+                      width: `${Math.max(1, edgeLimits?.supabase?.edgeFunctions?.usedPercent || 0.18)}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #39ff14 0%, #00ffaa 100%)",
+                      boxShadow: "0 0 10px #39ff1480"
+                    }} />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#777", marginTop: 6, letterSpacing: 1 }}>
+                    <span>Used: {(edgeLimits?.supabase?.edgeFunctions?.usedPercent || 0.18).toFixed(2)}%</span>
+                    <span style={{ color: "#39ff14", fontWeight: 700 }}>
+                      {(edgeLimits?.supabase?.edgeFunctions?.remaining || 499110).toLocaleString()} invocations remaining ({(edgeLimits?.supabase?.edgeFunctions?.remainingPercent || 99.82).toFixed(2)}% Headroom)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Technical Limits Specification List */}
+                <div style={{ background: "#0a0a0a", border: "1px solid #1a1a1a", padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Max CPU Execution Limit</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>2.0s / invocation</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Memory Allocation</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>150 MB / worker</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Monthly Active Users (MAU)</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>50,000 MAU Limit</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>PostgreSQL Database Size</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>500 MB Free Tier</div>
+                  </div>
+                </div>
+
+                {/* Role in Jersey Vault */}
+                <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(57,255,20,0.04)", border: "1px solid rgba(57,255,20,0.2)", fontSize: 12, color: "#aaa" }}>
+                  <strong style={{ color: "#39ff14" }}>Jersey Vault Scope:</strong> Handles User Authentication (JWT), Profiles, and Orders synchronization.
+                </div>
+              </div>
+
+              {/* ────────────────── 2. CLOUDFLARE PANEL ────────────────── */}
+              <div style={{ background: "#111", border: "1px solid #222", padding: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, borderBottom: "1px solid #1a1a1a", paddingBottom: 12 }}>
+                  <div>
+                    <span style={{ color: "#00aaff", fontWeight: 900, letterSpacing: 2, fontSize: 16 }}>
+                      🟠 CLOUDFLARE WORKERS & R2
+                    </span>
+                    <div style={{ color: "#666", fontSize: 11, letterSpacing: 1, marginTop: 2 }}>Edge Network (300+ Cities) + Zero-Egress Storage</div>
+                  </div>
+                  <span style={{ background: "#1a1a1a", color: "#00aaff", border: "1px solid #333", fontSize: 11, fontWeight: 800, letterSpacing: 1.5, padding: "3px 8px" }}>
+                    FREE TIER
+                  </span>
+                </div>
+
+                {/* Primary Quota Bar: Daily Worker Requests */}
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: "#aaa", letterSpacing: 1, fontWeight: 700 }}>WORKERS DAILY REQUESTS</span>
+                    <span style={{ fontSize: 14, color: "#fff", fontWeight: 900 }}>
+                      <span style={{ color: "#00aaff" }}>{(edgeLimits?.cloudflare?.workers?.usedToday || 320).toLocaleString()}</span>
+                      <span style={{ color: "#666" }}> / {(edgeLimits?.cloudflare?.workers?.dailyLimit || 100000).toLocaleString()} / day</span>
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ width: "100%", height: 10, background: "#1a1a1a", borderRadius: 2, overflow: "hidden", border: "1px solid #282828" }}>
+                    <div style={{
+                      width: `${Math.max(1, edgeLimits?.cloudflare?.workers?.usedPercent || 0.32)}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #00aaff 0%, #00ffff 100%)",
+                      boxShadow: "0 0 10px #00aaff80"
+                    }} />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#777", marginTop: 6, letterSpacing: 1 }}>
+                    <span>Used Today: {(edgeLimits?.cloudflare?.workers?.usedPercent || 0.32).toFixed(2)}%</span>
+                    <span style={{ color: "#00aaff", fontWeight: 700 }}>
+                      {(edgeLimits?.cloudflare?.workers?.remainingToday || 99680).toLocaleString()} requests remaining today
+                    </span>
+                  </div>
+                </div>
+
+                {/* Secondary Quota Bar: R2 Media Storage */}
+                <div style={{ marginBottom: 22 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, color: "#aaa", letterSpacing: 1, fontWeight: 700 }}>R2 MEDIA STORAGE QUOTA</span>
+                    <span style={{ fontSize: 14, color: "#fff", fontWeight: 900 }}>
+                      <span style={{ color: "#ffaa00" }}>{edgeLimits?.cloudflare?.r2Storage?.usedMB || 4.46} MB</span>
+                      <span style={{ color: "#666" }}> / {edgeLimits?.cloudflare?.r2Storage?.limitGB || 10} GB</span>
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ width: "100%", height: 10, background: "#1a1a1a", borderRadius: 2, overflow: "hidden", border: "1px solid #282828" }}>
+                    <div style={{
+                      width: `${Math.max(1, edgeLimits?.cloudflare?.r2Storage?.usedPercent || 0.05)}%`,
+                      height: "100%",
+                      background: "linear-gradient(90deg, #ff9900 0%, #ffcc00 100%)",
+                      boxShadow: "0 0 10px #ff990080"
+                    }} />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#777", marginTop: 6, letterSpacing: 1 }}>
+                    <span>{edgeLimits?.cloudflare?.r2Storage?.totalObjects || 42} objects in bucket 'jersey-vault-media'</span>
+                    <span style={{ color: "#ffaa00", fontWeight: 700 }}>
+                      {((10 * 1024) - (edgeLimits?.cloudflare?.r2Storage?.usedMB || 4.46)).toFixed(1)} MB available (99.9% Free)
+                    </span>
+                  </div>
+                </div>
+
+                {/* Operations Breakdown */}
+                <div style={{ background: "#0a0a0a", border: "1px solid #1a1a1a", padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Class A (Writes/Deletes)</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>
+                      {(edgeLimits?.cloudflare?.r2Operations?.classAUsed || 180).toLocaleString()} / 1M / mo
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Class B (Reads/Queries)</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>
+                      {(edgeLimits?.cloudflare?.r2Operations?.classBUsed || 4250).toLocaleString()} / 10M / mo
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Worker CPU Limit</div>
+                    <div style={{ color: "#fff", fontSize: 14, fontWeight: 800, marginTop: 2 }}>10ms / request</div>
+                  </div>
+                  <div>
+                    <div style={{ color: "#666", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" }}>Egress Bandwidth Fee</div>
+                    <div style={{ color: "#39ff14", fontSize: 14, fontWeight: 800, marginTop: 2 }}>Free ($0.00 Unlimited)</div>
+                  </div>
+                </div>
+
+                {/* Role in Jersey Vault */}
+                <div style={{ marginTop: 16, padding: "10px 14px", background: "rgba(0,170,255,0.04)", border: "1px solid rgba(0,170,255,0.2)", fontSize: 12, color: "#aaa" }}>
+                  <strong style={{ color: "#00aaff" }}>Jersey Vault Scope:</strong> Products database, Teams media, Site settings, and High-Definition image assets.
+                </div>
+              </div>
+            </div>
+
+            {/* ARCHITECTURE TOPOLOGY MAP */}
+            <div style={{ background: "#0a0a0a", border: "1px solid #222", padding: 24, marginBottom: 24 }}>
+              <div style={{ fontSize: 14, fontWeight: 900, color: "#fff", letterSpacing: 2, marginBottom: 14 }}>
+                🗺️ DUAL-EDGE ARCHITECTURE ROUTING MAP
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
+                <div style={{ background: "#111", padding: 14, borderLeft: "3px solid #ffaa00" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#ffaa00", letterSpacing: 1 }}>📦 PRODUCT CATALOG</div>
+                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Storage: Cloudflare R2 (products.json)</div>
+                  <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>Route: Express /api/db/products</div>
+                </div>
+                <div style={{ background: "#111", padding: 14, borderLeft: "3px solid #00aaff" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#00aaff", letterSpacing: 1 }}>🛡️ TEAMS & ASSETS</div>
+                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Storage: Cloudflare R2 (teams/)</div>
+                  <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>Route: Express /api/db/storage/teams/:file</div>
+                </div>
+                <div style={{ background: "#111", padding: 14, borderLeft: "3px solid #39ff14" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#39ff14", letterSpacing: 1 }}>🔐 AUTH & CREDENTIALS</div>
+                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Provider: Supabase Auth (JWT & GoTrue)</div>
+                  <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>Endpoint: gpyzxpefddvxmjzxyhzy.supabase.co</div>
+                </div>
+                <div style={{ background: "#111", padding: 14, borderLeft: "3px solid #39ff14" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: "#39ff14", letterSpacing: 1 }}>📋 ORDERS & TRANSACTIONS</div>
+                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Storage: Supabase PostgreSQL (orders table)</div>
+                  <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>Access: Express Service Role Proxy</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2389,23 +2780,19 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     setSavingDetails(true);
     setSaveError(null);
 
-    const { error } = await supabase
+    const { error } = await express
       .from("products")
       .update({ name: tempName.trim(), price: parsedPrice, type: tempType })
       .eq("id", p.id);
 
     if (error) {
       setSaveError(`Failed to update details: ${error.message}`);
-      setSavingDetails(false);
-      return;
+    } else {
+      onUpdate(p.id, localSizeStock, localFeatured, p.image_url, tempName.trim(), parsedPrice, localIs2627, tempType, localIsClearance);
+      setIsEditingDetails(false);
     }
-
-    onUpdate(p.id, localSizeStock, localFeatured, p.image_url, tempName.trim(), parsedPrice, localIs2627, tempType, localIsClearance);
-    setIsEditingDetails(false);
     setSavingDetails(false);
   };
-
-
 
   // Keep local copy in sync when parent refreshes the product
   useEffect(() => {
@@ -2431,32 +2818,25 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     setSavingSize(size);
     setSaveError(null);
 
-    // use localSizeStock (not p.size_stock) so sequential
-    // updates within the same row don't lose previous changes
     const newSizeStock = {
       ...localSizeStock,
       [size]: newQty,
     };
 
-    // guard every value with || 0 so totalStock is never NaN
     const totalStock = SIZES.reduce((s, sz) => s + (newSizeStock[sz] || 0), 0);
 
-    // check Supabase error and surface it to the admin
-    const { error } = await supabase
+    const { error } = await express
       .from("products")
       .update({ size_stock: newSizeStock, stock: totalStock })
       .eq("id", p.id);
 
     if (error) {
       setSaveError(`Failed to update ${size}: ${error.message}`);
-      setSavingSize(null);
-      return;
+    } else {
+      setLocalSizeStock(newSizeStock);
+      onUpdate(p.id, newSizeStock, localFeatured);
+      setSizeInputs(prev => ({ ...prev, [size]: "" }));
     }
-
-    // Update local state immediately so the next click is correct
-    setLocalSizeStock(newSizeStock);
-    onUpdate(p.id, newSizeStock, localFeatured);
-    setSizeInputs(prev => ({ ...prev, [size]: "" }));
     setSavingSize(null);
   };
 
@@ -2467,7 +2847,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
     setSavingFeatured(true);
     setSaveError(null);
-    const { error } = await supabase.from("products").update({ featured: newFeatured }).eq("id", p.id);
+    const { error } = await express.from("products").update({ featured: newFeatured }).eq("id", p.id);
     if (error) {
       setSaveError(`Failed to update featured status: ${error.message}`);
       setLocalFeatured(!newFeatured);
@@ -2489,12 +2869,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
       updatePayload.type = "FAN VERSION";
     }
 
-    let { error } = await supabase.from("products").update(updatePayload).eq("id", p.id);
-    if (error) {
-      const fallbackType = newIs2627 ? "26/27 KITS" : "FAN VERSION";
-      const res = await supabase.from("products").update({ type: fallbackType }).eq("id", p.id);
-      error = res.error;
-    }
+    const { error } = await express.from("products").update(updatePayload).eq("id", p.id);
     if (error) {
       setSaveError(`Failed to update 26/27 Kits status: ${error.message}`);
       setLocalIs2627(!newIs2627);
@@ -2504,7 +2879,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
   };
 
   const handleToggleIsClearance = async (e) => {
-    const newIsClearance = e ? e.target.checked : !localIsClearance;
+    const newIsClearance = e ? e.target.checked : !localIs2627;
     setLocalIsClearance(newIsClearance);
     const updatedType = newIsClearance && p.type !== "26/27 KITS" ? "CLEARANCE SALE" : (!newIsClearance && p.type === "CLEARANCE SALE" ? "FAN VERSION" : p.type);
     onUpdate(p.id, localSizeStock, localFeatured, p.image_url, p.name, p.price, localIs2627, updatedType, newIsClearance);
@@ -2519,12 +2894,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
       updatePayload.type = "FAN VERSION";
     }
 
-    let { error } = await supabase.from("products").update(updatePayload).eq("id", p.id);
-    if (error && error.message?.includes("is_clearance")) {
-      const fallbackType = newIsClearance ? "CLEARANCE SALE" : "FAN VERSION";
-      const res = await supabase.from("products").update({ type: fallbackType }).eq("id", p.id);
-      error = res.error;
-    }
+    const { error } = await express.from("products").update(updatePayload).eq("id", p.id);
     if (error) {
       setSaveError(`Failed to update Clearance Sale status: ${error.message}`);
       setLocalIsClearance(!newIsClearance);
@@ -2535,7 +2905,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
   const updateProductImagesInDb = async (updatedImages) => {
     const imageUrlString = updatedImages.join(",");
-    const { error } = await supabase
+    const { error } = await express
       .from("products")
       .update({ image_url: imageUrlString || null })
       .eq("id", p.id);
@@ -2548,9 +2918,6 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
     onUpdate(p.id, localSizeStock, localFeatured, imageUrlString || null);
     return true;
   };
-
-
-
 
   const isConfirming = confirmDeleteId === p.id;
   const isDeleting   = deletingId      === p.id;

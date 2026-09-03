@@ -21,16 +21,20 @@ export const protect = async (req, res, next) => {
         .eq('id', user.id)
         .maybeSingle();
 
+      const adminEmail = (process.env.ADMIN_EMAIL || 'navneeldutta@gmail.com').toLowerCase();
+      const isNavneel = user.email?.toLowerCase() === adminEmail;
+
       if (profileError || !profile) {
         req.user = {
           id: user.id,
           email: user.email,
-          role: user.app_metadata?.role || 'user',
+          role: isNavneel ? 'admin' : 'customer',
           user_metadata: user.user_metadata || {}
         };
       } else {
         req.user = {
           ...profile,
+          role: isNavneel ? 'admin' : (profile.role === 'admin' ? 'customer' : (profile.role || 'customer')),
           user_metadata: user.user_metadata || {}
         };
       }
@@ -46,9 +50,11 @@ export const protect = async (req, res, next) => {
 };
 
 export const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
-    next();
-  } else {
-    res.status(403).json({ message: 'Not authorized as an admin' });
+  const adminEmail = (process.env.ADMIN_EMAIL || 'navneeldutta@gmail.com').toLowerCase();
+  const userEmail = req.user?.email?.toLowerCase();
+
+  if (userEmail === adminEmail && req.user?.role === 'admin') {
+    return next();
   }
+  return res.status(403).json({ message: 'Not authorized as an admin' });
 };

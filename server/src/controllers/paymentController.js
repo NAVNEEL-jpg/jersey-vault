@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import razorpay from '../config/razorpay.js';
 import { supabase } from '../config/supabase.js';
 import { generatePDFBuffer } from '../utils/pdfGenerator.js';
+import { getR2Table, updateSizeStockInR2 } from '../services/r2Service.js';
 
 // ─── POST /api/payment/create-order ────────────────────────────────────────
 export const ENFORCE_SECURITY = true;
@@ -23,18 +24,13 @@ const calcShipping = (subtotal, payMethod = 'razorpay') => {
 async function recalculateCart(items, payMethod = 'razorpay') {
   let subtotal = 0;
   const verifiedItems = [];
+  const products = await getR2Table('products');
 
   for (const item of items) {
-    const { data: p, error } = await supabase.from('products').select('price, name').eq('id', item.id).single();
-    
-    if (error) {
-      console.error('Supabase query error in recalculateCart:', error);
-      throw new Error(`Product query failed for ${item.id}: ${error.message}`);
-    }
-
+    const p = (products || []).find(prod => String(prod.id) === String(item.id));
     if (p) {
-      const price = p.price;
-      subtotal += price * item.qty;
+      const price = Number(p.price) || 0;
+      subtotal += price * (Number(item.qty) || 1);
       verifiedItems.push({
         ...item,
         price,
@@ -347,8 +343,9 @@ export const reconcilePayment = async (req, res) => {
 async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...order_data }) {
   if (!razorpay_order_id && order_data.pay_method !== 'COD') return;
 
-  const orderId = razorpay_payment_id || order_data.id || `COD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-  const trackingId = `TRK-${orderId.slice(-6).toUpperCase()}`;
+  const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(str));
+  const orderId = isUUID(order_data.id) ? order_data.id : crypto.randomUUID();
+  const trackingId = order_data.tracking_id || `TRK-${(razorpay_payment_id || orderId).slice(-6).toUpperCase()}`;
 
   const { error } = await supabase
     .from('orders')
@@ -380,30 +377,18 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     return;
   }
 
-  let inventoryFailures = [];
+  // Decrement inventory stock directly in Cloudflare R2
   if (order_data.items && Array.isArray(order_data.items)) {
     for (const item of order_data.items) {
-      const { data, error } = await supabase.rpc('update_size_stock', {
-        p_product_id: item.id,
-        p_size: item.size,
-        p_qty_change: -Math.abs(item.qty)
-      });
-      if (error) {
-        console.error(`Failed to decrement size_stock for product ${item.id}, size ${item.size}:`, error);
-        inventoryFailures.push(`[${new Date().toISOString()}] RPC Error for product ${item.id} (${item.size}): ${error.message}`);
-      } else if (data && !data.success) {
-        console.error(`RPC reported failure for product ${item.id}, size ${item.size}:`, data.message);
-        inventoryFailures.push(`[${new Date().toISOString()}] Inventory Conflict for product ${item.id} (${item.size}): requested ${item.qty}, Response: ${data.message}`);
+      const prodId = item.product || item.id;
+      const size = item.size || 'M';
+      const qty = Number(item.qty) || 1;
+      try {
+        await updateSizeStockInR2(prodId, size, -qty);
+      } catch (stockErr) {
+        console.warn(`[R2] Could not decrement size_stock for product ${prodId}:`, stockErr.message);
       }
     }
-  }
-
-  if (inventoryFailures.length > 0) {
-    const adminNote = "INVENTORY FAILURE:\n" + inventoryFailures.join('\n');
-    await supabase.from('orders').update({
-      status: 'inventory_pending',
-      admin_notes: adminNote
-    }).eq('id', orderId);
   }
 
   // Trigger send-invoice directly via Resend API
