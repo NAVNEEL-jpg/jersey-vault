@@ -3,7 +3,7 @@
     "id": "00a2ea27-89bb-4d45-97c2-d1e1559ee139",
     "name": "URUGUAY",
     "sport": "FOOTBALL",
-    "logo_url": "/api/db/storage/teams/1787436900791-uruguay-dac23acd.svg",
+    "logo_url": "https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev/teams/uruguay-crest.png",
     "created_at": "2026-06-12 05:21:58.138783+00"
   },
   {

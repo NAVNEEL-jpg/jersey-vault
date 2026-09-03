@@ -2384,7 +2384,7 @@ letter-spacing: 4px !important;
                         }}
                       >
                         {t.logo_url ? (
-                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }} />
+                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%", background: "#fff", padding: "1px" }} />
                         ) : (
                           <span style={{ fontSize: 14 }}>🛡️</span>
                         )}

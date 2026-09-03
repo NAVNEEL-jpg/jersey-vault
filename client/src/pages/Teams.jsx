@@ -338,13 +338,31 @@ export default function Teams() {
             width:96px; height:96px; display:flex; align-items:center; justify-content:center;
             flex-shrink:0; transition:box-shadow 0.3s;
           }
-    
-          .t-team-logo { width:120px; height:120px; object-fit:contain; image-rendering:crisp-edges; filter:contrast(1.15) brightness(1.05); }
+          .t-team-logo-bg {
+            width:96px; height:96px; border-radius:50%;
+            background:#ffffff;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 4px 14px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.25);
+            transition:all 0.3s cubic-bezier(0.23,1,0.32,1);
+            flex-shrink:0;
+            padding:10px;
+          }
+          .t-team-card:hover .t-team-logo-bg {
+            box-shadow:0 0 0 3px #39ff14, 0 0 22px rgba(57,255,20,0.35);
+            transform:scale(1.05);
+          }
+          .t-team-logo {
+            width:100%; height:100%; max-width:76px; max-height:76px;
+            object-fit:contain; image-rendering:crisp-edges;
+            filter:drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+          }
           .t-team-logo-placeholder { font-size:44px; }
           .t-team-name {
             font-family:'Bebas Neue',sans-serif; font-weight:400; font-style:normal;
-            font-size:14px; letter-spacing:3px; text-align:center; color:#aaa; line-height:1.1; text-transform:uppercase;
+            font-size:15px; letter-spacing:3px; text-align:center; color:#ccc; line-height:1.1; text-transform:uppercase;
+            margin-top:16px; transition:color 0.2s;
           }
+          .t-team-card:hover .t-team-name { color:#fff; }
          .t-sport-badge {
   font-size:10px;
   font-weight:900;
@@ -399,11 +417,15 @@ export default function Teams() {
             .t-filter-btn { font-size:14px !important; padding:6px 12px; }
             .t-team-card { padding:24px 16px 20px; }
             .t-team-logo-wrap { width:80px; height:80px; }
-            .t-team-logo { width:60px; height:60px; }
+            .t-team-logo-bg { width:80px; height:80px; padding:8px; }
+            .t-team-logo { max-width:62px; max-height:62px; }
+            .t-team-name { font-size:14px; margin-top:12px; }
           }
           @media(max-width:480px) {
-            .t-team-name { font-size:15px; }
             .t-team-logo-wrap { width:72px; height:72px; }
+            .t-team-logo-bg { width:72px; height:72px; padding:6px; }
+            .t-team-logo { max-width:56px; max-height:56px; }
+            .t-team-name { font-size:13px; margin-top:10px; }
           }
         `}</style>
 
@@ -579,7 +601,7 @@ export default function Teams() {
                           <img
                             src={t.logo_url}
                             alt=""
-                            style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%" }}
+                            style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%", background: "#fff", padding: "1px" }}
                             onError={(e) => {
                               if (t.logo_url?.includes('teams/')) {
                                 const fn = t.logo_url.split('teams/')[1];
@@ -764,26 +786,28 @@ export default function Teams() {
 
                   {/* Logo */}
                   <div className="t-team-logo-wrap">
-                    {team.logo_url ? (
-                      <img
-                        src={team.logo_url}
-                        alt={team.name}
-                        className="t-team-logo"
-                        onError={(e) => {
-                          if (team.logo_url?.includes('teams/')) {
-                            const fn = team.logo_url.split('teams/')[1];
-                            if (!e.currentTarget.dataset.retried) {
-                              e.currentTarget.dataset.retried = '1';
-                              e.currentTarget.src = `/teams/${fn}`;
+                    <div className="t-team-logo-bg">
+                      {team.logo_url ? (
+                        <img
+                          src={team.logo_url}
+                          alt={team.name}
+                          className="t-team-logo"
+                          onError={(e) => {
+                            if (team.logo_url?.includes('teams/')) {
+                              const fn = team.logo_url.split('teams/')[1];
+                              if (!e.currentTarget.dataset.retried) {
+                                e.currentTarget.dataset.retried = '1';
+                                e.currentTarget.src = `/teams/${fn}`;
+                              }
                             }
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="t-team-logo-placeholder">
-                        {sportIcon[team.sport?.toUpperCase()] || "🛡️"}
-                      </span>
-                    )}
+                          }}
+                        />
+                      ) : (
+                        <span className="t-team-logo-placeholder">
+                          {sportIcon[team.sport?.toUpperCase()] || "🛡️"}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Name */}
