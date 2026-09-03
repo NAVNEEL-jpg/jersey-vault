@@ -874,7 +874,8 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
   }, []);
 
   useEffect(() => {
-    const handleAuthUser = (sessionUser) => {
+    const handleAuthUser = (sessionUser, source) => {
+      console.log('[Home Auth]', source, 'user:', sessionUser?.email || 'null');
       if (sessionUser) {
         const isNavneel = sessionUser.email?.toLowerCase() === "navneeldutta@gmail.com";
         setUser({ ...sessionUser, role: isNavneel ? "admin" : "customer" });
@@ -886,11 +887,11 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     };
 
     supabase.auth.getSession().then(({ data }) => {
-      handleAuthUser(data?.session?.user || null);
+      handleAuthUser(data?.session?.user || null, 'getSession');
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleAuthUser(session?.user || null);
+      handleAuthUser(session?.user || null, `onAuthStateChange(${_event})`);
     });
 
     return () => {

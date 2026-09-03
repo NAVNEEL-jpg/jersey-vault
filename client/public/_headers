@@ -1,0 +1,5 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://api.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com https://*.clarity.ms https://c.bing.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https: http:; media-src 'self' https: blob:; connect-src 'self' https://gpyzxpefddvxmjzxyhzy.supabase.co https://*.supabase.co https://api.razorpay.com https://checkout.razorpay.com https://checkout-static-next.razorpay.com https://lumberjack.razorpay.com https://www.google-analytics.com https://analytics.google.com https://*.clarity.ms https://c.bing.com https://jersey-vault-backend.onrender.com https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev; frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self';
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
