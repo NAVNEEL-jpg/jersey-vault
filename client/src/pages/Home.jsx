@@ -2268,7 +2268,7 @@ letter-spacing: 4px !important;
               setCartOpen={setCartOpen}
             />
           </div>
-          <div className="wc26-video-wrap" onClick={() => { setActiveFilter("FEATURED"); setTimeout(() => { document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ cursor: 'pointer' }}>
+          <div className="wc26-video-wrap" onClick={() => { setActiveFilter("26/27 KITS"); setTimeout(() => { document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ cursor: 'pointer' }} title="26/27 Kits">
             <video
               ref={(el) => {
                 if (el) {

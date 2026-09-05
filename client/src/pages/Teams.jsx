@@ -490,7 +490,7 @@ export default function Teams() {
 
           <div className="t-desktop-nav-links">{navLinks}</div>
 
-          <div className="wc26-video-wrap" onClick={() => navigate("/?cat=FEATURED")} style={{ cursor: "pointer" }} title="Featured Collection">
+          <div className="wc26-video-wrap" onClick={() => navigate("/?cat=" + encodeURIComponent("26/27 KITS"))} style={{ cursor: "pointer" }} title="26/27 Kits Collection">
             <video
               ref={(el) => {
                 if (el) {
