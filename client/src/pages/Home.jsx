@@ -588,6 +588,15 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
       image: heroBg,
     },
     {
+      id: "arsenal",
+      isFirstSlide: false,
+      image: arsenalSlideImg,
+      title: "ARSENAL 26/27 AWAY KIT",
+      targetUrl: "/collections/arsenal",
+      accent: "#fdb913",
+      bgGlow: "radial-gradient(ellipse at center, rgba(6, 26, 60, 0.45) 0%, rgba(253, 185, 19, 0.18) 50%, rgba(7, 7, 7, 0.96) 100%)",
+    },
+    {
       id: "barcelona",
       isFirstSlide: false,
       image: barcaSlideImg,
@@ -609,19 +618,10 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
       id: "manchester-united",
       isFirstSlide: false,
       image: manUtdSlideImg,
-      title: "MAN UTD. 26/27 KITS",
+      title: "MANCHESTER UNITED 26/27 KITS",
       targetUrl: "/collections/manchester-united",
       accent: "#da291c",
       bgGlow: "radial-gradient(ellipse at center, rgba(218, 41, 28, 0.28) 0%, rgba(30, 10, 10, 0.22) 50%, rgba(7, 7, 7, 0.96) 100%)",
-    },
-    {
-      id: "arsenal",
-      isFirstSlide: false,
-      image: arsenalSlideImg,
-      title: "ARSENAL 26/27 AWAY KIT",
-      targetUrl: "/collections/arsenal",
-      accent: "#fdb913",
-      bgGlow: "radial-gradient(ellipse at center, rgba(6, 26, 60, 0.45) 0%, rgba(253, 185, 19, 0.18) 50%, rgba(7, 7, 7, 0.96) 100%)",
     },
   ], []);
 
@@ -2160,9 +2160,10 @@ letter-spacing: 4px !important;
   ══════════════════════════════════════ */
   .hero-carousel-root {
     position: relative;
-    min-height: 480px;
-    height: clamp(480px, 46vw, 620px);
     width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 85vh;
+    min-height: 480px;
     padding: 0 !important;
     overflow: hidden;
     display: flex;
@@ -2221,9 +2222,10 @@ letter-spacing: 4px !important;
     height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-end;
-    padding-bottom: 28px;
+    padding-left: clamp(28px, 6vw, 95px);
+    padding-bottom: clamp(20px, 4vw, 55px);
     pointer-events: none;
     z-index: 4;
   }
@@ -2309,106 +2311,114 @@ letter-spacing: 4px !important;
     }
   }
 
-  /* Small White Arrow button below 26/27 kits (appears on hover) */
-  .hero-white-arrow-container {
-    margin-top: 12px;
-    display: flex;
-    justify-content: center;
+  /* Sleek, thin elongated horizontal hovering arrow directly below subheading on the left */
+  .hero-sleek-arrow-wrap {
+    position: absolute;
+    left: clamp(20px, 3.8%, 56px);
+    top: 72.5%;
+    z-index: 6;
+    pointer-events: auto;
+    display: inline-flex;
     align-items: center;
-    z-index: 5;
-    min-height: 42px;
   }
 
-  .hero-white-arrow-btn {
+  .hero-sleek-arrow-btn {
     all: unset;
     box-sizing: border-box;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1.5px solid rgba(255, 255, 255, 0.92);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0,0,0,0.5);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(8px) scale(0.9);
-    transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-                transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-                background 0.2s ease,
-                border-color 0.2s ease,
-                box-shadow 0.2s ease,
-                visibility 0.28s ease;
+    color: #ffffff;
+    padding: 8px 12px;
+    margin: -8px -12px;
+    opacity: 0.9;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.85));
+    animation: sleekArrowFloat 2.4s ease-in-out infinite;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                filter 0.28s ease,
+                opacity 0.28s ease,
+                color 0.28s ease;
   }
 
-  /* While hovering on the pics / slide, small white arrow appears */
-  .hero-slide:hover .hero-white-arrow-btn {
+  .hero-sleek-arrow-svg {
+    width: 48px;
+    height: 14px;
+    display: block;
+    overflow: visible;
+  }
+
+  @keyframes sleekArrowFloat {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(7px);
+    }
+  }
+
+  /* When hovering on the kit slide, arrow illuminates and glides */
+  .hero-slide:hover .hero-sleek-arrow-btn {
     opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-    transform: translateY(0) scale(1);
-    animation: heroArrowNudge 1.8s ease-in-out infinite 0.3s;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.75)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
   }
 
-  @keyframes heroArrowNudge {
-    0%, 100% { transform: translateX(0) scale(1); }
-    50% { transform: translateX(4px) scale(1.06); }
+  /* When hovering directly on the arrow button itself */
+  .hero-sleek-arrow-btn:hover {
+    animation-play-state: paused;
+    transform: translateX(10px) scale(1.08);
+    opacity: 1;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 4px #ffffff);
   }
 
-  .hero-white-arrow-btn:hover {
-    background: #ffffff;
-    border-color: #ffffff;
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 10px #ffffff;
-    transform: scale(1.15) !important;
+  .hero-sleek-arrow-btn:active {
+    transform: translateX(6px) scale(0.96);
   }
 
-  .hero-white-arrow-btn:hover .hero-arrow-svg {
-    stroke: #000000;
-  }
-
-  /* Nav arrows (Left / Right) */
+  /* Minimal >,< Nav arrows on the left & right sides of the tab */
   .hero-nav-arrow {
     all: unset;
     box-sizing: border-box;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 10;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(6px);
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0.75;
+    color: #ffffff;
   }
 
-  .hero-nav-prev { left: 16px; }
-  .hero-nav-next { right: 16px; }
+  .hero-nav-prev { left: 14px; }
+  .hero-nav-next { right: 14px; }
 
   .hero-nav-arrow:hover {
-    background: rgba(57, 255, 20, 0.2);
-    border-color: #39ff14;
-    transform: translateY(-50%) scale(1.1);
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.75);
+    border-color: rgba(255, 255, 255, 0.85);
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.12);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
   }
 
   .hero-nav-arrow:hover svg {
-    stroke: #39ff14;
+    stroke: #ffffff;
   }
 
   /* Dots Indicator Bar */
   .hero-dots-bar {
     position: absolute;
-    bottom: 18px;
+    bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -2441,56 +2451,63 @@ letter-spacing: 4px !important;
   }
 
   @media (hover: none), (max-width: 768px) {
-    .hero-white-arrow-btn {
+    .hero-sleek-arrow-btn {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
-      transform: translateY(0) scale(1) !important;
     }
   }
 
   @media (max-width: 768px) {
     .hero-carousel-root {
-      min-height: 470px;
+      aspect-ratio: 16 / 9;
+      min-height: 240px;
+      height: auto;
     }
     .slide-1-content {
-      padding: 50px 16px 50px;
+      padding: 30px 14px;
     }
     .slide-kit-content {
-      padding: 16px 12px 36px;
+      padding-left: 16px;
+      padding-bottom: 14px;
     }
-    .hero-kit-poster-img {
-      max-height: 320px;
+    .hero-sleek-arrow-wrap {
+      left: clamp(14px, 3.8%, 32px);
+      top: 73%;
     }
-    .hero-white-arrow-btn {
+    .hero-sleek-arrow-svg {
       width: 36px;
-      height: 36px;
+      height: 12px;
     }
     .hero-nav-arrow {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.45);
     }
-    .hero-nav-prev { left: 8px; }
-    .hero-nav-next { right: 8px; }
+    .hero-nav-arrow svg {
+      width: 16px;
+      height: 16px;
+    }
+    .hero-nav-prev { left: 6px; }
+    .hero-nav-next { right: 6px; }
   }
 
   @media (max-width: 480px) {
     .hero-carousel-root {
-      min-height: 450px;
-    }
-    .hero-kit-poster-img {
-      max-height: 290px;
+      aspect-ratio: 16 / 9;
+      min-height: 220px;
+      height: auto;
     }
     .hero-white-arrow-btn {
-      width: 34px;
-      height: 34px;
+      width: 28px;
+      height: 28px;
     }
     .hero-white-arrow-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 15px;
+      height: 15px;
     }
     .hero-dots-bar {
-      bottom: 12px;
+      bottom: 8px;
     }
   }
   .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
@@ -3135,33 +3152,30 @@ letter-spacing: 4px !important;
                     </div>
                   </div>
                 ) : (
-                  /* Content for Slides 2, 3, 4, 5 (Kit Photos with White Arrow) */
+                  /* Content for Slides 2, 3, 4, 5 (Kit Photos with Sleek Horizontal Hovering Arrow) */
                   <div className="hero-slide-content slide-kit-content">
-                    {/* White arrow below 26/27 kits */}
-                    <div className="hero-white-arrow-container">
+                    {/* Sleek, thin elongated hovering arrow directly below subheading text */}
+                    <div className="hero-sleek-arrow-wrap">
                       <button
                         type="button"
-                        className="hero-white-arrow-btn"
+                        className="hero-sleek-arrow-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(slide.targetUrl);
                         }}
-                        aria-label={`View ${slide.title}`}
-                        title={`View ${slide.title}`}
+                        aria-label={`Explore ${slide.title}`}
+                        title={`Explore ${slide.title}`}
                       >
                         <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
+                          width="48"
+                          height="14"
+                          viewBox="0 0 48 14"
                           fill="none"
-                          stroke="#ffffff"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="hero-arrow-svg"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="hero-sleek-arrow-svg"
                         >
-                          <line x1="4" y1="12" x2="20" y2="12" />
-                          <polyline points="13 5 20 12 13 19" />
+                          <line x1="1" y1="7" x2="43" y2="7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+                          <polyline points="36,2 43,7 36,12" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                     </div>
@@ -3171,7 +3185,7 @@ letter-spacing: 4px !important;
             );
           })}
 
-          {/* Previous / Next Arrow Controls */}
+          {/* Minimal Previous (<) / Next (>) Arrow Controls */}
           <button
             type="button"
             className="hero-nav-arrow hero-nav-prev"
@@ -3180,8 +3194,9 @@ letter-spacing: 4px !important;
               setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
             }}
             aria-label="Previous Slide"
+            title="Previous Slide"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -3193,8 +3208,9 @@ letter-spacing: 4px !important;
               setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
             }}
             aria-label="Next Slide"
+            title="Next Slide"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
