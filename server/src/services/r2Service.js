@@ -10,12 +10,21 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function getS3Client() {
-  const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || 'f4bf36f10d886d4adf42e94b084e1c3f';
-  const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-  const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+const DEFAULT_R2_ACCOUNT_ID = 'f4bf36f10d886d4adf42e94b084e1c3f';
+const DEFAULT_R2_ACCESS_KEY_ID = '7fe89068bef937c44309c265a405066e';
+const DEFAULT_R2_SECRET_ACCESS_KEY = '833a5f8d6009440d306459ce71f6b4048afe93848755051bfbd5071bd965bfa5';
+const DEFAULT_R2_BUCKET_NAME = 'jersey-vault-media';
+const DEFAULT_R2_PUBLIC_URL = 'https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev';
 
-  if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) return null;
+function getS3Client() {
+  const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || DEFAULT_R2_ACCOUNT_ID;
+  const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || DEFAULT_R2_ACCESS_KEY_ID;
+  const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || DEFAULT_R2_SECRET_ACCESS_KEY;
+
+  if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
+    console.error('[R2Service] ERROR: Cloudflare R2 credentials missing!');
+    return null;
+  }
 
   return new S3Client({
     region: 'auto',
@@ -28,8 +37,8 @@ function getS3Client() {
 }
 
 let s3Client = getS3Client();
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || 'jersey-vault-media';
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || 'https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev';
+const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME || DEFAULT_R2_BUCKET_NAME;
+const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || DEFAULT_R2_PUBLIC_URL;
 
 // In-memory cache with 5 minute TTL
 const cache = new Map();
@@ -119,10 +128,13 @@ export async function updateR2Table(tableName, data) {
         ContentType: 'application/json',
       });
       await s3Client.send(cmd);
+      console.log(`[R2Service] Successfully synced db/${tableName}.json (${data?.length || 0} items) to Cloudflare R2.`);
     } catch (err) {
-      console.error(`[R2Service] Failed to write db/${tableName}.json to R2:`, err.message);
+      console.error(`[R2Service] CRITICAL: Failed to write db/${tableName}.json to R2:`, err.message);
       throw err;
     }
+  } else {
+    console.error(`[R2Service CRITICAL] s3Client is null! Table ${tableName} was only saved to ephemeral local disk and WILL BE LOST on next restart.`);
   }
 }
 
