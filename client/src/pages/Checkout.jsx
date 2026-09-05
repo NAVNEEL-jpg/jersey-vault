@@ -272,7 +272,9 @@ export default function CheckoutPage() {
         
         .pay-card { border: 1px solid #27272a; padding: 18px 22px; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all 0.25s ease-in-out; background: #0f0f10; margin-bottom: 12px; width: 100%; text-align: left; font: inherit; color: inherit; border-radius: 2px; }
         .pay-card.active { border-color: #39ff14; background: rgba(57, 255, 20, 0.05); box-shadow: 0 0 15px rgba(57, 255, 20, 0.15); }
-        .pay-card:hover:not(.active) { border-color: #52525b; background: #141416; }
+        .pay-card:hover:not(.active):not(.disabled) { border-color: #52525b; background: #141416; }
+        .pay-card.disabled { border-color: #27272a; background: #0a0a0a; cursor: not-allowed; opacity: 0.55; filter: grayscale(1); }
+        .pay-card.disabled:hover { border-color: #27272a; background: #0a0a0a; }
         
         .next-btn {
           background: #39ff14;
@@ -551,47 +553,123 @@ export default function CheckoutPage() {
 
 
 
+              {hasClearanceItem && (
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid #27272a",
+                  padding: "12px 14px",
+                  marginBottom: 16,
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: 12,
+                  color: "#a1a1aa",
+                  fontFamily: "'Barlow', sans-serif"
+                }}>
+                  <span style={{ fontSize: 16 }}>🏷️</span>
+                  <span>
+                    <strong style={{ color: "#fff" }}>Clearance item in cart:</strong> Cash on Delivery and Partial COD are unavailable for clearance sale items. Please choose online payment.
+                  </span>
+                </div>
+              )}
+
               {[
                 {
                   id: "razorpay",
                   icon: "💳",
                   label: "PAY ONLINE",
                   sub: "UPI, Credit/Debit Card, Net Banking & more — choose inside Razorpay",
+                  disabled: false,
                 },
-                ...(!hasClearanceItem ? [
-                  {
-                    id: "cod",
-                    icon: "💵",
-                    label: "CASH ON DELIVERY",
-                    sub: isFreeShipping
-                      ? `Free Shipping 🎉 · Pay ₹99 first online · Rest jersey amount (₹${codDoorstep.toLocaleString()}) during COD`
-                      : `Pay delivery charge (₹${codShipping.toLocaleString()}) online now · Pay full cart value (₹${subtotal.toLocaleString()}) on delivery`,
-                  },
-                  {
-                    id: "partial_cod",
-                    icon: "🤝",
-                    label: "PARTIAL COD",
-                    sub: partialCodShipping === 0
-                      ? `Free Shipping 🎉 · Pay 50% cart value (₹${halfCartValue.toLocaleString()}) now · Remaining ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`
-                      : `Pay ₹${partialCodUpfrontCalc.toLocaleString()} now (₹${partialCodShipping} delivery + ₹${halfCartValue.toLocaleString()} (50% cart value)) · Pay ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`,
-                  },
-                ] : []),
+                {
+                  id: "cod",
+                  icon: "💵",
+                  label: "CASH ON DELIVERY",
+                  disabled: hasClearanceItem,
+                  sub: hasClearanceItem
+                    ? "🚫 No COD for clearance sale items · Online payment only"
+                    : isFreeShipping
+                    ? `Free Shipping 🎉 · Pay ₹99 first online · Rest jersey amount (₹${codDoorstep.toLocaleString()}) during COD`
+                    : `Pay delivery charge (₹${codShipping.toLocaleString()}) online now · Pay full cart value (₹${subtotal.toLocaleString()}) on delivery`,
+                },
+                {
+                  id: "partial_cod",
+                  icon: "🤝",
+                  label: "PARTIAL COD",
+                  disabled: hasClearanceItem,
+                  sub: hasClearanceItem
+                    ? "🚫 No COD for clearance sale items · Online payment only"
+                    : partialCodShipping === 0
+                    ? `Free Shipping 🎉 · Pay 50% cart value (₹${halfCartValue.toLocaleString()}) now · Remaining ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`
+                    : `Pay ₹${partialCodUpfrontCalc.toLocaleString()} now (₹${partialCodShipping} delivery + ₹${halfCartValue.toLocaleString()} (50% cart value)) · Pay ₹${partialCodDoorstepCalc.toLocaleString()} on delivery`,
+                },
               ].map(p => (
                 <button
                   type="button"
                   key={p.id}
-                  className={`pay-card ${payMethod === p.id ? "active" : ""}`}
-                  onClick={() => setPayMethod(p.id)}
+                  disabled={p.disabled}
+                  className={`pay-card ${payMethod === p.id ? "active" : ""} ${p.disabled ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (p.disabled) return;
+                    setPayMethod(p.id);
+                  }}
+                  style={p.disabled ? { opacity: 0.5, cursor: "not-allowed", filter: "grayscale(100%)", background: "#0a0a0a", borderColor: "#222" } : undefined}
                 >
-                  <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${payMethod === p.id ? "#00ff44" : "#555"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {payMethod === p.id && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#00ff44" }} />}
+                  <div style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    border: `2px solid ${p.disabled ? "#333" : payMethod === p.id ? "#00ff44" : "#555"}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>
+                    {!p.disabled && payMethod === p.id && <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#00ff44" }} />}
                   </div>
-                  <span style={{ fontSize: 24 }}>{p.icon}</span>
+                  <span style={{ fontSize: 24, filter: p.disabled ? "grayscale(100%)" : "none" }}>{p.icon}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: 2, fontFamily: "'Barlow', sans-serif", textTransform: "uppercase" }}>{p.label}</div>
-                    <div style={{ color: "#a1a1aa", fontSize: 12, fontFamily: "'Barlow', sans-serif", fontWeight: 400, marginTop: 3, lineHeight: 1.5 }}>{p.sub}</div>
+                    <div style={{
+                      fontWeight: 700,
+                      fontSize: 14,
+                      letterSpacing: 2,
+                      fontFamily: "'Barlow', sans-serif",
+                      textTransform: "uppercase",
+                      color: p.disabled ? "#777" : "inherit"
+                    }}>
+                      {p.label}
+                    </div>
+                    <div style={{
+                      color: p.disabled ? "#888" : "#a1a1aa",
+                      fontSize: 12,
+                      fontFamily: "'Barlow', sans-serif",
+                      fontWeight: p.disabled ? 600 : 400,
+                      marginTop: 3,
+                      lineHeight: 1.5
+                    }}>
+                      {p.sub}
+                    </div>
                   </div>
-                  {payMethod === p.id && <div style={{ marginLeft: "auto", color: "#00ff44", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>}
+                  {!p.disabled && payMethod === p.id && (
+                    <div style={{ marginLeft: "auto", color: "#00ff44", fontSize: 12, fontWeight: 700, letterSpacing: 2 }}>SELECTED</div>
+                  )}
+                  {p.disabled && (
+                    <div style={{
+                      marginLeft: "auto",
+                      background: "#18181b",
+                      border: "1px solid #333",
+                      color: "#888",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: 1,
+                      padding: "4px 8px",
+                      borderRadius: 2,
+                      fontFamily: "'Barlow', sans-serif"
+                    }}>
+                      DISABLED
+                    </div>
+                  )}
                 </button>
               ))}
 
