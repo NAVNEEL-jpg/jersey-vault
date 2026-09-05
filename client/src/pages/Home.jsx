@@ -2311,108 +2311,48 @@ letter-spacing: 4px !important;
     }
   }
 
-  /* Sleek, thin elongated horizontal hovering arrow directly below subheading on the left */
-  .hero-sleek-arrow-wrap {
-    position: absolute;
-    left: clamp(20px, 3.8%, 56px);
-    top: 72.5%;
-    z-index: 6;
-    pointer-events: auto;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .hero-sleek-arrow-btn {
-    all: unset;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #ffffff;
-    padding: 8px 12px;
-    margin: -8px -12px;
-    opacity: 0.9;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.85));
-    animation: sleekArrowFloat 2.4s ease-in-out infinite;
-    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-                filter 0.28s ease,
-                opacity 0.28s ease,
-                color 0.28s ease;
-  }
-
-  .hero-sleek-arrow-svg {
-    width: 48px;
-    height: 14px;
-    display: block;
-    overflow: visible;
-  }
-
-  @keyframes sleekArrowFloat {
-    0%, 100% {
-      transform: translateX(0);
-    }
-    50% {
-      transform: translateX(7px);
-    }
-  }
-
-  /* When hovering on the kit slide, arrow illuminates and glides */
-  .hero-slide:hover .hero-sleek-arrow-btn {
-    opacity: 1;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.75)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9));
-  }
-
-  /* When hovering directly on the arrow button itself */
-  .hero-sleek-arrow-btn:hover {
-    animation-play-state: paused;
-    transform: translateX(10px) scale(1.08);
-    opacity: 1;
-    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 4px #ffffff);
-  }
-
-  .hero-sleek-arrow-btn:active {
-    transform: translateX(6px) scale(0.96);
-  }
-
-  /* Minimal >,< Nav arrows on the left & right sides of the tab */
+  /* Prominent, sleek >,< Nav arrows on the left & right sides of the tab */
   .hero-nav-arrow {
     all: unset;
     box-sizing: border-box;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(12, 12, 16, 0.75);
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 10;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    opacity: 0.75;
+    z-index: 12;
+    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 1;
     color: #ffffff;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 255, 255, 0.15);
   }
 
-  .hero-nav-prev { left: 14px; }
-  .hero-nav-next { right: 14px; }
+  .hero-nav-prev { left: clamp(14px, 2.5vw, 32px); }
+  .hero-nav-next { right: clamp(14px, 2.5vw, 32px); }
 
   .hero-nav-arrow:hover {
-    opacity: 1;
-    background: rgba(0, 0, 0, 0.75);
-    border-color: rgba(255, 255, 255, 0.85);
-    color: #ffffff;
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #000000;
     transform: translateY(-50%) scale(1.12);
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.9), 0 4px 16px rgba(0, 0, 0, 0.7);
+  }
+
+  .hero-nav-arrow:active {
+    transform: translateY(-50%) scale(0.96);
   }
 
   .hero-nav-arrow:hover svg {
-    stroke: #ffffff;
+    stroke: #000000;
   }
 
   /* Dots Indicator Bar */
@@ -2450,14 +2390,6 @@ letter-spacing: 4px !important;
     box-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
   }
 
-  @media (hover: none), (max-width: 768px) {
-    .hero-sleek-arrow-btn {
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-    }
-  }
-
   @media (max-width: 768px) {
     .hero-carousel-root {
       aspect-ratio: 16 / 9;
@@ -2471,25 +2403,19 @@ letter-spacing: 4px !important;
       padding-left: 16px;
       padding-bottom: 14px;
     }
-    .hero-sleek-arrow-wrap {
-      left: clamp(14px, 3.8%, 32px);
-      top: 73%;
-    }
-    .hero-sleek-arrow-svg {
-      width: 36px;
-      height: 12px;
-    }
     .hero-nav-arrow {
-      width: 28px;
-      height: 28px;
-      background: rgba(0, 0, 0, 0.45);
+      width: 38px;
+      height: 38px;
+      background: rgba(12, 12, 16, 0.85);
+      border-color: rgba(255, 255, 255, 0.65);
+      opacity: 1;
     }
     .hero-nav-arrow svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
     }
-    .hero-nav-prev { left: 6px; }
-    .hero-nav-next { right: 6px; }
+    .hero-nav-prev { left: 8px; }
+    .hero-nav-next { right: 8px; }
   }
 
   @media (max-width: 480px) {
@@ -3152,40 +3078,14 @@ letter-spacing: 4px !important;
                     </div>
                   </div>
                 ) : (
-                  /* Content for Slides 2, 3, 4, 5 (Kit Photos with Sleek Horizontal Hovering Arrow) */
-                  <div className="hero-slide-content slide-kit-content">
-                    {/* Sleek, thin elongated hovering arrow directly below subheading text */}
-                    <div className="hero-sleek-arrow-wrap">
-                      <button
-                        type="button"
-                        className="hero-sleek-arrow-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(slide.targetUrl);
-                        }}
-                        aria-label={`Explore ${slide.title}`}
-                        title={`Explore ${slide.title}`}
-                      >
-                        <svg
-                          width="48"
-                          height="14"
-                          viewBox="0 0 48 14"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="hero-sleek-arrow-svg"
-                        >
-                          <line x1="1" y1="7" x2="43" y2="7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-                          <polyline points="36,2 43,7 36,12" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                  /* Slides 2-5: Full remastered kit photos, directly clickable to respective team jersey pages */
+                  null
                 )}
               </div>
             );
           })}
 
-          {/* Minimal Previous (<) / Next (>) Arrow Controls */}
+          {/* Visible Previous (<) / Next (>) Navigation Arrows */}
           <button
             type="button"
             className="hero-nav-arrow hero-nav-prev"
@@ -3196,7 +3096,7 @@ letter-spacing: 4px !important;
             aria-label="Previous Slide"
             title="Previous Slide"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -3210,7 +3110,7 @@ letter-spacing: 4px !important;
             aria-label="Next Slide"
             title="Next Slide"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
