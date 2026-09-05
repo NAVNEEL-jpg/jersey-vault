@@ -2162,8 +2162,7 @@ letter-spacing: 4px !important;
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    max-height: 85vh;
-    min-height: 480px;
+    max-height: 82vh;
     padding: 0 !important;
     overflow: hidden;
     display: flex;
@@ -2181,6 +2180,7 @@ letter-spacing: 4px !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #070707;
   }
 
   .hero-slide-bg {
@@ -2195,8 +2195,24 @@ letter-spacing: 4px !important;
     transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .hero-slide:hover .hero-slide-bg {
-    transform: scale(1.015);
+  .hero-slide-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain !important;
+    object-position: center center !important;
+    display: block;
+    pointer-events: none;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+    background: #070707;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hero-slide:hover .hero-slide-bg,
+  .hero-slide:hover .hero-slide-img {
+    transform: scale(1.012);
   }
 
   .hero-slide-content {
@@ -2311,48 +2327,50 @@ letter-spacing: 4px !important;
     }
   }
 
-  /* Prominent, sleek >,< Nav arrows on the left & right sides of the tab */
+  /* Prominent, high-contrast >,< Nav arrows on the left & right sides of the tab */
   .hero-nav-arrow {
-    all: unset;
-    box-sizing: border-box;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: rgba(12, 12, 16, 0.75);
-    border: 1.5px solid rgba(255, 255, 255, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 12;
-    transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    opacity: 1;
-    color: #ffffff;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 255, 255, 0.15);
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    background: rgba(8, 8, 10, 0.92) !important;
+    border: 2px solid #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 100 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    outline: none !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.95), 0 0 16px rgba(255, 255, 255, 0.4) !important;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .hero-nav-prev { left: clamp(14px, 2.5vw, 32px); }
-  .hero-nav-next { right: clamp(14px, 2.5vw, 32px); }
+  .hero-nav-prev { left: clamp(14px, 2.5vw, 36px) !important; }
+  .hero-nav-next { right: clamp(14px, 2.5vw, 36px) !important; }
 
   .hero-nav-arrow:hover {
-    background: #ffffff;
-    border-color: #ffffff;
-    color: #000000;
-    transform: translateY(-50%) scale(1.12);
-    box-shadow: 0 0 24px rgba(255, 255, 255, 0.9), 0 4px 16px rgba(0, 0, 0, 0.7);
+    background: #39ff14 !important;
+    border-color: #39ff14 !important;
+    color: #000000 !important;
+    transform: translateY(-50%) scale(1.14) !important;
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.95), 0 4px 18px rgba(0, 0, 0, 0.95) !important;
+  }
+
+  .hero-nav-arrow:hover svg polyline {
+    stroke: #000000 !important;
   }
 
   .hero-nav-arrow:active {
-    transform: translateY(-50%) scale(0.96);
-  }
-
-  .hero-nav-arrow:hover svg {
-    stroke: #000000;
+    transform: translateY(-50%) scale(0.95) !important;
   }
 
   /* Dots Indicator Bar */
@@ -2404,18 +2422,20 @@ letter-spacing: 4px !important;
       padding-bottom: 14px;
     }
     .hero-nav-arrow {
-      width: 38px;
-      height: 38px;
-      background: rgba(12, 12, 16, 0.85);
-      border-color: rgba(255, 255, 255, 0.65);
-      opacity: 1;
+      width: 40px !important;
+      height: 40px !important;
+      background: rgba(10, 10, 14, 0.92) !important;
+      border: 2px solid #ffffff !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      z-index: 100 !important;
     }
     .hero-nav-arrow svg {
-      width: 18px;
-      height: 18px;
+      width: 20px !important;
+      height: 20px !important;
     }
-    .hero-nav-prev { left: 8px; }
-    .hero-nav-next { right: 8px; }
+    .hero-nav-prev { left: 8px !important; }
+    .hero-nav-next { right: 8px !important; }
   }
 
   @media (max-width: 480px) {
@@ -3042,50 +3062,63 @@ letter-spacing: 4px !important;
                   transition: "opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)",
                 }}
               >
-                {/* Background Layer */}
-                <div
-                  className="hero-slide-bg"
-                  style={{
-                    backgroundImage: `url(${slide.image})`,
-                    backgroundSize: "cover",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "center center",
-                  }}
-                />
-                <div
-                  className="hero-overlay"
-                  style={slide.isFirstSlide ? undefined : {
-                    background: "linear-gradient(to top, rgba(7, 7, 7, 0.92) 0%, rgba(7, 7, 7, 0.25) 30%, transparent 65%)"
-                  }}
-                />
-
-                {/* Content for Slide 1 (WEAR YOUR LEGEND) */}
+                {/* Slide 1: Legend with Overlay & Hero Buttons */}
                 {slide.isFirstSlide ? (
-                  <div className="hero-slide-content slide-1-content">
-                    <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
-                    <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 2 }}>
-                      <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
-                      <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
-                    </h1>
-                    <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
-                    <div className="hero-cta-row">
-                      <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
-                        SHOP NOW
-                      </button>
-                      <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
-                        VIEW TEAMS
-                      </button>
+                  <>
+                    <div
+                      className="hero-slide-bg"
+                      style={{
+                        backgroundImage: `url(${slide.image})`,
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center center",
+                      }}
+                    />
+                    <div className="hero-overlay" />
+                    <div className="hero-slide-content slide-1-content">
+                      <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
+                      <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 2 }}>
+                        <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
+                        <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
+                      </h1>
+                      <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
+                      <div className="hero-cta-row">
+                        <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
+                          SHOP NOW
+                        </button>
+                        <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
+                          VIEW TEAMS
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 ) : (
-                  /* Slides 2-5: Full remastered kit photos, directly clickable to respective team jersey pages */
-                  null
+                  /* Slides 2-5: Full-bleed crystal-clear 1080p kit photo, completely free of darkening overlays */
+                  <img
+                    src={slide.image}
+                    alt={slide.title || "26/27 Kits"}
+                    className="hero-slide-img"
+                    loading={idx === 1 ? "eager" : "lazy"}
+                    decoding="async"
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      objectPosition: "center center",
+                      display: "block",
+                      pointerEvents: "none",
+                      imageRendering: "-webkit-optimize-contrast",
+                      background: "#070707",
+                    }}
+                  />
                 )}
               </div>
             );
           })}
 
-          {/* Visible Previous (<) / Next (>) Navigation Arrows */}
+          {/* Bold, Highly-Visible Previous (<) / Next (>) Navigation Arrows */}
           <button
             type="button"
             className="hero-nav-arrow hero-nav-prev"
@@ -3094,9 +3127,9 @@ letter-spacing: 4px !important;
               setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
             }}
             aria-label="Previous Slide"
-            title="Previous Slide"
+            title="Previous Slide (<)"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -3108,9 +3141,9 @@ letter-spacing: 4px !important;
               setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
             }}
             aria-label="Next Slide"
-            title="Next Slide"
+            title="Next Slide (>)"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
