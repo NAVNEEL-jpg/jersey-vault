@@ -17,6 +17,10 @@ import { supabase } from '../supabase';
 import { express } from '../express';
 import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
+import barcaSlideImg from "../assets/hero/barcelona-cleaned.png";
+import realMadridSlideImg from "../assets/hero/realmadrid-cleaned.png";
+import manUtdSlideImg from "../assets/hero/manutd-cleaned.png";
+import arsenalSlideImg from "../assets/hero/arsenal-cleaned.jpg";
 import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
@@ -568,6 +572,62 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
   const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
 
   const [teamsList, setTeamsList] = useState([]);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [isHeroTouching, setIsHeroTouching] = useState(false);
+  const heroTouchStartX = useRef(null);
+
+  const heroSlides = useMemo(() => [
+    {
+      id: "legend",
+      isFirstSlide: true,
+      image: heroBg,
+    },
+    {
+      id: "barcelona",
+      isFirstSlide: false,
+      image: barcaSlideImg,
+      title: "BARCELONA 26/27 KITS",
+      targetUrl: "/collections/barcelona",
+      accent: "#a50044",
+      bgGlow: "radial-gradient(ellipse at center, rgba(165, 0, 68, 0.28) 0%, rgba(0, 77, 152, 0.22) 50%, rgba(7, 7, 7, 0.96) 100%)",
+    },
+    {
+      id: "real-madrid",
+      isFirstSlide: false,
+      image: realMadridSlideImg,
+      title: "REAL MADRID 26/27 KITS",
+      targetUrl: "/collections/real-madrid",
+      accent: "#00529f",
+      bgGlow: "radial-gradient(ellipse at center, rgba(0, 82, 159, 0.28) 0%, rgba(15, 60, 40, 0.22) 50%, rgba(7, 7, 7, 0.96) 100%)",
+    },
+    {
+      id: "manchester-united",
+      isFirstSlide: false,
+      image: manUtdSlideImg,
+      title: "MAN UTD. 26/27 KITS",
+      targetUrl: "/collections/manchester-united",
+      accent: "#da291c",
+      bgGlow: "radial-gradient(ellipse at center, rgba(218, 41, 28, 0.28) 0%, rgba(30, 10, 10, 0.22) 50%, rgba(7, 7, 7, 0.96) 100%)",
+    },
+    {
+      id: "arsenal",
+      isFirstSlide: false,
+      image: arsenalSlideImg,
+      title: "ARSENAL 26/27 AWAY KIT",
+      targetUrl: "/collections/arsenal",
+      accent: "#fdb913",
+      bgGlow: "radial-gradient(ellipse at center, rgba(6, 26, 60, 0.45) 0%, rgba(253, 185, 19, 0.18) 50%, rgba(7, 7, 7, 0.96) 100%)",
+    },
+  ], []);
+
+  useEffect(() => {
+    if (isHeroTouching) return;
+    const interval = setInterval(() => {
+      setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isHeroTouching, heroSlides.length]);
+
   const [sortBy, setSortBy] = useState("FEATURED");
   const [sortOpen, setSortOpen] = useState(false);
   const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
@@ -2056,6 +2116,273 @@ letter-spacing: 4px !important;
   .hero-btn-primary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:#39ff14; color:#000; border:none; padding:14px 40px; font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:16px; letter-spacing:5px; cursor:pointer; animation:pulse 2s infinite; border-radius:2px; }
   .hero-btn-secondary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#fff; border:1px solid #2a2a2a; padding:14px 40px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:4px; cursor:pointer; border-radius:2px; transition:border-color 0.2s; }
   .hero-divider { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); pointer-events:none; }
+
+  /* ══════════════════════════════════════
+     HERO SLIDESHOW ENHANCEMENTS
+  ══════════════════════════════════════ */
+  .hero-carousel-root {
+    position: relative;
+    min-height: 520px;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #070707;
+    user-select: none;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-slide-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .hero-slide-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-1-content {
+    padding: 80px 24px 70px;
+    text-align: center;
+  }
+
+  .slide-kit-content {
+    padding: 24px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .hero-kit-poster-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 410px;
+    width: auto;
+    position: relative;
+    z-index: 3;
+    filter: drop-shadow(0 15px 35px rgba(0,0,0,0.85));
+    transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
+  }
+
+  .hero-slide:hover .hero-kit-poster-wrap {
+    transform: scale(1.02);
+  }
+
+  .hero-kit-poster-img {
+    max-height: 390px;
+    width: auto;
+    max-width: 92vw;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+
+  /* Small White Arrow button below 26/27 kits (appears on hover) */
+  .hero-white-arrow-container {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 5;
+    min-height: 42px;
+  }
+
+  .hero-white-arrow-btn {
+    all: unset;
+    box-sizing: border-box;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.92);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8px) scale(0.9);
+    transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+                background 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                visibility 0.28s ease;
+  }
+
+  /* While hovering on the pics / slide, small white arrow appears */
+  .hero-slide:hover .hero-white-arrow-btn {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    animation: heroArrowNudge 1.8s ease-in-out infinite 0.3s;
+  }
+
+  @keyframes heroArrowNudge {
+    0%, 100% { transform: translateX(0) scale(1); }
+    50% { transform: translateX(4px) scale(1.06); }
+  }
+
+  .hero-white-arrow-btn:hover {
+    background: #ffffff;
+    border-color: #ffffff;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 0 0 10px #ffffff;
+    transform: scale(1.15) !important;
+  }
+
+  .hero-white-arrow-btn:hover .hero-arrow-svg {
+    stroke: #000000;
+  }
+
+  /* Nav arrows (Left / Right) */
+  .hero-nav-arrow {
+    all: unset;
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(6px);
+  }
+
+  .hero-nav-prev { left: 16px; }
+  .hero-nav-next { right: 16px; }
+
+  .hero-nav-arrow:hover {
+    background: rgba(57, 255, 20, 0.2);
+    border-color: #39ff14;
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .hero-nav-arrow:hover svg {
+    stroke: #39ff14;
+  }
+
+  /* Dots Indicator Bar */
+  .hero-dots-bar {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 10;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-dot-item {
+    all: unset;
+    box-sizing: border-box;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .hero-dot-item.active {
+    width: 24px;
+    border-radius: 10px;
+    background: #39ff14;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.8);
+  }
+
+  @media (hover: none), (max-width: 768px) {
+    .hero-white-arrow-btn {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: translateY(0) scale(1) !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-carousel-root {
+      min-height: 470px;
+    }
+    .slide-1-content {
+      padding: 50px 16px 50px;
+    }
+    .slide-kit-content {
+      padding: 16px 12px 36px;
+    }
+    .hero-kit-poster-img {
+      max-height: 320px;
+    }
+    .hero-white-arrow-btn {
+      width: 36px;
+      height: 36px;
+    }
+    .hero-nav-arrow {
+      width: 36px;
+      height: 36px;
+    }
+    .hero-nav-prev { left: 8px; }
+    .hero-nav-next { right: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-carousel-root {
+      min-height: 450px;
+    }
+    .hero-kit-poster-img {
+      max-height: 290px;
+    }
+    .hero-white-arrow-btn {
+      width: 34px;
+      height: 34px;
+    }
+    .hero-white-arrow-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    .hero-dots-bar {
+      bottom: 12px;
+    }
+  }
   .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
   .stat-label { font-size:12px; letter-spacing:4px; color:#777; margin-top:4px; font-weight:700; }
   .card-body { padding:16px 16px 0; flex:1; }
@@ -2623,23 +2950,167 @@ letter-spacing: 4px !important;
         <BrandLogos />
         <div className="section-divider" />
 
-        {/* HERO */}
-        <section className="hero-section" aria-label="Hero" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
-          <div className="hero-overlay" />
-          <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
-          <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 1 }}>
-            <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
-            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
-          </h1>
-          <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
-          <div className="hero-cta-row">
-            <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
-              SHOP NOW
-            </button>
-            <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
-              VIEW TEAMS
-            </button>
+        {/* HERO SLIDESHOW */}
+        <section
+          className="hero-section hero-carousel-root"
+          aria-label="Hero Slideshow"
+          style={{
+            opacity: heroVisible ? 1 : 0,
+            transition: heroVisible ? "none" : "opacity 0.8s ease",
+          }}
+          onTouchStart={(e) => {
+            heroTouchStartX.current = e.touches[0].clientX;
+            setIsHeroTouching(true);
+          }}
+          onTouchEnd={(e) => {
+            if (heroTouchStartX.current !== null) {
+              const diffX = e.changedTouches[0].clientX - heroTouchStartX.current;
+              if (diffX > 40) {
+                setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+              } else if (diffX < -40) {
+                setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+              }
+              heroTouchStartX.current = null;
+            }
+            setIsHeroTouching(false);
+          }}
+        >
+          {heroSlides.map((slide, idx) => {
+            const isActive = currentHeroSlide === idx;
+            return (
+              <div
+                key={slide.id}
+                className={`hero-slide ${isActive ? "active" : ""}`}
+                onClick={slide.isFirstSlide ? undefined : () => navigate(slide.targetUrl)}
+                style={{
+                  cursor: slide.isFirstSlide ? "default" : "pointer",
+                  opacity: isActive ? 1 : 0,
+                  pointerEvents: isActive ? "auto" : "none",
+                  transition: "opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                }}
+              >
+                {/* Background Layer */}
+                <div
+                  className="hero-slide-bg"
+                  style={{
+                    backgroundImage: `url(${slide.image})`,
+                    backgroundSize: slide.isFirstSlide ? "cover" : "contain",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center top",
+                  }}
+                />
+                <div
+                  className="hero-overlay"
+                  style={slide.bgGlow ? { background: slide.bgGlow } : undefined}
+                />
+
+                {/* Content for Slide 1 (WEAR YOUR LEGEND) */}
+                {slide.isFirstSlide ? (
+                  <div className="hero-slide-content slide-1-content">
+                    <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
+                    <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 2 }}>
+                      <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
+                      <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
+                    </h1>
+                    <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
+                    <div className="hero-cta-row">
+                      <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
+                        SHOP NOW
+                      </button>
+                      <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
+                        VIEW TEAMS
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Content for Slides 2, 3, 4, 5 (Kit Photos with White Arrow) */
+                  <div className="hero-slide-content slide-kit-content">
+                    <div className="hero-kit-poster-wrap">
+                      <img
+                        src={slide.image}
+                        alt={slide.title}
+                        className="hero-kit-poster-img"
+                      />
+                    </div>
+
+                    {/* White arrow below 26/27 kits */}
+                    <div className="hero-white-arrow-container">
+                      <button
+                        type="button"
+                        className="hero-white-arrow-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(slide.targetUrl);
+                        }}
+                        aria-label={`View ${slide.title}`}
+                        title={`View ${slide.title}`}
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="hero-arrow-svg"
+                        >
+                          <line x1="4" y1="12" x2="20" y2="12" />
+                          <polyline points="13 5 20 12 13 19" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Previous / Next Arrow Controls */}
+          <button
+            type="button"
+            className="hero-nav-arrow hero-nav-prev"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+            }}
+            aria-label="Previous Slide"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="hero-nav-arrow hero-nav-next"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+            }}
+            aria-label="Next Slide"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          {/* Dots Indicator */}
+          <div className="hero-dots-bar">
+            {heroSlides.map((s, i) => (
+              <button
+                type="button"
+                key={s.id}
+                className={`hero-dot-item ${currentHeroSlide === i ? "active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentHeroSlide(i);
+                }}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
           </div>
+
           <div className="hero-divider" />
         </section>
 
