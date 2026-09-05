@@ -53,11 +53,18 @@ async function fetchOrderDetails(idOrTrackingId) {
       }
     }
 
-    const { data, error } = await localSupabase
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+    let query = localSupabase
       .from('orders')
-      .select('id, tracking_id, status, created_at, customer_name, total, items, shipping_address')
-      .or(`tracking_id.eq.${cleanId},id.eq.${cleanId}`)
-      .maybeSingle();
+      .select('id, tracking_id, status, created_at, customer_name, total, items');
+
+    if (isUuid) {
+      query = query.or(`tracking_id.eq.${cleanId},id.eq.${cleanId}`);
+    } else {
+      query = query.eq('tracking_id', cleanId);
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error) throw error;
     return data;

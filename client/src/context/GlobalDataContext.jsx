@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { express } from "../express";
 import { generateProductSlug } from "../utils/product-slugs";
+import initialTeams from "../data/teams.json";
 
 const GlobalDataContext = createContext();
 
 export function GlobalDataProvider({ children }) {
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState(initialTeams || []);
   const [featuredCategoryName, setFeaturedCategoryName] = useState("WC 26");
   const [productSlugMap, setProductSlugMap] = useState(null);
   const [loading, setLoading] = useState(true);

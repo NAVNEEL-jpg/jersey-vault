@@ -8,6 +8,8 @@ import { express } from "../express";
 import { API_BASE } from "../config/api";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
+import laliga26Video from "../assets/Laliga26.mp4.mp4";
+import initialTeams from "../data/teams.json";
 const FLAME_ID = "jv-flame-teams";
 
 /* ─────────────────────────────────────────
@@ -112,8 +114,8 @@ export default function Teams() {
   });
   const [activeTab,      setActiveTab]      = useState("ALL");
   const [searchQuery,    setSearchQuery]    = useState("");
-  const [teams,          setTeams]          = useState([]);
-  const [loading,        setLoading]        = useState(true);
+  const [teams,          setTeams]          = useState(() => (globalTeams && globalTeams.length > 0 ? globalTeams : (initialTeams || [])));
+  const [loading,        setLoading]        = useState(false);
   const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
   const [menuTeamsOpen, setMenuTeamsOpen] = useState(false);
   const [menuSortOpen, setMenuSortOpen] = useState(false);
@@ -204,7 +206,9 @@ export default function Teams() {
     const matchesSearch = nameLower.includes(q) ||
       (t.name === "ROYAL CHALLENGERS BANGALORE" && (q === "rcb" || q.includes("rcb"))) ||
       (t.name === "CHENNAI SUPER KINGS" && (q === "csk" || q.includes("csk"))) ||
-      (t.name === "INDIAN CRICKET TEAM" && (q === "bcci" || q === "india" || q.includes("bcci")));
+      (t.name === "INDIAN CRICKET TEAM" && (q === "bcci" || q === "india" || q.includes("bcci"))) ||
+      (t.name === "ARSENAL" && (q === "afc" || q === "gunners" || q.includes("arsenal"))) ||
+      (t.name === "MANCHESTER UNITED" && (q === "mufc" || q === "manu" || q === "man u" || q.includes("united") || q.includes("manchester")));
     return matchesSport && matchesSearch;
   }), [teams, activeTab, searchQuery]);
 
@@ -341,28 +345,32 @@ export default function Teams() {
             box-shadow:0 0 0 1px #39ff14, 0 0 30px rgba(57,255,20,0.2), 0 20px 60px rgba(0,0,0,0.6);
           }
           .t-team-logo-wrap {
-            width:96px; height:96px; display:flex; align-items:center; justify-content:center;
+            width:120px; height:120px; display:flex; align-items:center; justify-content:center;
             flex-shrink:0; transition:box-shadow 0.3s;
+            border-radius:50%; overflow:hidden;
           }
           .t-team-logo-bg {
-            width:96px; height:96px; border-radius:50%;
+            width:120px; height:120px; border-radius:50%;
             background:#ffffff;
             display:flex; align-items:center; justify-content:center;
             box-shadow:0 4px 14px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.25);
             transition:all 0.3s cubic-bezier(0.23,1,0.32,1);
             flex-shrink:0;
             padding:10px;
+            overflow:hidden;
+            position:relative;
           }
           .t-team-card:hover .t-team-logo-bg {
             box-shadow:0 0 0 3px #39ff14, 0 0 22px rgba(57,255,20,0.35);
             transform:scale(1.05);
           }
           .t-team-logo {
-            width:100%; height:100%; max-width:76px; max-height:76px;
+            width:100%; height:100%; max-width:100px; max-height:100px;
             object-fit:contain; image-rendering:crisp-edges;
             filter:drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+            border-radius:50%;
           }
-          .t-team-logo-placeholder { font-size:44px; }
+          .t-team-logo-placeholder { font-size:54px; }
           .t-team-name {
             font-family:'Bebas Neue',sans-serif; font-weight:400; font-style:normal;
             font-size:15px; letter-spacing:3px; text-align:center; color:#ccc; line-height:1.1; text-transform:uppercase;
@@ -414,23 +422,38 @@ export default function Teams() {
           /* ── DESKTOP NAV ── */
           .t-desktop-nav-links { display:flex; gap:28px; align-items:center; flex-shrink:0; }
           .t-desktop-search { display:flex; align-items:center; flex:1; max-width:520px; justify-content:center; }
+          .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a; position:relative; margin:0 8px; }
+          .wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.05); object-position:center center; }
 
           @media(max-width:768px) {
             .t-hamburger { display:flex; }
             .t-desktop-nav-links { display:none; }
             .t-desktop-search { display:none; }
+            .wc26-video-wrap {
+              display:flex;
+              height:36px;
+              width:clamp(75px, 20vw, 110px);
+              margin:0 4px 0 auto;
+              border:1px solid rgba(255,255,255,0.12);
+              border-radius:4px;
+            }
             .t-hero { padding:60px 16px 40px; }
             .t-filter-btn { font-size:14px !important; padding:6px 12px; }
-            .t-team-card { padding:24px 16px 20px; }
-            .t-team-logo-wrap { width:80px; height:80px; }
-            .t-team-logo-bg { width:80px; height:80px; padding:8px; }
-            .t-team-logo { max-width:62px; max-height:62px; }
+            .t-team-card { padding:24px 14px 20px; }
+            .t-team-logo-wrap { width:100px; height:100px; }
+            .t-team-logo-bg { width:100px; height:100px; padding:8px; }
+            .t-team-logo { max-width:84px; max-height:84px; }
             .t-team-name { font-size:14px; margin-top:12px; }
           }
           @media(max-width:480px) {
-            .t-team-logo-wrap { width:72px; height:72px; }
-            .t-team-logo-bg { width:72px; height:72px; padding:6px; }
-            .t-team-logo { max-width:56px; max-height:56px; }
+            .wc26-video-wrap {
+              height:32px;
+              width:68px;
+              margin:0 2px 0 auto;
+            }
+            .t-team-logo-wrap { width:88px; height:88px; }
+            .t-team-logo-bg { width:88px; height:88px; padding:7px; }
+            .t-team-logo { max-width:74px; max-height:74px; }
             .t-team-name { font-size:13px; margin-top:10px; }
           }
         `}</style>
@@ -466,6 +489,25 @@ export default function Teams() {
           </div>
 
           <div className="t-desktop-nav-links">{navLinks}</div>
+
+          <div className="wc26-video-wrap" onClick={() => navigate("/?cat=FEATURED")} style={{ cursor: "pointer" }} title="Featured Collection">
+            <video
+              ref={(el) => {
+                if (el) {
+                  el.muted = true;
+                  el.defaultMuted = true;
+                  const p = el.play();
+                  if (p !== undefined) p.catch(() => {});
+                }
+              }}
+              src={laliga26Video}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+            />
+          </div>
 
           {/* Right: cart */}
           <div className="t-nav-right" style={{ marginRight: "4px" }}>
@@ -609,11 +651,19 @@ export default function Teams() {
                             alt=""
                             style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%", background: "#fff", padding: "1px" }}
                             onError={(e) => {
+                              const retry = Number(e.currentTarget.dataset.retry || 0);
                               if (t.logo_url?.includes('teams/')) {
-                                const fn = t.logo_url.split('teams/')[1];
-                                if (!e.currentTarget.dataset.retried) {
-                                  e.currentTarget.dataset.retried = '1';
-                                  e.currentTarget.src = `/teams/${fn}`;
+                                const rawFn = t.logo_url.split('teams/')[1].split('?')[0];
+                                const base = rawFn.substring(0, rawFn.lastIndexOf('.')) || rawFn;
+                                if (retry === 0) {
+                                  e.currentTarget.dataset.retry = '1';
+                                  e.currentTarget.src = `/teams/${rawFn}`;
+                                } else if (retry === 1) {
+                                  e.currentTarget.dataset.retry = '2';
+                                  e.currentTarget.src = `/teams/${base}.jpg`;
+                                } else if (retry === 2) {
+                                  e.currentTarget.dataset.retry = '3';
+                                  e.currentTarget.src = `/teams/${base}.png`;
                                 }
                               }
                             }}
@@ -760,10 +810,10 @@ export default function Teams() {
           {/* Grid */}
           {loading ? (
             /* Skeleton */
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:6 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))", gap:8 }}>
               {[...Array(8)].map((_, i) => (
-                <div key={i} style={{ background:"#0f0f0f", border:"1px solid #151515", padding:"32px 20px 24px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
-                  <div className="t-skeleton" style={{ width:96, height:96, borderRadius:"50%" }} />
+                <div key={i} style={{ background:"#0f0f0f", border:"1px solid #151515", padding:"30px 16px 20px", display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+                  <div className="t-skeleton" style={{ width:120, height:120, borderRadius:"50%" }} />
                   <div className="t-skeleton" style={{ height:18, width:"70%", borderRadius:2 }} />
                   <div className="t-skeleton" style={{ height:12, width:"40%", borderRadius:2 }} />
                 </div>
@@ -775,7 +825,7 @@ export default function Teams() {
               <p style={{ marginTop:16, letterSpacing:4, fontSize:13 }}>NO TEAMS FOUND</p>
             </div>
           ) : (
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:6 }}>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))", gap:8 }}>
               {filtered.map((team, i) => (
                 <Link
                   key={team.id}
@@ -799,11 +849,19 @@ export default function Teams() {
                           alt={team.name}
                           className="t-team-logo"
                           onError={(e) => {
+                            const retry = Number(e.currentTarget.dataset.retry || 0);
                             if (team.logo_url?.includes('teams/')) {
-                              const fn = team.logo_url.split('teams/')[1];
-                              if (!e.currentTarget.dataset.retried) {
-                                e.currentTarget.dataset.retried = '1';
-                                e.currentTarget.src = `/teams/${fn}`;
+                              const rawFn = team.logo_url.split('teams/')[1].split('?')[0];
+                              const base = rawFn.substring(0, rawFn.lastIndexOf('.')) || rawFn;
+                              if (retry === 0) {
+                                e.currentTarget.dataset.retry = '1';
+                                e.currentTarget.src = `/teams/${rawFn}`;
+                              } else if (retry === 1) {
+                                e.currentTarget.dataset.retry = '2';
+                                e.currentTarget.src = `/teams/${base}.jpg`;
+                              } else if (retry === 2) {
+                                e.currentTarget.dataset.retry = '3';
+                                e.currentTarget.src = `/teams/${base}.png`;
                               }
                             }
                           }}

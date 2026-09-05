@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createRazorpayOrder,
   verifyPayment,
+  placeCodOrder,
   razorpayWebhook,
   checkPaymentStatus,
   reconcilePayment,
@@ -16,7 +17,8 @@ router.post('/create-order', createRazorpayOrder);
 // Verify signature after success callback
 router.post('/verify', verifyPayment);
 
-// Removed POST /cod
+// Secure COD order placement (when upfront payment is ₹0)
+router.post('/cod', placeCodOrder);
 
 // Razorpay webhook — raw body handled in server.js
 router.post('/webhook', razorpayWebhook);

@@ -260,14 +260,48 @@ export async function updateTeamInR2(id, updates) {
   const index = teams.findIndex(t => String(t.id) === String(id));
   if (index === -1) return null;
 
-  teams[index] = {
-    ...teams[index],
+  const current = teams[index];
+  const updatedTeam = {
+    ...current,
     ...updates,
-    id: teams[index].id,
+    id: current.id,
+    name: updates.name !== undefined ? String(updates.name).trim().toUpperCase() : current.name,
+    sport: updates.sport !== undefined ? String(updates.sport).trim().toUpperCase() : current.sport,
+    logo_url: updates.logo_url !== undefined ? updates.logo_url : current.logo_url,
+    updated_at: new Date().toISOString(),
   };
 
+  teams[index] = updatedTeam;
   await updateR2Table('teams', teams);
-  return teams[index];
+
+  // Synchronously update any products in Cloudflare R2 associated with this team
+  try {
+    const products = await getR2Table('products');
+    let productsChanged = false;
+    const syncedProducts = products.map(p => {
+      if (String(p.team_id) === String(id)) {
+        productsChanged = true;
+        return {
+          ...p,
+          teams: {
+            id: updatedTeam.id,
+            name: updatedTeam.name,
+            sport: updatedTeam.sport,
+            logo_url: updatedTeam.logo_url,
+          },
+        };
+      }
+      return p;
+    });
+
+    if (productsChanged) {
+      await updateR2Table('products', syncedProducts);
+    }
+  } catch (syncErr) {
+    console.warn('[r2Service:updateTeamInR2] Warning syncing team on products:', syncErr.message);
+  }
+
+  return updatedTeam;
 }
 
 export async function deleteTeamInR2(id) {

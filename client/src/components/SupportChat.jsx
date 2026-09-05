@@ -1,6 +1,72 @@
 import React, { useState, useRef, useEffect } from 'react';
 import BrandLogo from './BrandLogo';
 import { supabase } from '../supabase';
+import { API_BASE } from '../config/api';
+
+function getOfflineSupportResponse(text) {
+  const msg = (text || '').toLowerCase();
+  if (msg.includes('size') || msg.includes('fit') || msg.includes('shrink') || msg.includes('guide') || msg.includes('chart')) {
+    return `Here is our official **Size Chart** (measurements in inches):\n\n` +
+           `| Size | Chest (Fan Version) | Chest (Player Version) | Length |\n` +
+           `| :---: | :---: | :---: | :---: |\n` +
+           `| **S** | 38" | 36" | 27" |\n` +
+           `| **M** | 40" | 38" | 28" |\n` +
+           `| **L** | 42" | 40" | 29" |\n` +
+           `| **XL** | 44" | 42" | 30" |\n` +
+           `| **XXL** | 46" | 44" | 31" |\n\n` +
+           `💡 **Fan vs Player Version:**\n` +
+           `- **Fan Version:** Slightly looser, standard comfort fit.\n` +
+           `- **Player Version:** Slim performance fit, runs tighter.\n` +
+           `- Football jerseys run slim, so if you prefer a relaxed fit or are between sizes, we highly recommend **sizing up**.\n\n` +
+           `🧼 **Care Instructions:** Made of 100% premium polyester. Do not shrink if cold-washed (gentle cycle) and air-dried. Do not iron prints directly.\n\n` +
+           `For more details, visit our **[FAQ Page](/faq)**.`;
+  }
+  if (msg.includes('return') || msg.includes('refund') || msg.includes('exchange') || msg.includes('replace')) {
+    return `Here is our Return & Refund Policy:\n` +
+           `- 🔄 **3-Days Return Policy:** Returns/exchanges are accepted within **3 days** of delivery, only if the product is manufacturer-damaged, torn, or if there is an ordered size mismatch.\n` +
+           `- 📹 **Unboxing Video Mandatory:** A continuous, unedited unboxing video from start to finish is a **must** to claim any return or refund.\n` +
+           `- ✉️ **Initiation Period:** At least **7 days** are required to process and initiate a return. You must request the return by emailing us at **support.jerseyvault@gmail.com**.\n\n` +
+           `For further details, visit our **[FAQ Page](/faq)** or contact support on WhatsApp at **+91 70297 86817**.`;
+  }
+  if (msg.includes('shipping') || msg.includes('charge') || msg.includes('cost') || msg.includes('free')) {
+    return `🚚 **Shipping Information:**\n` +
+           `- **Delivery Time:** Standard shipping takes 5–8 business days across India. Metro cities (like Mumbai, Delhi, Kolkata, Bengaluru) typically arrive within 3–5 business days.\n` +
+           `- **Shipping Fee:** Free shipping on orders above ₹1,099! For orders below ₹1,099, there is a flat shipping fee of ₹99.\n` +
+           `- **International:** We currently only ship within India, but international shipping is in the works!\n\n` +
+           `You can view our shipping FAQs on the **[FAQ Page](/faq)**.`;
+  }
+  if (msg.includes('payment') || msg.includes('cod') || msg.includes('cash')) {
+    return `💳 **Payment Options:**\n` +
+           `- We accept UPI (PhonePe, GPay, Paytm), Credit/Debit Cards, Net Banking, and **Cash on Delivery (COD)**.\n` +
+           `- Online payments are handled securely via Razorpay.\n` +
+           `- Please note: Cash on Delivery (COD) orders attract a flat COD convenience fee of **₹30**.\n\n` +
+           `You can view our payment terms on the **[FAQ Page](/faq)**.`;
+  }
+  if (msg.includes('contact') || msg.includes('support') || msg.includes('whatsapp') || msg.includes('human') || msg.includes('phone') || msg.includes('email')) {
+    return `You can reach our customer support team directly here:\n` +
+           `📞 **WhatsApp Support (India):** +91 70297 86817\n` +
+           `🌎 **WhatsApp (International):** +1 (579) 475-9370 or +1 (604) 200-9964\n` +
+           `📸 **Instagram DM:** @the_jerseyvault.in\n` +
+           `✉️ **Email:** support.jerseyvault@gmail.com\n\n` +
+           `Support hours are Monday – Saturday (10:00 AM – 8:00 PM IST) and Sunday (11:00 AM – 5:00 PM IST).`;
+  }
+  if (msg.includes('track') || msg.includes('order') || msg.includes('status')) {
+    return `To check your shipment status, please paste your **Order ID** (starts with \`pay_\`, \`order_\`, or \`COD-\`) or query directly on our **[Order Tracking Page](/tracking)** or visit the **[Delhivery Tracking Website](https://www.delhivery.com/track/package/)**.`;
+  }
+  return `Hello! ⚽ I am your JerseyVault Customer Support Bot.\n\n` +
+         `How can I help you navigate the store today?\n\n` +
+         `🧭 **Store Directory:**\n` +
+         `- 🛍️ **[Catalog / Home Page](/)** — Explore all jerseys\n` +
+         `- 🏆 **[Browse by Teams](/teams)** — Browse jerseys by league or club\n` +
+         `- 🛒 **[Shopping Cart](/cart)** — Open the cart sidebar from the Home Page header\n` +
+         `- 💳 **[Checkout Page](/checkout)** — Place your order and complete payment\n` +
+         `- 🚚 **[Track Your Order](/tracking)** — Real-time delivery status\n` +
+         `- 👤 **[Login / Your Account](/auth)** — Sign in or create an account\n` +
+         `- 📦 **[My Orders](/myorders)** — Past receipts & orders\n` +
+         `- ❓ **[FAQ Page](/faq)** — Size charts, returns, payments & shipping rules\n` +
+         `- 📞 **[Contact Support](/contact)** — Get WhatsApp or Instagram help\n\n` +
+         `*Just ask me any question or paste your Order ID/Tracking ID to begin!*`;
+}
 
 const statusLabels = ["", "ORDER PLACED", "PACKED", "SHIPPED", "OUT FOR DELIVERY", "DELIVERED"];
 
@@ -112,14 +178,10 @@ export default function SupportChat() {
     setLoading(true);
 
     try {
-      const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-      const supabaseKey = process.env.REACT_APP_SUPABASE_KEY || '';
-      const response = await fetch(`${supabaseUrl}/functions/v1/chatbot`, {
+      const response = await fetch(`${API_BASE}/api/support/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({
           message: text
@@ -130,11 +192,13 @@ export default function SupportChat() {
         const data = await response.json();
         setHistory(prev => [...prev, { role: 'model', text: data.text, orderData: data.orderData }]);
       } else {
-        setHistory(prev => [...prev, { role: 'model', text: 'Sorry, I am having trouble connecting to the support server. Please try again or reach out on WhatsApp at +91 70297 86817.' }]);
+        const fallbackText = getOfflineSupportResponse(text);
+        setHistory(prev => [...prev, { role: 'model', text: fallbackText }]);
       }
     } catch (err) {
-      console.error('Chat error:', err);
-      setHistory(prev => [...prev, { role: 'model', text: 'An error occurred. Please verify your connection or chat with us on WhatsApp at +91 70297 86817.' }]);
+      console.warn('Chat backend unreachable, using intelligent local support:', err);
+      const fallbackText = getOfflineSupportResponse(text);
+      setHistory(prev => [...prev, { role: 'model', text: fallbackText }]);
     } finally {
       setLoading(false);
       if (!isOpen) {

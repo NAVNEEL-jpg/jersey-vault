@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
-import { calcOrderTotals } from './utils/shipping';
+import { calcOrderTotals, FREE_SHIPPING_MIN } from './utils/shipping';
+import { API_BASE } from './config/api';
 
-const API = process.env.REACT_APP_API_URL || '/api';
+const API = API_BASE;
 
 // ─── Finalize order in Supabase + send email ─────────────────────────────────
 async function finalizeOrder({
@@ -22,12 +23,19 @@ async function finalizeOrder({
 }) {
   const { subtotal, shipping, total } = calcOrderTotals(cart);
   const customerEmail = email || user?.email || '';
+  const isFreeShippingCod = isCOD && isCODMode === 'cod' && subtotal > FREE_SHIPPING_MIN;
+  const balanceDue = isFreeShippingCod 
+    ? Math.max(0, subtotal - amountPaid) 
+    : isCODMode === 'partial_cod'
+    ? Math.max(0, total - amountPaid)
+    : (isCOD ? subtotal : 0);
 
   const order = {
     id: orderId,
     items: cart,
     total,
     amountPaid,
+    balanceDue,
     date: new Date().toLocaleDateString(),
     customer: { name, email: customerEmail, phone },
     payMethod: isCODMode === 'partial_cod' ? 'Partial_COD' : isCOD ? 'COD' : 'Online',
@@ -40,12 +48,77 @@ async function finalizeOrder({
   // Backend handles DB insert now
   if (decrementStock) await decrementStock();
 
+  try { sessionStorage.removeItem('cart'); } catch (e) {}
   localStorage.setItem('latestOrder', JSON.stringify(order));
   navigate('/success');
 }
 
 // ─── COD with free shipping (no Razorpay charge) ─────────────────────────────
-// REMOVED (Insecure Endpoint)
+export async function placeCodOrderFree(
+  name,
+  email,
+  phone,
+  cart,
+  navigate,
+  decrementStock,
+  form,
+  user,
+  onStatusChange = () => {}
+) {
+  const { subtotal } = calcOrderTotals(cart, 0, 'COD');
+  const customerEmail = email || user?.email || '';
+
+  onStatusChange('processing');
+
+  const orderData = {
+    customer_name: name,
+    customer_email: customerEmail,
+    customer_phone: phone,
+    address: form.address,
+    city: form.city,
+    state: form.state,
+    pincode: form.pincode,
+    items: cart,
+    subtotal,
+    shipping: 0,
+    total: subtotal,
+    pay_method: 'COD',
+  };
+
+  try {
+    const res = await fetch(`${API}/api/payment/cod`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_data: orderData }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to place COD order');
+    }
+
+    onStatusChange('success');
+
+    await finalizeOrder({
+      orderId: data.order_id,
+      name,
+      email,
+      phone,
+      cart,
+      navigate,
+      decrementStock,
+      form,
+      user,
+      isCOD: true,
+      isCODMode: 'cod',
+      amountPaid: 0,
+    });
+  } catch (err) {
+    console.error('placeCodOrderFree error:', err);
+    onStatusChange('error');
+    alert(err.message || 'Failed to place COD order. Please try again.');
+  }
+}
 
 // ─── Main payment initiator ───────────────────────────────────────────────────
 export const initiatePayment = async (
@@ -61,6 +134,13 @@ export const initiatePayment = async (
   isCODMode, // 'online' | 'cod' | 'partial_cod'
   onStatusChange = () => {}
 ) => {
+  if (!amountToPayNow || amountToPayNow <= 0) {
+    console.error('initiatePayment called with amount <= 0');
+    onStatusChange('error');
+    alert('Payment amount must be greater than zero.');
+    return;
+  }
+
   const { shipping, total } = calcOrderTotals(cart);
   const customerEmail = email || user?.email || '';
   const isCOD = isCODMode === 'cod' || isCODMode === 'partial_cod';
@@ -106,11 +186,21 @@ export const initiatePayment = async (
     description: isCODMode === 'partial_cod'
       ? `Partial COD: ₹${shipping} delivery + ₹${Math.ceil(calcOrderTotals(cart).subtotal / 2)} (50% cart value)`
       : isCOD
-      ? (shipping > 0 ? `Shipping fee (₹${shipping}) — COD order` : 'Jersey Purchase')
+      ? (calcOrderTotals(cart).subtotal > FREE_SHIPPING_MIN
+          ? `COD Advance: ₹99 (Free Shipping Applied) — Rest on Delivery`
+          : `Shipping fee (₹${shipping}) — COD order`)
       : `Order total (₹${total})`,
     // Step 2 — Success: verify signature on backend
     handler: async function (response) {
       onStatusChange('verifying');
+
+      const { subtotal, shipping, total } = calcOrderTotals(cart);
+      const isFreeShippingCod = isCOD && isCODMode === 'cod' && subtotal > FREE_SHIPPING_MIN;
+      const balanceDue = isFreeShippingCod
+        ? Math.max(0, subtotal - amountToPayNow)
+        : isCODMode === 'partial_cod'
+        ? Math.max(0, total - amountToPayNow)
+        : (isCOD ? subtotal : 0);
 
       const orderData = {
         customer_name: name,
@@ -121,11 +211,12 @@ export const initiatePayment = async (
         city: form.city,
         state: form.state,
         pincode: form.pincode,
-        subtotal: calcOrderTotals(cart).subtotal,
-        shipping: calcOrderTotals(cart).shipping,
-        total: calcOrderTotals(cart).total,
+        subtotal,
+        shipping,
+        total,
         amount_paid: amountToPayNow,
-        upfront_shipping: amountToPayNow,
+        balance_due: balanceDue,
+        upfront_shipping: isFreeShippingCod ? 0 : amountToPayNow,
         pay_method: isCODMode === 'partial_cod' ? 'Partial_COD' : isCOD ? 'COD' : 'Online',
       };
 

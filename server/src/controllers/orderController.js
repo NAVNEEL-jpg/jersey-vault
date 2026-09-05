@@ -204,17 +204,26 @@ export const updateOrderStatus = async (req, res) => {
       updateData.delivered_at = new Date();
     }
 
-    // Fetch existing order to determine if we need to restore inventory
-    const { data: existingOrder, error: fetchError } = await supabase
-      .from('orders')
-      .select('status, items')
-      .eq('id', req.params.id)
-      .single();
+    // 1. Fetch existing order to determine if we need to restore inventory
+    let existingOrder = null;
+    try {
+      const { data } = await supabase
+        .from('orders')
+        .select('status, items')
+        .eq('id', req.params.id)
+        .single();
+      if (data) existingOrder = data;
+    } catch (_) {}
 
-    if (fetchError) throw fetchError;
+    if (!existingOrder) {
+      try {
+        const r2Orders = await getR2Table('orders');
+        existingOrder = (r2Orders || []).find(o => String(o.id) === String(req.params.id));
+      } catch (_) {}
+    }
 
-    // Perform Inventory Restoration ONLY if transitioning from non-cancelled to cancelled
-    if (newStatus === 'cancelled' && existingOrder.status !== 'cancelled') {
+    // 2. Perform Inventory Restoration ONLY if transitioning from non-cancelled to cancelled
+    if (newStatus === 'cancelled' && existingOrder && existingOrder.status !== 'cancelled') {
       const items = Array.isArray(existingOrder.items) ? existingOrder.items : [];
       for (const item of items) {
         const productId = item.id || item.product;
@@ -222,20 +231,50 @@ export const updateOrderStatus = async (req, res) => {
         const size = item.size || 'M';
 
         if (productId) {
-          await updateSizeStockInR2(productId, size, qty);
+          try {
+            await updateSizeStockInR2(productId, size, qty);
+          } catch (stockErr) {
+            console.warn('[updateOrderStatus] Restock error:', stockErr.message);
+          }
         }
       }
     }
 
-    const { data, error } = await supabase
-      .from('orders')
-      .update(updateData)
-      .eq('id', req.params.id)
-      .select()
-      .single();
+    // 3. Update Supabase
+    let updatedOrder = null;
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', req.params.id)
+        .select()
+        .single();
 
-    if (error) throw error;
-    res.json(data);
+      if (!error && data) updatedOrder = data;
+    } catch (supaErr) {
+      console.warn('[updateOrderStatus] Supabase update warning:', supaErr.message);
+    }
+
+    // 4. Update Cloudflare R2 orders backup table
+    try {
+      const r2Orders = await getR2Table('orders');
+      if (Array.isArray(r2Orders)) {
+        const idx = r2Orders.findIndex(o => String(o.id) === String(req.params.id));
+        if (idx !== -1) {
+          r2Orders[idx] = { ...r2Orders[idx], ...updateData, updated_at: new Date().toISOString() };
+          await updateR2Table('orders', r2Orders);
+          if (!updatedOrder) updatedOrder = r2Orders[idx];
+        }
+      }
+    } catch (r2Err) {
+      console.warn('[updateOrderStatus] R2 orders update warning:', r2Err.message);
+    }
+
+    if (!updatedOrder) {
+      updatedOrder = { id: req.params.id, ...updateData };
+    }
+
+    res.json(updatedOrder);
   } catch (error) {
     console.error('updateOrderStatus Error:', error);
     res.status(500).json({ message: 'Unable to update order status.' });

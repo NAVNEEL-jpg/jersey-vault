@@ -102,26 +102,33 @@ export default function CheckoutPage() {
 
   const dynamicFee = delhiveryInfo ? delhiveryInfo.totalShipping : null;
   const { subtotal, shipping, total, freeShippingGap } = calcOrderTotals(cart, dynamicFee, payMethod);
+  const isFreeShipping = subtotal > FREE_SHIPPING_MIN;
 
   // Partial COD: pay ₹99 delivery + 50% cart value upfront, rest on delivery
   const halfCartValue = Math.ceil(subtotal / 2);
   const partialCodUpfront = shipping + halfCartValue;
   const partialCodDoorstep = subtotal - halfCartValue;
 
-  // Specific shipping fee calculations for payment option cards (so COD ALWAYS displays 149, Partial COD 99 unless subtotal > 1099)
+  // Specific shipping fee calculations for payment option cards
   const codShipping = calcShipping(subtotal, 'COD', payMethod === 'cod' ? dynamicFee : null);
   const partialCodShipping = calcShipping(subtotal, 'PARTIAL_COD', payMethod === 'partial_cod' ? dynamicFee : null);
   const partialCodUpfrontCalc = partialCodShipping + halfCartValue;
   const partialCodDoorstepCalc = subtotal - halfCartValue;
 
+  // COD upfront & doorstep breakdown:
+  // In free shipping above 1099: customer pays ₹99 first online, and rest jersey amount (subtotal - 99) during COD
+  // When subtotal <= 1099: customer pays delivery charge (codShipping = 149) online, full cart value (subtotal) during COD
+  const codUpfront = isFreeShipping ? 99 : codShipping;
+  const codDoorstep = isFreeShipping ? Math.max(0, subtotal - 99) : subtotal;
+
   // COD & Shipping calculations
   const razorpayTaxFee = 0;
   const payNowOnline = cart.length === 0 ? 0
-    : payMethod === "cod" ? shipping
+    : payMethod === "cod" ? codUpfront
     : payMethod === "partial_cod" ? partialCodUpfront
     : total;
   const payAtDoorstep = cart.length === 0 ? 0
-    : payMethod === "cod" ? subtotal
+    : payMethod === "cod" ? codDoorstep
     : payMethod === "partial_cod" ? partialCodDoorstep
     : 0;
   const payNow = payNowOnline;
@@ -188,13 +195,6 @@ export default function CheckoutPage() {
     setLoading(true);
     setPaymentStatus('idle');
     try {
-      const razorpayReady = await loadRazorpayScript();
-      if (!razorpayReady) {
-        alert('Unable to load Razorpay. Please refresh and try again.');
-        setLoading(false);
-        return;
-      }
-
       const onStatusChange = (status) => {
         setPaymentStatus(status);
         if (status === 'error' || status === 'failed' || status === 'dismissed') {
@@ -203,13 +203,32 @@ export default function CheckoutPage() {
       };
 
       if (payMethod === 'cod') {
+        const razorpayReady = await loadRazorpayScript();
+        if (!razorpayReady) {
+          alert('Unable to load Razorpay. Please refresh and try again.');
+          setLoading(false);
+          return;
+        }
         initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, 'cod', onStatusChange);
       } else if (payMethod === 'partial_cod') {
+        const razorpayReady = await loadRazorpayScript();
+        if (!razorpayReady) {
+          alert('Unable to load Razorpay. Please refresh and try again.');
+          setLoading(false);
+          return;
+        }
         initiatePayment(payNowOnline, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, 'partial_cod', onStatusChange);
       } else {
+        const razorpayReady = await loadRazorpayScript();
+        if (!razorpayReady) {
+          alert('Unable to load Razorpay. Please refresh and try again.');
+          setLoading(false);
+          return;
+        }
         initiatePayment(total, form.name, form.email, form.phone, cart, navigate, decrementStock, form, user, 'online', onStatusChange);
       }
     } catch (err) {
+      console.error('handlePlace error:', err);
       setLoading(false);
     }
   };
@@ -544,8 +563,8 @@ export default function CheckoutPage() {
                     id: "cod",
                     icon: "💵",
                     label: "CASH ON DELIVERY",
-                    sub: codShipping === 0
-                      ? `Free Shipping 🎉 · Pay ₹${subtotal.toLocaleString()} in cash on delivery`
+                    sub: isFreeShipping
+                      ? `Free Shipping 🎉 · Pay ₹99 first online · Rest jersey amount (₹${codDoorstep.toLocaleString()}) during COD`
                       : `Pay delivery charge (₹${codShipping.toLocaleString()}) online now · Pay full cart value (₹${subtotal.toLocaleString()}) on delivery`,
                   },
                   {
@@ -588,7 +607,9 @@ export default function CheckoutPage() {
                 <div className="checkout-pay-info">
                   <span style={{ fontSize: 18 }}>ℹ️</span>
                   <span style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Barlow', sans-serif", letterSpacing: 0.5, lineHeight: 1.5 }}>
-                    Pay delivery charge (₹{shipping.toLocaleString()}) online now via Razorpay. Pay full cart value (₹{subtotal.toLocaleString()}) in cash when your order arrives.
+                    {isFreeShipping
+                      ? `Free shipping applied! Pay ₹99 first online via Razorpay. Pay the rest jersey amount (₹${codDoorstep.toLocaleString()}) in cash during delivery.`
+                      : `Pay delivery charge (₹${shipping.toLocaleString()}) online now via Razorpay. Pay full cart value (₹${subtotal.toLocaleString()}) in cash when your order arrives.`}
                   </span>
                 </div>
               )}
@@ -623,6 +644,54 @@ export default function CheckoutPage() {
                   {{ razorpay: "💳 ONLINE PAYMENT (Razorpay)", cod: "💵 CASH ON DELIVERY", partial_cod: "🤝 PARTIAL COD" }[payMethod]}
                 </div>
               </div>
+
+              {/* PAYMENT BREAKDOWN SUMMARY BOX */}
+              <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20, marginBottom: 16 }}>
+                <div className="checkout-section-label">PAYMENT BREAKDOWN</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 12 }}>
+                  <div style={{ background: "rgba(57, 255, 20, 0.05)", border: "1px solid rgba(57, 255, 20, 0.25)", padding: 14, borderRadius: 2 }}>
+                    <div style={{ fontSize: 11, color: "#a1a1aa", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 700 }}>
+                      {payMethod === "cod"
+                        ? (isFreeShipping ? "PAY FIRST ONLINE" : "DELIVERY CHARGE ONLINE")
+                        : payMethod === "partial_cod"
+                        ? "PAY FIRST ONLINE"
+                        : "PAY NOW ONLINE"}
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: "#39ff14", marginTop: 4, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      ₹{payNowOnline.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 3 }}>Via UPI / Cards / NetBanking</div>
+                  </div>
+
+                  <div style={{ background: payAtDoorstep > 0 ? "rgba(251, 191, 36, 0.05)" : "rgba(255, 255, 255, 0.02)", border: `1px solid ${payAtDoorstep > 0 ? "rgba(251, 191, 36, 0.25)" : "#222"}`, padding: 14, borderRadius: 2 }}>
+                    <div style={{ fontSize: 11, color: "#a1a1aa", letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 700 }}>
+                      {payMethod === "cod"
+                        ? (isFreeShipping ? "REST JERSEY AMOUNT (COD)" : "PAY ON DELIVERY (COD)")
+                        : payMethod === "partial_cod"
+                        ? "REMAINING 50% (COD)"
+                        : "PAY ON DELIVERY"}
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: payAtDoorstep > 0 ? "#fbbf24" : "#888", marginTop: 4, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                      ₹{payAtDoorstep.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#888", marginTop: 3 }}>
+                      {payAtDoorstep > 0 ? "Cash or UPI at doorstep" : "Fully paid online"}
+                    </div>
+                  </div>
+                </div>
+
+                {payMethod === "cod" && isFreeShipping && (
+                  <div style={{ marginTop: 14, fontSize: 12, color: "#39ff14", background: "rgba(57,255,20,0.06)", border: "1px solid rgba(57,255,20,0.2)", padding: "10px 14px", borderRadius: 2, lineHeight: 1.5 }}>
+                    ✨ <strong>Free Shipping Unlocked (Above ₹1,099):</strong> Your ₹99 online payment is deducted from the jersey amount. The remaining ₹{codDoorstep.toLocaleString()} is collected in cash or UPI when your jersey arrives!
+                  </div>
+                )}
+                {payMethod === "cod" && !isFreeShipping && (
+                  <div style={{ marginTop: 14, fontSize: 12, color: "#a1a1aa", background: "rgba(255,255,255,0.03)", border: "1px solid #27272a", padding: "10px 14px", borderRadius: 2, lineHeight: 1.5 }}>
+                    ℹ️ Pay standard delivery charge (₹{shipping.toLocaleString()}) online now. Pay full cart value (₹{subtotal.toLocaleString()}) in cash or UPI on delivery.
+                  </div>
+                )}
+              </div>
+
               <div style={{ background: "#111", border: "1px solid #1a1a1a", padding: 20 }}>
                 <div className="checkout-section-label">YOUR ITEMS</div>
                 {cart.map((item) => (
@@ -647,7 +716,9 @@ export default function CheckoutPage() {
                     PROCESSING...
                   </span>
                 ) : payMethod === 'cod'
-                  ? `PAY ₹${payNowOnline.toLocaleString()} DELIVERY NOW →`
+                  ? (isFreeShipping
+                      ? `PAY ₹99 FIRST · REST ₹${codDoorstep.toLocaleString()} DURING COD →`
+                      : `PAY ₹${payNowOnline.toLocaleString()} DELIVERY NOW →`)
                   : payMethod === 'partial_cod'
                   ? `PAY ₹${payNowOnline.toLocaleString()} NOW →`
                   : `PAY NOW — ₹${total.toLocaleString()} →`}
@@ -737,31 +808,64 @@ export default function CheckoutPage() {
               </div>
             ))}
             <div style={{ borderTop: "1px solid #1a1a1a", paddingTop: 16, marginTop: 8 }}>
-              {[
-                ["SUBTOTAL", `₹${subtotal.toLocaleString()}`],
-                ["SHIPPING", shipping === 0 ? "FREE 🎉" : `₹${shipping.toLocaleString()}`],
-                ...(payMethod === "cod" ? [["PAY AT DOORSTEP", `₹${subtotal.toLocaleString()}`]] : []),
-                ...(payMethod === "partial_cod" ? [["PAY AT DOORSTEP", `₹${partialCodDoorstep.toLocaleString()}`]] : []),
-              ].map(([l, v]) => (
-                <div key={l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 13, letterSpacing: 1 }}>
-                  <span style={{ color: "#888" }}>{l}</span>
-                  <span style={{ color: v === "FREE 🎉" ? "#39ff14" : (l === "SHIPPING" || l === "PAY AT DOORSTEP") ? "#39ff14" : "#a1a1aa", fontWeight: (l === "SHIPPING" || l === "PAY AT DOORSTEP") ? 700 : 400 }}>{v}</span>
-                </div>
-              ))}
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 13, letterSpacing: 1 }}>
+                <span style={{ color: "#888" }}>SUBTOTAL</span>
+                <span style={{ color: "#a1a1aa" }}>₹{subtotal.toLocaleString()}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 13, letterSpacing: 1 }}>
+                <span style={{ color: "#888" }}>SHIPPING</span>
+                <span style={{ color: shipping === 0 ? "#39ff14" : "#a1a1aa", fontWeight: shipping === 0 ? 700 : 400 }}>
+                  {shipping === 0 ? "FREE 🎉" : `₹${shipping.toLocaleString()}`}
+                </span>
+              </div>
+
               {delhiveryInfo?.estimatedDays && (
                 <div style={{ fontSize: 11, color: "#39ff14", letterSpacing: 1, marginBottom: 10, textAlign: "right" }}>
                   🚚 Est. Delivery: {delhiveryInfo.estimatedDays}
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid #1a1a1a", fontWeight: 800, fontSize: 20, fontFamily: "'Barlow Condensed', sans-serif" }}>
-                <span>{payMethod === "cod" || payMethod === "partial_cod" ? "ORDER TOTAL" : "PAY NOW"}</span>
-                <span style={{ color: "#39ff14" }}>₹{total.toLocaleString()}</span>
+
+              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 12, paddingBottom: 12, borderTop: "1px solid #222", borderBottom: "1px solid #222", margin: "10px 0", fontWeight: 800, fontSize: 19, fontFamily: "'Barlow Condensed', sans-serif" }}>
+                <span>TOTAL ORDER VALUE</span>
+                <span style={{ color: "#fff" }}>₹{total.toLocaleString()}</span>
               </div>
-              {(payMethod === "cod" || payMethod === "partial_cod") && (
-                <div className="checkout-cod-note">
-                  PAY NOW: ₹{payNowOnline.toLocaleString()}
+
+              {/* PAYMENT BREAKDOWN SUMMARY BOX */}
+              <div style={{ background: "rgba(57, 255, 20, 0.04)", border: "1px solid rgba(57, 255, 20, 0.2)", borderRadius: 3, padding: "12px 14px", margin: "12px 0" }}>
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: "#39ff14", textTransform: "uppercase", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>💳</span> PAYMENT BREAKDOWN
                 </div>
-              )}
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8 }}>
+                  <span style={{ color: "#a1a1aa" }}>
+                    {payMethod === "cod"
+                      ? (isFreeShipping ? "Pay First (Online Advance):" : "Pay First (Delivery Fee):")
+                      : payMethod === "partial_cod"
+                      ? "Pay First Online (50% + Fee):"
+                      : "Pay Online Now:"}
+                  </span>
+                  <span style={{ color: "#39ff14", fontWeight: 800 }}>₹{payNowOnline.toLocaleString()}</span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                  <span style={{ color: "#a1a1aa" }}>
+                    {payMethod === "cod"
+                      ? (isFreeShipping ? "Rest on Delivery (COD):" : "Pay on Delivery (COD):")
+                      : payMethod === "partial_cod"
+                      ? "Remaining 50% on Delivery:"
+                      : "Pay on Delivery:"}
+                  </span>
+                  <span style={{ color: payAtDoorstep > 0 ? "#fbbf24" : "#888", fontWeight: 800 }}>
+                    {payAtDoorstep > 0 ? `₹${payAtDoorstep.toLocaleString()}` : "₹0 (Fully Paid)"}
+                  </span>
+                </div>
+
+                {payMethod === "cod" && isFreeShipping && (
+                  <div style={{ fontSize: 11, color: "#39ff14", lineHeight: 1.4, borderTop: "1px dashed rgba(57,255,20,0.15)", paddingTop: 8, marginTop: 8 }}>
+                    ✨ Free shipping applied! ₹99 paid now is deducted from jersey price — remaining ₹{codDoorstep.toLocaleString()} paid at doorstep.
+                  </div>
+                )}
+              </div>
             </div>
             {freeShippingGap > 0 && (
               <div style={{ background: "rgba(57, 255, 20, 0.05)", border: "1px solid rgba(57, 255, 20, 0.15)", padding: "10px 14px", marginTop: 16, fontSize: 12, letterSpacing: 1, color: "#39ff14" }}>

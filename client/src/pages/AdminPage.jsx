@@ -126,6 +126,15 @@ export default function AdminPage() {
   const [teamLogoFile, setTeamLogoFile] = useState(null);
   const [teamLogoPreview, setTeamLogoPreview] = useState("");
 
+  // Edit Team state
+  const [editingTeamId, setEditingTeamId] = useState(null);
+  const [editTeamForm, setEditTeamForm] = useState({ id: "", name: "", sport: "FOOTBALL", logo_url: "" });
+  const [editTeamLogoFile, setEditTeamLogoFile] = useState(null);
+  const [editTeamLogoPreview, setEditTeamLogoPreview] = useState("");
+  const [editTeamSaving, setEditTeamSaving] = useState(false);
+  const [editTeamError, setEditTeamError] = useState("");
+  const editLogoInputRef = useRef(null);
+
   // ── Review Management State & Handlers ──
   const [adminReviews, setAdminReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -677,7 +686,7 @@ export default function AdminPage() {
   const uploadLogoAndGetUrl = async (file, teamName) => {
     const ext = file.name ? file.name.split(".").pop() : "png";
     const fileName = `${Date.now()}-${teamName.trim().replace(/\s+/g, "-").toLowerCase()}.${ext}`;
-    const { data, error } = await express.storage.from("team-logos").upload(fileName, file);
+    const { data, error } = await express.storage.from("teams").upload(fileName, file);
     if (error) throw new Error("Logo upload failed: " + (error.message || "Upload error"));
     return data.publicUrl;
   };
@@ -765,6 +774,92 @@ export default function AdminPage() {
     } finally {
       setDeletingTeamId(null);
       setConfirmDeleteTeamId(null);
+    }
+  };
+
+  // ── Team Edit Handlers ──
+  const handleStartEditTeam = (team) => {
+    setEditingTeamId(team.id);
+    setEditTeamForm({
+      id: team.id,
+      name: team.name || "",
+      sport: team.sport || "FOOTBALL",
+      logo_url: team.logo_url || "",
+    });
+    setEditTeamLogoFile(null);
+    setEditTeamLogoPreview(team.logo_url || "");
+    setEditTeamError("");
+  };
+
+  const handleCancelEditTeam = () => {
+    setEditingTeamId(null);
+    setEditTeamForm({ id: "", name: "", sport: "FOOTBALL", logo_url: "" });
+    setEditTeamLogoFile(null);
+    setEditTeamLogoPreview("");
+    setEditTeamError("");
+  };
+
+  const handleEditTeamLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setEditTeamLogoFile(file);
+    setEditTeamLogoPreview(URL.createObjectURL(file));
+    setEditTeamError("");
+  };
+
+  const handleSaveEditTeam = async () => {
+    if (!editTeamForm.name.trim()) { setEditTeamError("Team name is required."); return; }
+    setEditTeamSaving(true);
+    setEditTeamError("");
+    try {
+      let logo_url = editTeamForm.logo_url;
+      if (editTeamLogoFile) {
+        logo_url = await uploadLogoAndGetUrl(editTeamLogoFile, editTeamForm.name);
+      }
+      const payload = {
+        name: editTeamForm.name.trim().toUpperCase(),
+        sport: editTeamForm.sport,
+        logo_url: logo_url || null,
+      };
+
+      const { data, error } = await express
+        .from("teams")
+        .update(payload)
+        .eq("id", editTeamForm.id)
+        .single();
+
+      if (error) {
+        setEditTeamError("Failed to update team: " + (error.message || "Update error"));
+        setEditTeamSaving(false);
+        return;
+      }
+
+      const updatedTeam = data || { ...editTeamForm, ...payload };
+
+      setTeams(prev => prev.map(t => t.id === editTeamForm.id ? { ...t, ...updatedTeam } : t));
+      setAllTeams(prev => prev.map(t => t.id === editTeamForm.id ? { ...t, ...updatedTeam } : t));
+
+      // Also update products in local state if their nested team info matches
+      setProducts(prev => prev.map(p => {
+        if (p.team_id === editTeamForm.id) {
+          return {
+            ...p,
+            teams: {
+              ...p.teams,
+              name: updatedTeam.name,
+              sport: updatedTeam.sport,
+              logo_url: updatedTeam.logo_url,
+            }
+          };
+        }
+        return p;
+      }));
+
+      handleCancelEditTeam();
+    } catch (err) {
+      setEditTeamError(err.message || "Error updating team");
+    } finally {
+      setEditTeamSaving(false);
     }
   };
 
@@ -1830,10 +1925,121 @@ export default function AdminPage() {
             ) : (
               <div className="teams-grid">
                 {filteredTeams.map(team => {
+                  const isEditing = editingTeamId === team.id;
                   const isConfirming = confirmDeleteTeamId === team.id;
                   const isDeleting = deletingTeamId === team.id;
                   const sc = sportColor[team.sport] || "#39ff14";
                   const productCount = products.filter(p => p.team_id === team.id).length;
+
+                  if (isEditing) {
+                    return (
+                      <div key={team.id} className="team-card" style={{ border: "1px solid #39ff14", background: "#111", padding: "16px 12px" }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: "#39ff14", letterSpacing: 2, marginBottom: 8, textAlign: "center" }}>
+                          ✏️ EDIT TEAM
+                        </div>
+                        
+                        {/* Logo Preview & Upload */}
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                          <div className="team-logo-circle" style={{ borderColor: "#39ff14", cursor: "pointer", width: 64, height: 64 }} onClick={() => editLogoInputRef.current?.click()}>
+                            {editTeamLogoPreview ? (
+                              <img src={editTeamLogoPreview} alt="preview" style={{ width: 56, height: 56, objectFit: "contain" }} />
+                            ) : (
+                              <span style={{ fontSize: 30 }}>{sportIcon[editTeamForm.sport] || "🛡️"}</span>
+                            )}
+                          </div>
+                          <input
+                            ref={editLogoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleEditTeamLogoChange}
+                            style={{ display: "none" }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            style={{ fontSize: 10, padding: "2px 8px", borderColor: "#39ff14", color: "#39ff14" }}
+                            onClick={() => editLogoInputRef.current?.click()}
+                          >
+                            📷 CHANGE LOGO
+                          </button>
+                          {editTeamLogoFile && (
+                            <span style={{ fontSize: 10, color: "#888", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {editTeamLogoFile.name}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Name input */}
+                        <div style={{ width: "100%", marginBottom: 8 }}>
+                          <label style={{ fontSize: 10, letterSpacing: 1, color: "#888", display: "block", marginBottom: 2 }}>TEAM NAME *</label>
+                          <input
+                            className="form-input"
+                            type="text"
+                            value={editTeamForm.name}
+                            onChange={e => { setEditTeamForm(f => ({ ...f, name: e.target.value })); setEditTeamError(""); }}
+                            style={{ fontSize: 12, padding: "4px 8px", height: 28 }}
+                          />
+                        </div>
+
+                        {/* Sport dropdown */}
+                        <div style={{ width: "100%", marginBottom: 8 }}>
+                          <label style={{ fontSize: 10, letterSpacing: 1, color: "#888", display: "block", marginBottom: 2 }}>SPORT *</label>
+                          <select
+                            className="form-select"
+                            value={editTeamForm.sport}
+                            onChange={e => setEditTeamForm(f => ({ ...f, sport: e.target.value }))}
+                            style={{ fontSize: 11, padding: "2px 6px", height: 28 }}
+                          >
+                            {SPORTS.map(s => <option key={s} value={s}>{sportIcon[s]} {s}</option>)}
+                          </select>
+                        </div>
+
+                        {/* Logo URL input */}
+                        <div style={{ width: "100%", marginBottom: 8 }}>
+                          <label style={{ fontSize: 10, letterSpacing: 1, color: "#888", display: "block", marginBottom: 2 }}>OR LOGO URL</label>
+                          <input
+                            className="form-input"
+                            type="url"
+                            placeholder="https://..."
+                            value={editTeamForm.logo_url}
+                            onChange={e => {
+                              const u = e.target.value;
+                              setEditTeamForm(f => ({ ...f, logo_url: u }));
+                              if (!editTeamLogoFile) setEditTeamLogoPreview(u);
+                              setEditTeamError("");
+                            }}
+                            style={{ fontSize: 11, padding: "4px 8px", height: 28 }}
+                          />
+                        </div>
+
+                        {editTeamError && (
+                          <div style={{ color: "#ff4444", fontSize: 11, marginBottom: 8, textAlign: "center" }}>{editTeamError}</div>
+                        )}
+
+                        {/* Action buttons */}
+                        <div style={{ display: "flex", gap: 6, width: "100%", marginTop: 4 }}>
+                          <button
+                            type="button"
+                            className="btn-primary"
+                            style={{ flex: 1, fontSize: 11, padding: "4px 0", height: 28 }}
+                            onClick={handleSaveEditTeam}
+                            disabled={editTeamSaving}
+                          >
+                            {editTeamSaving ? "..." : "✓ SAVE"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            style={{ flex: 1, fontSize: 11, padding: "4px 0", height: 28 }}
+                            onClick={handleCancelEditTeam}
+                          >
+                            CANCEL
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={team.id} className="team-card">
                       <div className="team-sport-pill" style={{ background: sc + "22", border: `1px solid ${sc}44`, color: sc, position: "absolute", top: 10, right: 10 }}>
@@ -1849,12 +2055,20 @@ export default function AdminPage() {
                       <div style={{ fontSize: 12, letterSpacing: 3, color: productCount > 0 ? "#39ff14" : "#333", fontWeight: 900 }}>
                         {productCount} JERSEY{productCount !== 1 ? "S" : ""}
                       </div>
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 6, display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          className="btn-ghost"
+                          style={{ fontSize: 11, padding: "4px 8px", borderColor: "#39ff14", color: "#39ff14" }}
+                          onClick={() => handleStartEditTeam(team)}
+                        >
+                          ✏️ EDIT
+                        </button>
                         {!isConfirming ? (
-                          <button type="button" className="btn-danger" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => setConfirmDeleteTeamId(team.id)} disabled={isDeleting}>🗑 REMOVE</button>
+                          <button type="button" className="btn-danger" style={{ fontSize: 11, padding: "4px 8px" }} onClick={() => setConfirmDeleteTeamId(team.id)} disabled={isDeleting}>🗑 REMOVE</button>
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "center" }}>
-                            <div style={{ fontSize: 12, color: "#ff4444", letterSpacing: 1 }}>CONFIRM?</div>
+                            <div style={{ fontSize: 11, color: "#ff4444", letterSpacing: 1 }}>CONFIRM?</div>
                             <div style={{ display: "flex", gap: 4 }}>
                               <button type="button" className="btn-cancel-sm" onClick={() => setConfirmDeleteTeamId(null)}>NO</button>
                               <button type="button" className="btn-danger-confirm" onClick={() => handleDeleteTeam(team.id)} disabled={isDeleting}>{isDeleting ? "..." : "DELETE"}</button>

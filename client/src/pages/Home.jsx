@@ -11,7 +11,7 @@ import umbrologo from "../assets/brands/umbro.png";
 import kappalogo from "../assets/brands/kappa.png";
 import macronlogo from "../assets/brands/macron.png";
 import hummellogo from "../assets/brands/hummel.png";
-import { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import { useGlobalData } from "../context/GlobalDataContext";
 import { supabase } from '../supabase';
 import { express } from '../express';
@@ -20,7 +20,8 @@ import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
-import wc26Video from "../assets/WC26(1).mp4";
+import kits2627Img from "../assets/KITS2627.png";
+import laliga26Video from "../assets/Laliga26.mp4.mp4";
 import { getProductImages, getFirstImage } from "../utils/imageHelpers";
 import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
 import ProductSEO from "../components/ProductSEO";
@@ -427,7 +428,31 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     } catch { return []; }
   });
   const [cartOpen, setCartOpen] = useState(false);
+  const cartPanelRef = useRef(null);
   const [selectedJersey, setSelectedJersey] = useState(null);
+
+  // Close cart when clicking/touching outside or pressing Escape
+  useEffect(() => {
+    if (!cartOpen) return;
+    const handleOutsideClick = (e) => {
+      if (cartPanelRef.current && !cartPanelRef.current.contains(e.target)) {
+        if (e.target.closest && (e.target.closest('.cart-btn') || e.target.closest('[data-open-cart]'))) return;
+        setCartOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setCartOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [cartOpen]);
   const [selectedSize, setSelectedSize] = useState("M");
   const [modalQty, setModalQty] = useState(1);
   const [showSizeChart, setShowSizeChart] = useState(false);
@@ -648,7 +673,20 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
 
   const openQuickView = useCallback((jersey) => {
     setSelectedJersey(jersey);
-    setSelectedSize("M");
+    let defaultSize = "M";
+    if (jersey) {
+      let sStock = jersey.size_stock;
+      if (typeof sStock === "string") {
+        try { sStock = JSON.parse(sStock); } catch (_) { sStock = null; }
+      }
+      if (sStock && typeof sStock === "object") {
+        if (!sStock["M"] || Number(sStock["M"]) <= 0) {
+          const available = sizes.find(s => Number(sStock[s]) > 0);
+          if (available) defaultSize = available;
+        }
+      }
+    }
+    setSelectedSize(defaultSize);
     setModalQty(1);
     if (jersey && jersey.name) {
       try {
@@ -746,7 +784,7 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
       let fetchedData = null;
 
       try {
-        let query = express.from("products").select("id, name, price, stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
+        let query = express.from("products").select("id, name, price, stock, size_stock, image_url, status, type, team_id, featured, is_clearance, is_26_27, category, sub_category").eq("status", "active");
 
         if (collectionData) {
           if (collectionData.type === "team") {
@@ -921,7 +959,7 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
         (activeFilter === "FEATURED"
           ? j.featured === true 
           : activeFilter === "26/27 KITS"
-            ? (j.is_26_27 === true || (j.type === "26/27 KITS" && j.is_26_27 !== false))
+            ? (Boolean(j.is_26_27) || (j.type || "").toUpperCase() === "26/27 KITS" || (j.type || "").toUpperCase() === "26/27" || (j.category || "").toUpperCase() === "26/27 KITS" || (j.name || "").includes("26/27") || (j.name || "").includes("2026/27"))
             : activeFilter === "CLEARANCE SALE"
               ? (j.is_clearance === true || (j.type === "CLEARANCE SALE" && j.is_clearance !== false))
               : j.type === activeFilter);
@@ -942,7 +980,58 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     return list;
   }, [jerseys, searchQuery, activeFilter, sortBy]);
 
-  const ITEMS_PER_PAGE = isMobile ? 10 : 12;
+  const gridRef = useRef(null);
+  const [gridColumns, setGridColumns] = useState(() => {
+    if (typeof window === "undefined") return 4;
+    if (window.innerWidth <= 768) return 2;
+    const estimated = Math.floor((window.innerWidth - 32) / 166);
+    return Math.max(2, estimated || 4);
+  });
+
+  useEffect(() => {
+    if (isMobile) {
+      setGridColumns(2);
+      return;
+    }
+
+    const calculateCols = () => {
+      if (gridRef.current) {
+        const computed = window.getComputedStyle(gridRef.current);
+        const template = computed.getPropertyValue("grid-template-columns");
+        if (template) {
+          const cols = template.split(/\s+/).filter(Boolean).length;
+          if (cols > 0) {
+            setGridColumns(cols);
+            return;
+          }
+        }
+        const width = gridRef.current.clientWidth || (window.innerWidth - 32);
+        const cols = Math.floor((width + 6) / 166);
+        if (cols > 0) setGridColumns(cols);
+      }
+    };
+
+    calculateCols();
+    window.addEventListener("resize", calculateCols);
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== "undefined" && gridRef.current) {
+      resizeObserver = new ResizeObserver(calculateCols);
+      resizeObserver.observe(gridRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", calculateCols);
+      if (resizeObserver) resizeObserver.disconnect();
+    };
+  }, [isMobile, filtered.length]);
+
+  const ITEMS_PER_PAGE = useMemo(() => {
+    if (isMobile || gridColumns <= 2) return 10;
+    // On desktop PC, guarantee that EVERY page completes full rows of jerseys!
+    const targetRows = gridColumns >= 7 ? 2 : 3;
+    return Math.max(gridColumns, gridColumns * targetRows);
+  }, [isMobile, gridColumns]);
+
   const totalPages = useMemo(() => Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1, [filtered.length, ITEMS_PER_PAGE]);
   const validCurrentPage = useMemo(() => Math.min(Math.max(currentPage, 1), totalPages), [currentPage, totalPages]);
   const paginatedProducts = useMemo(() => {
@@ -984,8 +1073,12 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
         if (item.id === id && item.size === size) {
           const newQty = item.qty + delta;
           if (newQty <= 0) return null;
-          const maxStock = item.size_stock && typeof item.size_stock === "object" && item.size_stock[size] !== undefined
-            ? item.size_stock[size]
+          let sStock = item.size_stock;
+          if (typeof sStock === "string") {
+            try { sStock = JSON.parse(sStock); } catch (_) { sStock = null; }
+          }
+          const maxStock = sStock && typeof sStock === "object" && sStock[size] !== undefined
+            ? Number(sStock[size])
             : (item.stock ?? 99);
           if (delta > 0 && maxStock !== undefined && newQty > maxStock) {
             showToast(`Only ${maxStock} in stock for size ${size}`);
@@ -998,12 +1091,26 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     });
   }, [showToast]);
 
-
-
-  // FIX: getSizeStock wrapped in useCallback for stability
+  // FIX: getSizeStock wrapped in useCallback with string JSON parsing and reliable stock fallback
   const getSizeStock = useCallback((jersey, size) => {
-    if (!jersey?.size_stock || typeof jersey.size_stock !== "object") return 0;
-    return jersey.size_stock[size] ?? 0;
+    if (!jersey) return 0;
+    let sStock = jersey.size_stock;
+    if (typeof sStock === "string") {
+      try {
+        sStock = JSON.parse(sStock);
+      } catch (_) {
+        sStock = null;
+      }
+    }
+    if (sStock && typeof sStock === "object") {
+      const val = Number(sStock[size]);
+      if (!isNaN(val) && val >= 0) return val;
+    }
+    // Reliable fallback: if item has general stock > 0, make size available
+    if (jersey.stock && Number(jersey.stock) > 0) {
+      return Math.max(1, Math.floor(Number(jersey.stock) / 6));
+    }
+    return 0;
   }, []);
 
   const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
@@ -1493,9 +1600,9 @@ letter-spacing: 4px !important;
     flex-shrink: 0 !important;
   }
   #jv-root .filter-btn.kits2627-btn {
-    width: 110px !important;
+    width: 120px !important;
     height: 36px !important;
-    padding: 3px 6px !important;
+    padding: 2px 4px !important;
     flex-shrink: 0 !important;
   }
 }
@@ -1757,7 +1864,7 @@ letter-spacing: 4px !important;
   ══════════════════════════════════════ */
   .modal-bg { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; overscroll-behavior:contain; touch-action:none; }
   .modal-bg-dismiss { position:absolute; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px); border:none; padding:0; cursor:pointer; width:100%; height:100%; touch-action:none; }
-  .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; touch-action:none; }
+  .cart-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.8); border:none; padding:0; cursor:pointer; }
   .modal { background:#0a0a0a; border:1px solid #1e1e1e; width:100%; max-width:480px; overflow:hidden; animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1); max-height:calc(100vh - 32px); overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; box-shadow:0 0 80px rgba(57,255,20,0.06), 0 40px 80px rgba(0,0,0,0.9); border-radius:2px; position:relative; z-index:1; }
   .modal-img-wrap { position:relative; width:100%; height:360px; background:#0d0d0d; overflow:hidden; }
   .modal-img { width:100% !important; height:100% !important; object-fit:cover !important; object-position:center center !important; transform:scale(1.08) !important; transform-origin:center center !important; display:block !important; }
@@ -1809,7 +1916,7 @@ letter-spacing: 4px !important;
   .hamburger { display:flex; }
   .desktop-nav-links { display:none; }
   .desktop-search { display:none; }
-  .cart-panel { width:100%; border-left:none; }
+  .cart-panel { width:min(390px, 86vw); border-left:1px solid #1a1a1a; }
   .hero-section { padding:60px 16px 40px; }
   .modal-img-wrap { height:300px !important; }
   .modal-img { height:100% !important; object-fit:cover !important; }
@@ -1911,8 +2018,29 @@ letter-spacing: 4px !important;
     .sort-dropdown-menu { right: 0; left: auto; }
   }
 .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
-.wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.6); object-position:70% center; }
-@media(max-width:768px) { .wc26-video-wrap { display:none; } }
+.wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.05); object-position:center center; }
+@media(max-width:768px) {
+  .site-nav { padding:0 12px 0 4px !important; gap:8px !important; }
+  .wc26-video-wrap {
+    display:flex;
+    height:36px;
+    width:clamp(75px, 20vw, 110px);
+    margin:0 4px 0 auto;
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:4px;
+  }
+  .site-nav .nav-right {
+    margin-left:0 !important;
+    gap:12px !important;
+  }
+}
+@media(max-width:380px) {
+  .wc26-video-wrap {
+    height:32px;
+    width:68px;
+    margin:0 2px 0 auto;
+  }
+}
   .logo-title { font-weight:900; font-size:20px; letter-spacing:3px; color:#fff; }
   .logo-title-accent { color:#39ff14; }
   .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
@@ -1940,6 +2068,9 @@ letter-spacing: 4px !important;
   .cart-overlay { position:fixed; inset:0; z-index:150; }
   .cart-header { display:flex; align-items:center; justify-content:space-between; padding:20px; border-bottom:1px solid #111; }
   .cart-count-badge { display:inline-block; margin-left:10px; background:var(--green); color:#000; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:12px; letter-spacing:2px; padding:2px 8px; vertical-align:middle; border-radius:2px; }
+  .cart-back-btn { background:rgba(57,255,20,0.08); border:1.5px solid #39ff14; color:#39ff14; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:4px; transition:all 0.2s cubic-bezier(0.2,0.8,0.2,1); box-shadow:0 0 10px rgba(57,255,20,0.25); flex-shrink:0; }
+  .cart-back-btn:hover, .cart-back-btn:active { background:#39ff14; color:#000; box-shadow:0 0 18px rgba(57,255,20,0.65); transform:translateX(-2px); }
+  .cart-back-btn:hover svg, .cart-back-btn:active svg { stroke:#000; }
   .cart-close-btn { background:none; border:1px solid #1a1a1a; color:#444; font-size:14px; cursor:pointer; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; transition:border-color 0.2s, color 0.2s; border-radius:2px; }
   .cart-close-btn:hover { border-color:#39ff14; color:#39ff14; }
   .cart-remove-btn { background:none; border:1px solid #333; color:#aaa; cursor:pointer; font-size:16px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:900; flex-shrink:0; transition:border-color 0.15s, color 0.15s, background 0.15s; border-radius:3px; }
@@ -2138,8 +2269,23 @@ letter-spacing: 4px !important;
             />
           </div>
           <div className="wc26-video-wrap" onClick={() => { setActiveFilter("FEATURED"); setTimeout(() => { document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ cursor: 'pointer' }}>
-  <video src={wc26Video} autoPlay loop muted playsInline />
-</div>
+            <video
+              ref={(el) => {
+                if (el) {
+                  el.muted = true;
+                  el.defaultMuted = true;
+                  const p = el.play();
+                  if (p !== undefined) p.catch(() => {});
+                }
+              }}
+              src={laliga26Video}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+            />
+          </div>
           <div className="nav-right" style={{ gap: "18px", marginLeft: "auto" }}>
             {/* SEARCH ICON */}
             <div className="mobile-search-btn">
@@ -2543,7 +2689,7 @@ letter-spacing: 4px !important;
                   <button
                     type="button"
                     key={key}
-                    className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}`}
+                    className={`filter-btn${activeFilter === key ? " active" : ""}${key === "FEATURED" ? " wc26-btn" : ""}${key === "26/27 KITS" ? " kits2627-btn" : ""}`}
                     onClick={() => setActiveFilter(key)}
                     style={key === "FEATURED" ? {
                       "--wc26-bg": `url(${wc26Bg})`,
@@ -2556,9 +2702,17 @@ letter-spacing: 4px !important;
                       textShadow: "none"
                     } : undefined}
                   >
-                    <span style={{ display: "inline-block", opacity: key === "FEATURED" ? 0 : 1, transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
-                      {label}
-                    </span>
+                    {key === "26/27 KITS" ? (
+                      <span
+                        className="kits2627-graphic"
+                        aria-label="26/27 KITS"
+                        style={{ backgroundImage: `url(${kits2627Img})` }}
+                      />
+                    ) : (
+                      <span style={{ display: "inline-block", opacity: key === "FEATURED" ? 0 : 1, transform: activeFilter === key ? "skewX(8deg)" : "none" }}>
+                        {label}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -2634,7 +2788,7 @@ letter-spacing: 4px !important;
               <p style={{ marginTop: 16, letterSpacing: 4, fontSize: 13 }}>NO RESULTS FOUND</p>
             </div>
           ) : (
-            <div className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
+            <div ref={gridRef} className="card-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 6 }}>
               {paginatedProducts.map((jersey, i) => (
                 <div
                   key={`${activeFilter}-${jersey.id}`}
@@ -3789,18 +3943,38 @@ letter-spacing: 4px !important;
         {/* CART PANEL */}
         {cartOpen && (
           <div className="cart-overlay">
-            <button type="button" className="cart-backdrop" aria-label="Close cart" onClick={() => setCartOpen(false)} />
-            <div className="cart-panel">
+            <button 
+              type="button" 
+              className="cart-backdrop" 
+              aria-label="Close cart" 
+              onClick={() => setCartOpen(false)} 
+              onTouchEnd={(e) => { e.preventDefault(); setCartOpen(false); }}
+            />
+            <div className="cart-panel" ref={cartPanelRef}>
               <div className="cart-header">
-                <div>
-                  <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, fontStyle: "italic", color: "#888" }}>YOUR</span>
-                  {" "}
-                  <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
-                  {cartCount > 0 && (
-                    <span className="cart-count-badge">{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
-                  )}
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <button
+                    type="button"
+                    className="cart-back-btn"
+                    onClick={() => setCartOpen(false)}
+                    aria-label="Back to store"
+                    title="Back to shopping"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#39ff14" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12" />
+                      <polyline points="12 19 5 12 12 5" />
+                    </svg>
+                  </button>
+                  <div>
+                    <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, fontStyle: "italic", color: "#888" }}>YOUR</span>
+                    {" "}
+                    <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: 4, color: "#39ff14", fontStyle: "italic" }}>CART</span>
+                    {cartCount > 0 && (
+                      <span className="cart-count-badge">{cartCount} ITEM{cartCount !== 1 ? "S" : ""}</span>
+                    )}
+                  </div>
                 </div>
-                <button type="button" className="cart-close-btn" onClick={() => setCartOpen(false)}>✕</button>
+                <button type="button" className="cart-close-btn" aria-label="Close cart" onClick={() => setCartOpen(false)}>✕</button>
               </div>
 
               <div style={{ flex: 1, overflowY: "auto" }}>
@@ -3910,7 +4084,7 @@ letter-spacing: 4px !important;
             }}
             style={{
               position: "fixed",
-              bottom: 28,
+              bottom: 92,
               right: 24,
               zIndex: 300,
               background: "#0d0d0d",

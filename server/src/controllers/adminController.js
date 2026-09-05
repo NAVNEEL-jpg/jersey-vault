@@ -116,19 +116,23 @@ export const deleteUser = async (req, res) => {
       return res.status(400).json({ message: 'User ID is required' });
     }
 
-    if (id === req.user.id) {
+    if (id === req.user?.id) {
       return res.status(400).json({ message: 'Admins cannot delete their own account here' });
     }
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', id);
-
-    if (profileError) throw profileError;
-
+    // 1. Delete user login account directly from Supabase Auth
     const { error: authError } = await supabase.auth.admin.deleteUser(id);
-    if (authError) throw authError;
+    if (authError) {
+      console.error('[deleteUser] Auth delete error:', authError.message);
+      return res.status(500).json({ success: false, message: authError.message });
+    }
+
+    // 2. Clean up associated profile row if present
+    try {
+      await supabase.from('profiles').delete().eq('id', id);
+    } catch (profErr) {
+      console.warn('[deleteUser] Profile delete warning:', profErr.message);
+    }
 
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {

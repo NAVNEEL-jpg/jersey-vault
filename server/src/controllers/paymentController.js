@@ -27,7 +27,7 @@ async function recalculateCart(items, payMethod = 'razorpay') {
   const products = await getR2Table('products');
 
   for (const item of items) {
-    const p = (products || []).find(prod => String(prod.id) === String(item.id));
+    const p = (products || []).find(prod => String(prod.id) === String(item.id) || (item.name && prod.name === item.name));
     if (p) {
       const price = Number(p.price) || 0;
       subtotal += price * (Number(item.qty) || 1);
@@ -37,7 +37,7 @@ async function recalculateCart(items, payMethod = 'razorpay') {
         name: p.name,
       });
     } else {
-      throw new Error(`Product not found: ${item.id}`);
+      throw new Error(`Product not found: ${item.name || item.id}`);
     }
   }
 
@@ -128,9 +128,15 @@ export const verifyPayment = async (req, res) => {
           balance_due = Math.max(0, total - amount_paid);
           isMatch = (Math.round(amountPaid) === Math.round(amount_paid));
         } else if (payMethodLower === 'cod' || payMethodLower === 'hybrid_cod') {
-          // Full COD: upfront = deposit fee only (149)
-          amount_paid = COD_DEPOSIT;
-          balance_due = Math.max(0, total - amount_paid);
+          if (subtotal > FREE_SHIPPING_MIN) {
+            // Free shipping COD (subtotal > 1099): customer pays ₹99 first, rest jersey amount during COD
+            amount_paid = 99;
+            balance_due = Math.max(0, subtotal - 99);
+          } else {
+            // Standard COD (subtotal <= 1099): upfront delivery fee (149), full subtotal on COD
+            amount_paid = COD_DEPOSIT;
+            balance_due = Math.max(0, total - amount_paid);
+          }
           isMatch = (Math.round(amountPaid) === Math.round(amount_paid));
         } else {
           // Prepaid: full total paid
@@ -163,9 +169,9 @@ Match: ${isMatch ? 'YES' : 'NO'}`);
           razorpay_payment_id,
           paymentStatus: 'captured',
         });
-      } catch (calcError) {
-        console.error('Cart calculation error:', calcError);
-        return res.status(400).json({ message: 'Invalid cart data' });
+      } catch (finalizeErr) {
+        console.error('Finalize order error:', finalizeErr);
+        return res.status(500).json({ message: finalizeErr.message || 'Failed to finalize order' });
       }
     }
 
@@ -347,37 +353,68 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
   const orderId = isUUID(order_data.id) ? order_data.id : crypto.randomUUID();
   const trackingId = order_data.tracking_id || `TRK-${(razorpay_payment_id || orderId).slice(-6).toUpperCase()}`;
 
-  const { error } = await supabase
-    .from('orders')
-    .upsert({
-      id: orderId,
-      customer_name: order_data.customer_name,
-      customer_email: order_data.customer_email,
-      customer_phone: order_data.customer_phone,
-      address: order_data.address,
-      city: order_data.city,
-      state: order_data.state,
-      pincode: order_data.pincode,
-      items: order_data.items,
-      subtotal: order_data.subtotal,
-      shipping: order_data.shipping,
-      total: order_data.total,
-      amount_paid: order_data.amount_paid,
-      balance_due: order_data.balance_due,
-      pay_method: order_data.pay_method || 'Online',
-      status: 'confirmed',
-      tracking_id: trackingId,
-      razorpay_order_id: razorpay_order_id || null,
-      razorpay_payment_id: razorpay_payment_id || null,
-      payment_captured: order_data.pay_method !== 'COD',
-    }, { onConflict: 'id' });
+  const orderRecord = {
+    id: orderId,
+    customer_name: order_data.customer_name,
+    customer_email: order_data.customer_email,
+    customer_phone: order_data.customer_phone,
+    address: order_data.address,
+    city: order_data.city,
+    state: order_data.state,
+    pincode: order_data.pincode,
+    items: order_data.items,
+    subtotal: order_data.subtotal,
+    shipping: order_data.shipping,
+    total: order_data.total,
+    amount_paid: order_data.amount_paid,
+    balance_due: order_data.balance_due,
+    pay_method: order_data.pay_method || 'Online',
+    status: 'confirmed',
+    tracking_id: trackingId,
+    razorpay_order_id: razorpay_order_id || null,
+    razorpay_payment_id: razorpay_payment_id || null,
+    payment_captured: order_data.pay_method !== 'COD',
+  };
 
-  if (error) {
-    console.error('finalizeOrderInDB error:', error);
-    return;
+  let dbSaved = false;
+
+  // 1. Upsert to Supabase
+  try {
+    const { error: supaError } = await supabase
+      .from('orders')
+      .upsert(orderRecord, { onConflict: 'id' });
+
+    if (supaError) {
+      console.error('finalizeOrderInDB Supabase error:', supaError);
+    } else {
+      dbSaved = true;
+    }
+  } catch (err) {
+    console.error('finalizeOrderInDB Supabase exception:', err);
+  }
+
+  // 2. Always persist to Cloudflare R2 backup orders table
+  try {
+    const existingOrders = await getR2Table('orders');
+    const ordersList = Array.isArray(existingOrders) ? existingOrders : [];
+    const idx = ordersList.findIndex(o => o.id === orderId);
+    if (idx >= 0) {
+      ordersList[idx] = { ...ordersList[idx], ...orderRecord, updated_at: new Date().toISOString() };
+    } else {
+      ordersList.unshift({ ...orderRecord, created_at: new Date().toISOString() });
+    }
+    await updateR2Table('orders', ordersList);
+    dbSaved = true;
+  } catch (r2Err) {
+    console.error('finalizeOrderInDB R2 orders backup error:', r2Err.message);
+  }
+
+  if (!dbSaved) {
+    throw new Error('Failed to save order to database. Please check connection and try again.');
   }
 
   // Decrement inventory stock directly in Cloudflare R2
+  const inventoryFailures = [];
   if (order_data.items && Array.isArray(order_data.items)) {
     for (const item of order_data.items) {
       const prodId = item.product || item.id;
@@ -387,6 +424,7 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
         await updateSizeStockInR2(prodId, size, -qty);
       } catch (stockErr) {
         console.warn(`[R2] Could not decrement size_stock for product ${prodId}:`, stockErr.message);
+        inventoryFailures.push(`Failed stock decrement for ${prodId} (${size}): ${stockErr.message}`);
       }
     }
   }
@@ -397,16 +435,19 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'support@thejerseyvault.in';
     
     if (RESEND_API_KEY) {
-      // 1. Fetch exact canonical DB record
-      const { data: savedOrder, error: fetchErr } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-        
-      if (fetchErr || !savedOrder) {
-        console.error('Failed to fetch saved order for email:', fetchErr);
-        throw new Error('Order not found in DB');
+      // 1. Fetch exact canonical DB record or fall back to orderRecord
+      let savedOrder = null;
+      try {
+        const { data: sOrder } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', orderId)
+          .single();
+        if (sOrder) savedOrder = sOrder;
+      } catch (_) {}
+
+      if (!savedOrder) {
+        savedOrder = { ...orderRecord, id: orderId, tracking_id: trackingId };
       }
 
       // 2. Generate PDF Attachment
@@ -480,5 +521,98 @@ async function finalizeOrderInDB({ razorpay_order_id, razorpay_payment_id, ...or
     console.error("Failed to send order email:", err);
   }
 }
+
+// ─── POST /api/payment/cod ──────────────────────────────────────────────────
+// Secure endpoint to place a COD order when upfront payment is ₹0 (subtotal > FREE_SHIPPING_MIN)
+export const placeCodOrder = async (req, res) => {
+  try {
+    const { order_data } = req.body;
+    if (!order_data) {
+      return res.status(400).json({ message: 'Missing order data' });
+    }
+
+    const {
+      customer_name,
+      customer_email,
+      customer_phone,
+      address,
+      city,
+      state,
+      pincode,
+      items,
+    } = order_data;
+
+    // Validate customer delivery details
+    if (!customer_name?.trim() || !customer_email?.trim() || !customer_phone?.trim() ||
+        !address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
+      return res.status(400).json({ message: 'All delivery details are required.' });
+    }
+
+    if (!/^[6-9]\d{9}$/.test(String(customer_phone).trim())) {
+      return res.status(400).json({ message: 'Please provide a valid 10-digit phone number.' });
+    }
+
+    if (!/^\d{6}$/.test(String(pincode).trim())) {
+      return res.status(400).json({ message: 'Please provide a valid 6-digit pincode.' });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Your cart is empty.' });
+    }
+
+    // Recalculate cart server-side for integrity and verify real prices
+    const { subtotal, shipping, total, verifiedItems } = await recalculateCart(items, 'COD');
+
+    // Reject clearance items from COD
+    const hasClearance = verifiedItems.some(
+      item => item.is_clearance === true || item.type === 'CLEARANCE SALE' || item.type === 'CLEARANCE'
+    );
+    if (hasClearance) {
+      return res.status(400).json({ message: 'Clearance sale items are not eligible for Cash on Delivery.' });
+    }
+
+    // Orders that do NOT qualify for free shipping (subtotal <= FREE_SHIPPING_MIN)
+    // require upfront online payment for the delivery fee via Razorpay.
+    if (shipping > 0) {
+      return res.status(400).json({
+        message: `Orders below ₹${FREE_SHIPPING_MIN} require upfront shipping payment (₹${shipping}) online.`
+      });
+    }
+
+    const orderId = crypto.randomUUID();
+    const trackingId = `TRK-${orderId.slice(-6).toUpperCase()}`;
+
+    await finalizeOrderInDB({
+      id: orderId,
+      tracking_id: trackingId,
+      customer_name: customer_name.trim(),
+      customer_email: customer_email.trim().toLowerCase(),
+      customer_phone: customer_phone.trim(),
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      pincode: pincode.trim(),
+      items: verifiedItems,
+      subtotal,
+      shipping: 0,
+      total: subtotal,
+      amount_paid: 0,
+      balance_due: subtotal,
+      pay_method: 'COD',
+      paymentStatus: 'confirmed',
+    });
+
+    res.json({
+      success: true,
+      order_id: orderId,
+      tracking_id: trackingId,
+      total: subtotal,
+    });
+  } catch (err) {
+    console.error('placeCodOrder error:', err);
+    res.status(500).json({ message: err.message || 'Failed to place COD order.' });
+  }
+};
+
 
 

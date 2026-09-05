@@ -267,7 +267,20 @@ router.post('/storage/:bucket/upload', verifyAdminForMutations, upload.single('f
       try { fs.unlinkSync(req.file.path); } catch (_) {}
     }
 
-    const publicUrl = await uploadFileToR2(buffer, key, req.file.mimetype || 'image/jpeg');
+    let publicUrl = await uploadFileToR2(buffer, key, req.file.mimetype || 'image/jpeg');
+    // Ensure streamable URL via API proxy
+    publicUrl = `/api/db/storage/${key}`;
+
+    // Also write local backup if bucket is teams
+    try {
+      if (cleanBucket === 'teams' || cleanBucket === 'team-logos') {
+        const localTeamsDir = path.resolve(__dirname, '../../../client/public/teams');
+        if (fs.existsSync(localTeamsDir)) {
+          fs.writeFileSync(path.join(localTeamsDir, fileName), buffer);
+        }
+      }
+    } catch (_) {}
+
     res.json({ data: { path: key, publicUrl }, error: null });
   } catch (err) {
     console.error('[dbRoutes:storage/upload] Error:', err);
