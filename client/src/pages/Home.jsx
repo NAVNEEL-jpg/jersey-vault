@@ -17,10 +17,15 @@ import { supabase } from '../supabase';
 import { express } from '../express';
 import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
-import barcaSlideImg from "../assets/hero/barcelona-cleaned.png";
-import realMadridSlideImg from "../assets/hero/realmadrid-cleaned.png";
-import manUtdSlideImg from "../assets/hero/manutd-cleaned.png";
-import arsenalSlideImg from "../assets/hero/arsenal-cleaned.jpg";
+import barcaSlideImg from "../assets/hero/barcelona-wide.jpg";
+import realMadridSlideImg from "../assets/hero/realmadrid-wide.jpg";
+import manUtdSlideImg from "../assets/hero/manutd-wide.jpg";
+import arsenalSlideImg from "../assets/hero/arsenal-wide.jpg";
+
+import barcaTeamBanner from "../assets/team-banners/barcelona-banner.jpg";
+import realMadridTeamBanner from "../assets/team-banners/real-madrid-banner.jpg";
+import manUtdTeamBanner from "../assets/team-banners/manchester-united-banner.jpg";
+import arsenalTeamBanner from "../assets/team-banners/arsenal-banner.jpg";
 import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
@@ -1265,6 +1270,39 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     return activeFilter;
   }, [activeTeamName, searchQuery, teamsList, filtered, activeFilter]);
 
+  const teamBannerData = useMemo(() => {
+    const norm = (activeTeamName || collectionSlug || "").toLowerCase();
+    if (norm.includes("barcelona") || norm.includes("barca")) {
+      return {
+        title: "FC BARCELONA 26/27 COLLECTION",
+        image: barcaTeamBanner,
+        accent: "#a50044"
+      };
+    }
+    if (norm.includes("real madrid") || norm.includes("real-madrid")) {
+      return {
+        title: "REAL MADRID 26/27 COLLECTION",
+        image: realMadridTeamBanner,
+        accent: "#00529f"
+      };
+    }
+    if (norm.includes("manchester united") || norm.includes("man utd") || norm.includes("manchester-united")) {
+      return {
+        title: "MANCHESTER UNITED 26/27 COLLECTION",
+        image: manUtdTeamBanner,
+        accent: "#da291c"
+      };
+    }
+    if (norm.includes("arsenal")) {
+      return {
+        title: "ARSENAL 26/27 COLLECTION",
+        image: arsenalTeamBanner,
+        accent: "#fdb913"
+      };
+    }
+    return null;
+  }, [activeTeamName, collectionSlug]);
+
 
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut();
@@ -2122,7 +2160,9 @@ letter-spacing: 4px !important;
   ══════════════════════════════════════ */
   .hero-carousel-root {
     position: relative;
-    min-height: 520px;
+    min-height: 480px;
+    height: clamp(480px, 46vw, 620px);
+    width: 100%;
     padding: 0 !important;
     overflow: hidden;
     display: flex;
@@ -2147,7 +2187,15 @@ letter-spacing: 4px !important;
     inset: 0;
     width: 100%;
     height: 100%;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
     pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hero-slide:hover .hero-slide-bg {
+    transform: scale(1.015);
   }
 
   .hero-slide-content {
@@ -2167,36 +2215,98 @@ letter-spacing: 4px !important;
   }
 
   .slide-kit-content {
-    padding: 24px 16px 40px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    justify-content: flex-end;
+    padding-bottom: 28px;
+    pointer-events: none;
+    z-index: 4;
   }
 
-  .hero-kit-poster-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-height: 410px;
-    width: auto;
+  /* Team Section Banner above jersey listings */
+  .team-section-banner-wrap {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 36px;
+    border-radius: 12px;
+    overflow: hidden;
     position: relative;
-    z-index: 3;
-    filter: drop-shadow(0 15px 35px rgba(0,0,0,0.85));
-    transition: transform 0.35s cubic-bezier(0.2,0.8,0.2,1);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #09090b;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    aspect-ratio: 16 / 7;
+    max-height: 420px;
   }
 
-  .hero-slide:hover .hero-kit-poster-wrap {
+  .team-section-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .team-section-banner-wrap:hover .team-section-banner-img {
     transform: scale(1.02);
   }
 
-  .hero-kit-poster-img {
-    max-height: 390px;
-    width: auto;
-    max-width: 92vw;
-    object-fit: contain;
+  .team-section-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5, 5, 7, 0.94) 0%, rgba(5, 5, 7, 0.35) 45%, transparent 80%),
+                radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+    display: flex;
+    align-items: flex-end;
+    padding: 24px 32px;
+    pointer-events: none;
+  }
+
+  .team-section-banner-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .team-section-banner-badge {
+    align-self: flex-start;
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 900;
+    padding: 4px 10px;
     border-radius: 4px;
+    border: 1px solid;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+  }
+
+  .team-section-banner-heading {
+    margin: 0;
+    font-size: clamp(22px, 3.2vw, 38px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-family: 'Bebas Neue', sans-serif;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.9);
+  }
+
+  @media (max-width: 768px) {
+    .team-section-banner-wrap {
+      aspect-ratio: 16 / 9;
+      margin-bottom: 24px;
+      border-radius: 8px;
+    }
+    .team-section-banner-overlay {
+      padding: 16px;
+    }
+    .team-section-banner-heading {
+      font-size: 22px;
+    }
   }
 
   /* Small White Arrow button below 26/27 kits (appears on hover) */
@@ -2994,14 +3104,16 @@ letter-spacing: 4px !important;
                   className="hero-slide-bg"
                   style={{
                     backgroundImage: `url(${slide.image})`,
-                    backgroundSize: slide.isFirstSlide ? "cover" : "contain",
+                    backgroundSize: "cover",
                     backgroundRepeat: "no-repeat",
-                    backgroundPosition: "center top",
+                    backgroundPosition: "center center",
                   }}
                 />
                 <div
                   className="hero-overlay"
-                  style={slide.bgGlow ? { background: slide.bgGlow } : undefined}
+                  style={slide.isFirstSlide ? undefined : {
+                    background: "linear-gradient(to top, rgba(7, 7, 7, 0.92) 0%, rgba(7, 7, 7, 0.25) 30%, transparent 65%)"
+                  }}
                 />
 
                 {/* Content for Slide 1 (WEAR YOUR LEGEND) */}
@@ -3025,14 +3137,6 @@ letter-spacing: 4px !important;
                 ) : (
                   /* Content for Slides 2, 3, 4, 5 (Kit Photos with White Arrow) */
                   <div className="hero-slide-content slide-kit-content">
-                    <div className="hero-kit-poster-wrap">
-                      <img
-                        src={slide.image}
-                        alt={slide.title}
-                        className="hero-kit-poster-img"
-                      />
-                    </div>
-
                     {/* White arrow below 26/27 kits */}
                     <div className="hero-white-arrow-container">
                       <button
@@ -3127,6 +3231,34 @@ letter-spacing: 4px !important;
 
         {/* SHOP */}
         <section id="shop" style={{ padding: "60px 16px" }}>
+          {/* Team Section Banner above jersey listings */}
+          {teamBannerData && (
+            <div className="team-section-banner-wrap">
+              <img
+                src={teamBannerData.image}
+                alt={teamBannerData.title}
+                className="team-section-banner-img"
+              />
+              <div className="team-section-banner-overlay">
+                <div className="team-section-banner-meta">
+                  <span
+                    className="team-section-banner-badge"
+                    style={{
+                      borderColor: teamBannerData.accent,
+                      color: teamBannerData.accent,
+                      boxShadow: `0 0 14px ${teamBannerData.accent}55`
+                    }}
+                  >
+                    OFFICIAL 26/27 DROP
+                  </span>
+                  <h3 className="team-section-banner-heading">
+                    {teamBannerData.title}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="shop-header-outer">
             {/* ROW 1: Title & Right Border Arrow Indicator */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
