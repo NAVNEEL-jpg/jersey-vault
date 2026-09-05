@@ -2411,49 +2411,63 @@ letter-spacing: 4px !important;
   @media (max-width: 768px) {
     .hero-carousel-root {
       aspect-ratio: 16 / 9;
-      min-height: 240px;
+      width: 100%;
       height: auto;
+      min-height: unset;
+      max-height: unset;
     }
     .slide-1-content {
-      padding: 30px 14px;
+      padding: 24px 14px;
     }
     .slide-kit-content {
       padding-left: 16px;
       padding-bottom: 14px;
     }
     .hero-nav-arrow {
-      width: 40px !important;
-      height: 40px !important;
-      background: rgba(10, 10, 14, 0.92) !important;
-      border: 2px solid #ffffff !important;
+      width: 36px !important;
+      height: 36px !important;
+      top: auto !important;
+      bottom: 10px !important;
+      transform: none !important;
+      background: rgba(0, 0, 0, 0.9) !important;
+      border: 1.5px solid #ffffff !important;
       opacity: 1 !important;
       visibility: visible !important;
       z-index: 100 !important;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.9) !important;
     }
     .hero-nav-arrow svg {
-      width: 20px !important;
-      height: 20px !important;
+      width: 18px !important;
+      height: 18px !important;
     }
-    .hero-nav-prev { left: 8px !important; }
-    .hero-nav-next { right: 8px !important; }
+    .hero-nav-prev { left: 10px !important; }
+    .hero-nav-next { right: 10px !important; }
+    .hero-dots-bar {
+      bottom: 12px;
+    }
   }
 
   @media (max-width: 480px) {
     .hero-carousel-root {
       aspect-ratio: 16 / 9;
-      min-height: 220px;
+      width: 100%;
       height: auto;
+      min-height: unset;
+      max-height: unset;
     }
-    .hero-white-arrow-btn {
-      width: 28px;
-      height: 28px;
+    .hero-nav-arrow {
+      width: 34px !important;
+      height: 34px !important;
+      bottom: 8px !important;
     }
-    .hero-white-arrow-btn svg {
-      width: 15px;
-      height: 15px;
+    .hero-nav-arrow svg {
+      width: 16px !important;
+      height: 16px !important;
     }
+    .hero-nav-prev { left: 8px !important; }
+    .hero-nav-next { right: 8px !important; }
     .hero-dots-bar {
-      bottom: 8px;
+      bottom: 10px;
     }
   }
   .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
