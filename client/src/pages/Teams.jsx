@@ -5,11 +5,11 @@ import { REVERSE_TEAM_MAPPING } from "../utils/collection-mapping";
 import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { supabase } from "../supabase";
 import { express } from "../express";
-import { API_BASE } from "../config/api";
 import heroBg from "../assets/hero-bg.jpeg";
 import BrandLogo from "../components/BrandLogo";
 import laliga26Video from "../assets/Laliga26.mp4.mp4";
 import initialTeams from "../data/teams.json";
+
 const FLAME_ID = "jv-flame-teams";
 
 /* ─────────────────────────────────────────
@@ -26,7 +26,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
       >
         <defs>
           <clipPath id={FLAME_ID}>
-            <text x="0" y="90%" fontSize="clamp(40px,8vw,100px)" fontWeight="900" fontStyle="italic"
+            <text x="0" y="90%" className="t-flame-svg-text" fontSize="clamp(44px,8.5vw,100px)" fontWeight="900" fontStyle="italic"
               fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
           </clipPath>
           <linearGradient id={`${FLAME_ID}-g1`} x1="0" y1="1" x2="0" y2="0">
@@ -47,7 +47,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text }) {
             <feTurbulence type="turbulence" baseFrequency="0.025 0.06" numOctaves="3" seed="2" result="noise">
               <animate attributeName="baseFrequency" values="0.025 0.06; 0.03 0.08; 0.022 0.055; 0.025 0.06" dur="0.9s" repeatCount="indefinite" />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
         <g clipPath={`url(#${FLAME_ID})`} filter={`url(#${FLAME_ID}-wobble)`}>
@@ -401,8 +401,30 @@ export default function Teams() {
           .t-hero { position:relative; padding:80px 24px 60px; text-align:center; overflow:hidden; background-size:cover; background-position:center top; background-repeat:no-repeat; }
           .t-nav { position:sticky; top:0; z-index:99999; background:rgba(7,7,7,0.97); backdrop-filter:blur(12px); border-bottom:1px solid #151515; padding:0 20px 0 4px; display:flex; align-items:center; justify-content:space-between; gap:16px; height:64px; animation:slideDown 0.5s ease; }
           .t-nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
-          .t-flame-wrap { position:relative; display:inline-block; line-height:0.9; }
-          .t-flame-text { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#ffffff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
+          .t-flame-wrap {
+            position: relative;
+            display: inline-block;
+            line-height: 0.9;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(255, 69, 0, 0.45));
+          }
+          .t-flame-text {
+            font-size: clamp(44px, 8.5vw, 100px);
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -2px;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            font-family: 'Barlow Condensed', sans-serif;
+            user-select: none;
+          }
+          .t-flame-svg-text {
+            font-size: clamp(44px, 8.5vw, 100px);
+            font-weight: 900;
+            font-style: italic;
+            letter-spacing: -2px;
+            font-family: 'Barlow Condensed', sans-serif;
+          }
           .t-hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
           .t-hero-subtitle { color:#aaa; margin-top:20px; font-size:14px; letter-spacing:3px; font-family:'Barlow',sans-serif; font-weight:400; position:relative; z-index:1; }
           .t-hero-actions { margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
@@ -455,6 +477,54 @@ export default function Teams() {
             .t-team-logo-bg { width:88px; height:88px; padding:7px; }
             .t-team-logo { max-width:74px; max-height:74px; }
             .t-team-name { font-size:13px; margin-top:10px; }
+          }
+          /* ── base overflow guard ── */
+          html, body { max-width:100vw; overflow-x:hidden; }
+
+          /* ── Tablet 769–1024px ── */
+          @media(min-width:769px) and (max-width:1024px) {
+            #teams-grid { padding: 48px 20px !important; }
+            .t-nav { padding: 0 16px 0 8px !important; }
+            .t-hero { padding: 64px 20px 48px !important; }
+          }
+
+          /* ── iPad Pro / Small Laptop 1025–1279px ── */
+          @media(min-width:1025px) and (max-width:1279px) {
+            #teams-grid { padding: 56px 24px !important; }
+          }
+
+          /* ── Large desktop ≥1280px ── */
+          @media(min-width:1280px) {
+            #teams-grid { padding: 64px 32px !important; }
+            .t-team-logo-wrap { width:130px; height:130px; }
+            .t-team-logo-bg { width:130px; height:130px; }
+          }
+
+          /* ── iPhone SE and very small (≤375px) ── */
+          @media(max-width:375px) {
+            .t-nav { height: 56px !important; }
+            .t-mobile-menu { top: 56px !important; height: calc(100vh - 56px) !important; }
+            .t-hero { padding: 44px 12px 32px !important; }
+            #teams-grid { padding: 24px 10px !important; }
+            .t-team-card { padding: 18px 10px 14px; }
+            .t-team-logo-wrap { width:80px; height:80px; }
+            .t-team-logo-bg { width:80px; height:80px; padding:7px; }
+            .t-team-logo { max-width:66px; max-height:66px; }
+            .t-team-name { font-size:12px; margin-top:8px; }
+            .wc26-video-wrap { height:28px !important; width:58px !important; }
+            .t-filter-btn { font-size:12px !important; padding:5px 10px; height:34px !important; }
+          }
+
+          /* ── Landscape phone ── */
+          @media(max-width:812px) and (orientation:landscape) {
+            .t-hero { padding: 32px 16px 24px !important; }
+            #teams-grid { padding: 24px 12px !important; }
+          }
+
+          /* ── Touch devices: no hover effects ── */
+          @media(hover:none) and (pointer:coarse) {
+            .t-team-card:hover { transform: none; box-shadow: none; border-color: var(--border); }
+            .t-team-card:hover .t-team-logo-bg { transform: none; box-shadow: 0 4px 14px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.25); }
           }
         `}</style>
 
@@ -627,8 +697,8 @@ export default function Teams() {
                         type="button"
                         onClick={() => {
                           setMobileMenuOpen(false);
-                          const slug = REVERSE_TEAM_MAPPING[(t.name || "").toUpperCase()];
-                          navigate(slug ? `/collections/${slug}` : `/?team=${t.id}`);
+                          const slug = REVERSE_TEAM_MAPPING[(t.name || "").toUpperCase()] || (t.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
+                          navigate(`/teams/${slug}`);
                         }}
                         style={{
                           textAlign: "left",
@@ -760,7 +830,7 @@ export default function Teams() {
             <span style={{ display:"block", position:"relative", marginBottom:4 }}>
               <CartoonFlameText text="PICK YOUR" />
             </span>
-            <span style={{ display:"block", color:"#39ff14", fontSize:"clamp(48px,10vw,120px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9, letterSpacing:-2 }}>
+            <span style={{ display:"block", color:"#39ff14", fontSize:"clamp(52px,10.5vw,120px)", fontWeight:900, fontStyle:"italic", lineHeight:0.9, letterSpacing:-2, filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.95)) drop-shadow(0 0 16px rgba(57,255,20,0.45))" }}>
               TEAM
             </span>
           </h1>
@@ -829,7 +899,7 @@ export default function Teams() {
               {filtered.map((team, i) => (
                 <Link
                   key={team.id}
-                  to={REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()] ? `/collections/${REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()]}` : `/?team=${team.id}`}
+                  to={REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()] ? `/teams/${REVERSE_TEAM_MAPPING[(team.name || "").toUpperCase()]}` : `/teams/${(team.name || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")}`}
                   className="t-team-card"
                   style={{ animation:`teamCardIn 0.5s ease ${i * 0.06}s both` }}
                 >

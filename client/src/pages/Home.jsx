@@ -17,6 +17,15 @@ import { supabase } from '../supabase';
 import { express } from '../express';
 import ReactGA from "react-ga4";
 import heroBg from "../assets/hero-bg.jpeg";
+import barcaSlideImg from "../assets/hero/barcelona-wide.jpg";
+import realMadridSlideImg from "../assets/hero/realmadrid-wide.jpg";
+import manUtdSlideImg from "../assets/hero/manutd-wide.jpg";
+import arsenalSlideImg from "../assets/hero/arsenal-wide.jpg";
+
+import barcaTeamBanner from "../assets/team-banners/barcelona-banner.jpg";
+import realMadridTeamBanner from "../assets/team-banners/real-madrid-banner.jpg";
+import manUtdTeamBanner from "../assets/team-banners/manchester-united-banner.jpg";
+import arsenalTeamBanner from "../assets/team-banners/arsenal-banner.jpg";
 import BrandLogo from "../components/BrandLogo";
 import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
@@ -299,7 +308,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text, fontSize }) {
       >
         <defs>
           <clipPath id={clipId}>
-            <text x="0" y="90%" fontSize={fontSize || "clamp(40px,8vw,100px)"} fontWeight="900" fontStyle="italic" fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
+            <text x="0" y="90%" className="flame-text-svg" fontSize={fontSize || "clamp(44px,8.5vw,100px)"} fontWeight="900" fontStyle="italic" fontFamily="'Barlow Condensed', sans-serif" letterSpacing="-2">{text}</text>
           </clipPath>
           <linearGradient id={`${clipId}-g1`} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0%" stopColor="#FFE000" /><stop offset="22%" stopColor="#FF8C00" />
@@ -315,7 +324,7 @@ const CartoonFlameText = memo(function CartoonFlameText({ text, fontSize }) {
             <feTurbulence type="turbulence" baseFrequency="0.025 0.06" numOctaves="3" seed="2" result="noise">
               <animate attributeName="baseFrequency" values="0.025 0.06; 0.03 0.08; 0.022 0.055; 0.025 0.06" dur="0.9s" repeatCount="indefinite" />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G" />
           </filter>
         </defs>
         <g clipPath={`url(#${clipId})`} filter={`url(#${clipId}-wobble)`}>
@@ -568,6 +577,71 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
   const [featuredCategoryName, setFeaturedCategoryName] = useState("FEATURED");
 
   const [teamsList, setTeamsList] = useState([]);
+  const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+  const [isHeroTouching, setIsHeroTouching] = useState(false);
+  const [isShopNowHovered, setIsShopNowHovered] = useState(false);
+  const heroTouchStartX = useRef(null);
+
+  const heroSlides = useMemo(() => [
+    {
+      id: "legend",
+      isFirstSlide: true,
+      image: heroBg,
+    },
+    {
+      id: "arsenal",
+      isFirstSlide: false,
+      image: arsenalSlideImg,
+      title: "Arsenal 26/27 Away Kit",
+      titleLine1: "ARSENAL",
+      titleLine2: "26/27 AWAY KIT",
+      subtitle: "BRUISED BANANA HERITAGE",
+      targetUrl: "/teams/arsenal",
+      alignLeft: "clamp(12px, 3vw, 40px)",
+    },
+    {
+      id: "barcelona",
+      isFirstSlide: false,
+      image: barcaSlideImg,
+      title: "Barcelona 26/27 Kits",
+      titleLine1: "BARCELONA",
+      titleLine2: "26/27 KITS",
+      subtitle: "WHICH KIT IS THE BEST?",
+      targetUrl: "/teams/barcelona",
+      alignLeft: "clamp(12px, 3vw, 40px)",
+    },
+    {
+      id: "real-madrid",
+      isFirstSlide: false,
+      image: realMadridSlideImg,
+      title: "Real Madrid 26/27 Kits",
+      titleLine1: "REAL MADRID",
+      titleLine2: "26/27 KITS",
+      subtitle: "KINGS OF EUROPE DROP",
+      targetUrl: "/teams/real-madrid",
+      alignLeft: "clamp(12px, 3vw, 40px)",
+    },
+    {
+      id: "manchester-united",
+      isFirstSlide: false,
+      image: manUtdSlideImg,
+      title: "Manchester United 26/27 Kits",
+      titleLine1: "MANCHESTER UNITED",
+      titleLine2: "26/27 KITS",
+      subtitle: "WHICH KIT IS THE BEST?",
+      targetUrl: "/teams/manchester-united",
+      alignLeft: "clamp(12px, 3vw, 40px)",
+    },
+  ], []);
+
+  useEffect(() => {
+    if (isHeroTouching) return;
+    const interval = setInterval(() => {
+      setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [isHeroTouching, heroSlides.length]);
+
   const [sortBy, setSortBy] = useState("FEATURED");
   const [sortOpen, setSortOpen] = useState(false);
   const [menuCategoriesOpen, setMenuCategoriesOpen] = useState(false);
@@ -1167,6 +1241,11 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
     if (activeTeamName) {
       return `${activeTeamName.toUpperCase()} JERSEYS`;
     }
+    const collectionData = collectionSlug ? COLLECTION_MAPPING[collectionSlug] : null;
+    if (collectionData) {
+      if (collectionData.h1) return collectionData.h1;
+      if (collectionData.title) return collectionData.title;
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       // 1. Direct team name match in teamsList
@@ -1203,7 +1282,40 @@ export default function JerseyStore({ collectionSlug, productSlug, isStandaloneP
       return "SHOP ALL";
     }
     return activeFilter;
-  }, [activeTeamName, searchQuery, teamsList, filtered, activeFilter]);
+  }, [activeTeamName, collectionSlug, searchQuery, teamsList, filtered, activeFilter]);
+
+  const teamBannerData = useMemo(() => {
+    const norm = (activeTeamName || collectionSlug || "").toLowerCase();
+    if (norm.includes("barcelona") || norm.includes("barca")) {
+      return {
+        title: "FC BARCELONA 26/27 COLLECTION",
+        image: barcaTeamBanner,
+        accent: "#a50044"
+      };
+    }
+    if (norm.includes("real madrid") || norm.includes("real-madrid")) {
+      return {
+        title: "REAL MADRID 26/27 COLLECTION",
+        image: realMadridTeamBanner,
+        accent: "#00529f"
+      };
+    }
+    if (norm.includes("manchester united") || norm.includes("man utd") || norm.includes("manchester-united")) {
+      return {
+        title: "MANCHESTER UNITED 26/27 COLLECTION",
+        image: manUtdTeamBanner,
+        accent: "#da291c"
+      };
+    }
+    if (norm.includes("arsenal")) {
+      return {
+        title: "ARSENAL 26/27 COLLECTION",
+        image: arsenalTeamBanner,
+        accent: "#fdb913"
+      };
+    }
+    return null;
+  }, [activeTeamName, collectionSlug]);
 
 
   const handleLogout = useCallback(async () => {
@@ -1971,8 +2083,40 @@ letter-spacing: 4px !important;
   .stat-cell { padding:10px 0; }
 }
 
-  .flame-text-wrap { position:relative; display:inline-block; line-height:0.9; }
-  .flame-text-main { font-size:clamp(40px,8vw,100px); font-weight:900; font-style:italic; letter-spacing:-2px; color:#fff; display:block; font-family:'Barlow Condensed',sans-serif; user-select:none; }
+  .flame-text-wrap {
+    position: relative;
+    display: inline-block;
+    line-height: 0.9;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(255, 69, 0, 0.45));
+  }
+  .flame-text-main {
+    font-size: clamp(44px, 8.5vw, 100px);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -2px;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    user-select: none;
+  }
+  .flame-text-svg {
+    font-size: clamp(44px, 8.5vw, 100px);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -2px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .hero-legend-text {
+    display: block;
+    color: #39ff14;
+    font-size: clamp(52px, 10.5vw, 120px);
+    font-weight: 900;
+    font-style: italic;
+    line-height: 0.9;
+    letter-spacing: -2px;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 16px rgba(57, 255, 20, 0.45));
+  }
   .toast-banner { position:fixed; bottom:96px; right:24px; background:#0d0d0d; color:#fff; padding:14px 18px; font-weight:700; letter-spacing:1px; font-size:13px; z-index:9999; animation:toastIn 0.35s cubic-bezier(0.23,1,0.32,1); max-width:calc(100vw - 48px); display:flex; align-items:center; gap:12px; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.5); border:1px solid rgba(57,255,20,0.35); min-width:230px; }
   .toast-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; background:rgba(57,255,20,0.12); border-radius:8px; font-size:18px; flex-shrink:0; border:1px solid rgba(57,255,20,0.25); }
   .toast-body { display:flex; flex-direction:column; gap:2px; flex:1; }
@@ -2017,45 +2161,582 @@ letter-spacing: 4px !important;
     .sort-dropdown-wrap, .shop-sort-wrap { align-self:flex-end !important; margin-left:auto !important; }
     .sort-dropdown-menu { right: 0; left: auto; }
   }
-.wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
-.wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.05); object-position:center center; }
-@media(max-width:768px) {
-  .site-nav { padding:0 12px 0 4px !important; gap:8px !important; }
-  .wc26-video-wrap {
-    display:flex;
-    height:36px;
-    width:clamp(75px, 20vw, 110px);
-    margin:0 4px 0 auto;
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:4px;
+
+  .wc26-video-wrap { display:flex; align-items:center; height:50px; width:170px; overflow:hidden; flex-shrink:0; border-left:1px solid #1a1a1a; border-right:1px solid #1a1a1a;position:relative; margin:0 8px; }
+  .wc26-video-wrap video { width:100%; height:100%; object-fit:cover; pointer-events:none; transform:scale(1.05); object-position:center center; }
+  @media(max-width:768px) {
+    .site-nav { padding:0 12px 0 4px !important; gap:8px !important; }
+    .wc26-video-wrap {
+      display:flex;
+      height:36px;
+      width:clamp(75px, 20vw, 110px);
+      margin:0 4px 0 auto;
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:4px;
+    }
+    .site-nav .nav-right {
+      margin-left:0 !important;
+      gap:12px !important;
+    }
   }
-  .site-nav .nav-right {
-    margin-left:0 !important;
-    gap:12px !important;
+  @media(max-width:380px) {
+    .wc26-video-wrap {
+      height:32px;
+      width:68px;
+      margin:0 2px 0 auto;
+    }
   }
-}
-@media(max-width:380px) {
-  .wc26-video-wrap {
-    height:32px;
-    width:68px;
-    margin:0 2px 0 auto;
-  }
-}
   .logo-title { font-weight:900; font-size:20px; letter-spacing:3px; color:#fff; }
   .logo-title-accent { color:#39ff14; }
   .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
   .icon-action-btn { background:transparent; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s; }
   .icon-action-btn:hover { color:#39ff14; }
   .icon-cart-btn { gap:0; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:1px; position:relative; }
-   .cart-count-inline { color:#39ff14; background:transparent; font-size:16px; font-weight:900; line-height:1; padding:0; min-width:0; text-align:center; margin-left:4px; }
+  .cart-count-inline { color:#39ff14; background:transparent; font-size:16px; font-weight:900; line-height:1; padding:0; min-width:0; text-align:center; margin-left:4px; }
   .mobile-search-gap { margin-bottom:8px; }
-  .hero-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(7,7,7,0.92) 0%, rgba(7,7,7,0.4) 30%, rgba(0,0,0,0.3) 60%, rgba(7,7,7,0.99) 100%); pointer-events:none; }
+  .hero-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(7,7,7,0.85) 0%, rgba(7,7,7,0.3) 30%, rgba(0,0,0,0.2) 60%, rgba(7,7,7,0.92) 100%); pointer-events:none; }
   .hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
   .hero-subtitle { color:#aaa; margin-top:20px; font-size:14px; letter-spacing:3px; font-family:'Barlow',sans-serif; font-weight:400; position:relative; z-index:1; }
   .hero-cta-row { margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
   .hero-btn-primary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:#39ff14; color:#000; border:none; padding:14px 40px; font-family:'Bebas Neue','Barlow Condensed',sans-serif; font-weight:400; font-size:16px; letter-spacing:5px; cursor:pointer; animation:pulse 2s infinite; border-radius:2px; }
   .hero-btn-secondary { all:unset; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#fff; border:1px solid #2a2a2a; padding:14px 40px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:4px; cursor:pointer; border-radius:2px; transition:border-color 0.2s; }
   .hero-divider { position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #39ff14, transparent); pointer-events:none; }
+
+  @media (max-width: 768px) {
+    .slide-1-content {
+      padding: 16px 16px 20px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+    }
+    .hero-eyebrow { font-size: 11px !important; letter-spacing: 3.5px !important; margin-bottom: 6px !important; text-shadow: 0 1px 6px rgba(0,0,0,0.9); }
+    .hero-subtitle { font-size: 12px !important; margin-top: 8px !important; letter-spacing: 1px !important; max-width: 320px !important; line-height: 1.35 !important; text-shadow: 0 1px 6px rgba(0,0,0,0.9); }
+    .hero-cta-row { margin-top: 14px !important; gap: 10px !important; }
+    .hero-btn-primary { padding: 9px 24px !important; font-size: 13px !important; letter-spacing: 3px !important; }
+    .hero-btn-secondary { padding: 9px 18px !important; font-size: 12px !important; letter-spacing: 2px !important; }
+  }
+
+  @media (max-width: 480px) {
+    .hero-overlay {
+      background: linear-gradient(to bottom, rgba(7,7,7,0.45) 0%, rgba(7,7,7,0.15) 35%, rgba(0,0,0,0.2) 65%, rgba(7,7,7,0.65) 100%) !important;
+    }
+    .slide-1-content {
+      padding: 14px 14px 18px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+    }
+    .hero-eyebrow { font-size: 10px !important; letter-spacing: 3px !important; margin-bottom: 4px !important; }
+    .hero-subtitle { font-size: 11px !important; margin-top: 6px !important; letter-spacing: 1px !important; max-width: 290px !important; line-height: 1.3 !important; }
+    .hero-cta-row { margin-top: 12px !important; gap: 8px !important; }
+    .hero-btn-primary { padding: 8px 18px !important; font-size: 12px !important; letter-spacing: 2px !important; }
+  }
+
+
+  /* ══════════════════════════════════════
+     HERO SLIDESHOW ENHANCEMENTS
+  ══════════════════════════════════════ */
+  .hero-carousel-root {
+    position: relative;
+    width: 100% !important;
+    max-width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    height: auto !important;
+    min-height: 460px !important;
+    max-height: 860px !important;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #070707;
+    user-select: none;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #070707;
+    overflow: hidden;
+  }
+
+  /* Slide 2-5 Kit overlay texts: Slide in from infinity when slide is active / transitions */
+  .hero-slide-kit-track {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) translateX(-100vw);
+    opacity: 0;
+    transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+    will-change: transform, opacity;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    pointer-events: auto;
+    z-index: 4;
+  }
+
+  .hero-slide.active .hero-slide-kit-track {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+
+  /* Micro-interaction on hover: smooth forward glide */
+  .hero-slide.active:hover .hero-slide-kit-track {
+    transform: translateY(-50%) translateX(6px);
+  }
+
+  /* On mobile/touch devices, ensure track starts right from the edge */
+  @media (max-width: 768px) {
+    .hero-slide-kit-track {
+      left: clamp(10px, 3vw, 22px) !important;
+      max-width: 90% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-slide-kit-track {
+      left: 12px !important;
+      max-width: 92% !important;
+    }
+  }
+
+  .hero-slide-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    pointer-events: none;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hero-slide-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important;
+    object-position: center center !important;
+    display: block;
+    pointer-events: none;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+    filter: none;
+    transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .hero-slide:hover .hero-slide-bg {
+      transform: scale(1.012);
+    }
+    .hero-slide:hover .hero-slide-img {
+      transform: scale(1.015);
+    }
+    /* Subtle depth-of-field blur only when hovered on desktop Shop Now */
+    .hero-slide-img.blurred,
+    .hero-slide:has(.hero-kit-shop-btn:hover) .hero-slide-img {
+      filter: blur(1.2px) brightness(0.92) !important;
+      transform: scale(1.018) !important;
+    }
+  }
+
+  /* On mobile phones: keep images 100% crisp, sharp and vivid */
+  @media (max-width: 768px), (hover: none) {
+    .hero-slide-img {
+      filter: none !important;
+    }
+    .hero-slide-img.blurred {
+      filter: blur(0.6px) brightness(0.95) !important;
+    }
+  }
+
+  .hero-slide-content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-1-content {
+    padding: 80px 24px 70px;
+    text-align: center;
+  }
+
+  .slide-kit-content {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-left: clamp(28px, 6vw, 95px);
+    padding-bottom: clamp(20px, 4vw, 55px);
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* Team Section Banner above jersey listings */
+  .team-section-banner-wrap {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto 36px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: #09090b;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    aspect-ratio: 16 / 7;
+    max-height: 420px;
+  }
+
+  .team-section-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .team-section-banner-wrap:hover .team-section-banner-img {
+    transform: scale(1.02);
+  }
+
+  .team-section-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(5, 5, 7, 0.94) 0%, rgba(5, 5, 7, 0.35) 45%, transparent 80%),
+                radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+    display: flex;
+    align-items: flex-end;
+    padding: 24px 32px;
+    pointer-events: none;
+  }
+
+  .team-section-banner-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .team-section-banner-badge {
+    align-self: flex-start;
+    font-size: 11px;
+    letter-spacing: 3px;
+    font-weight: 900;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+  }
+
+  .team-section-banner-heading {
+    margin: 0;
+    font-size: clamp(22px, 3.2vw, 38px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-family: 'Bebas Neue', sans-serif;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.9);
+  }
+
+  @media (max-width: 768px) {
+    .team-section-banner-wrap {
+      aspect-ratio: 16 / 9;
+      margin-bottom: 24px;
+      border-radius: 8px;
+    }
+    .team-section-banner-overlay {
+      padding: 16px;
+    }
+    .team-section-banner-heading {
+      font-size: 22px;
+    }
+  }
+
+  /* Prominent, high-contrast >,< Nav arrows on the left & right sides of the tab */
+  .hero-nav-arrow {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 100 !important;
+    color: #ffffff !important;
+    opacity: 0.88 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    padding: 8px !important;
+    margin: 0 !important;
+    outline: none !important;
+    transition: transform 0.2s ease, opacity 0.2s ease !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .hero-nav-prev { left: clamp(10px, 2.2vw, 30px) !important; }
+  .hero-nav-next { right: clamp(10px, 2.2vw, 30px) !important; }
+
+  .hero-nav-arrow svg {
+    filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+
+  .hero-nav-arrow:hover {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    transform: translateY(-50%) scale(1.22) !important;
+  }
+
+  .hero-nav-arrow:hover svg {
+    filter: drop-shadow(0 0 16px rgba(57, 255, 20, 0.95)) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.95));
+  }
+
+  .hero-nav-arrow:hover svg polyline {
+    stroke: #39ff14 !important;
+  }
+
+  .hero-nav-arrow:active {
+    transform: translateY(-50%) scale(0.95) !important;
+  }
+
+  /* ══════════════════════════════════════
+     TEAM HEADING HOME BUTTON
+  ══════════════════════════════════════ */
+  .heading-home-btn {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(57, 255, 20, 0.5);
+    border-radius: 4px;
+    color: #ffffff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 2.5px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    user-select: none;
+    line-height: 1;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.12);
+  }
+
+  .heading-home-btn svg {
+    color: #39ff14;
+    stroke: #39ff14;
+    transition: transform 0.2s ease, stroke 0.2s ease;
+  }
+
+  .heading-home-btn:hover {
+    background: #39ff14;
+    color: #000000;
+    border-color: #39ff14;
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.65);
+    transform: translateY(-1px);
+  }
+
+  .heading-home-btn:hover svg {
+    color: #000000;
+    stroke: #000000;
+    transform: scale(1.1);
+  }
+
+  .heading-home-btn:active {
+    transform: translateY(0) scale(0.96);
+  }
+
+  @media (max-width: 768px) {
+    .heading-home-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+    }
+    .heading-home-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+
+  /* Dots Indicator Bar - Identical to Jersey Image Section carousel-dots */
+  .hero-dots-bar {
+    position: absolute;
+    bottom: clamp(10px, 1.8vw, 18px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 10px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    pointer-events: auto;
+  }
+
+  .hero-dot-item {
+    all: unset;
+    box-sizing: border-box;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transform: scale(1);
+  }
+
+  .hero-dot-item:hover {
+    background: #ffffff;
+    transform: scale(1.2);
+  }
+
+  .hero-dot-item.active {
+    width: 6px;
+    border-radius: 50%;
+    background: #39ff14;
+    transform: scale(1.25);
+    box-shadow: 0 0 8px rgba(57, 255, 20, 0.85);
+  }
+
+  @media (max-width: 768px) {
+    .hero-carousel-root {
+      width: 100% !important;
+      aspect-ratio: auto !important;
+      height: clamp(340px, 86vw, 480px) !important;
+      min-height: 340px !important;
+      max-height: 520px !important;
+    }
+    .slide-1-content {
+      padding: 16px 16px 20px !important;
+    }
+    .slide-kit-content {
+      padding-left: 12px;
+      padding-bottom: 12px;
+    }
+    .hero-nav-arrow {
+      top: 50% !important;
+      bottom: auto !important;
+      transform: translateY(-50%) !important;
+      padding: 0 !important;
+      width: 44px !important;
+      height: 54px !important;
+      opacity: 0.95 !important;
+      z-index: 999 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .hero-nav-arrow svg {
+      width: 24px !important;
+      height: 32px !important;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.9)) !important;
+    }
+    .hero-nav-arrow:hover {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      transform: translateY(-50%) scale(1.15) !important;
+    }
+    .hero-nav-arrow:hover svg {
+      filter: drop-shadow(0 0 16px rgba(57, 255, 20, 0.95)) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.95)) !important;
+    }
+    .hero-nav-arrow:hover svg polyline {
+      stroke: #39ff14 !important;
+    }
+    .hero-nav-arrow:active,
+    .hero-nav-arrow:focus {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+      transform: translateY(-50%) scale(0.92) !important;
+    }
+    .hero-nav-prev { left: 0px !important; }
+    .hero-nav-next { right: 0px !important; }
+    .hero-dots-bar {
+      bottom: 10px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .hero-carousel-root {
+      width: 100% !important;
+      aspect-ratio: auto !important;
+      height: clamp(340px, 92vw, 440px) !important;
+      min-height: 340px !important;
+      max-height: 480px !important;
+    }
+    .slide-1-content {
+      padding: 14px 14px 18px !important;
+    }
+    .hero-nav-arrow {
+      top: 50% !important;
+      bottom: auto !important;
+      transform: translateY(-50%) !important;
+      padding: 0 !important;
+      width: 42px !important;
+      height: 50px !important;
+      opacity: 0.95 !important;
+      z-index: 999 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .hero-nav-arrow svg {
+      width: 22px !important;
+      height: 28px !important;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95)) !important;
+    }
+    .hero-nav-arrow:hover,
+    .hero-nav-arrow:active,
+    .hero-nav-arrow:focus {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+    .hero-nav-prev { left: 0px !important; }
+    .hero-nav-next { right: 0px !important; }
+    .hero-dots-bar {
+      bottom: 8px;
+    }
+  }
   .stat-num { font-size:30px; font-weight:900; color:#39ff14; font-family:'Bebas Neue',sans-serif; letter-spacing:2px; }
   .stat-label { font-size:12px; letter-spacing:4px; color:#777; margin-top:4px; font-weight:700; }
   .card-body { padding:16px 16px 0; flex:1; }
@@ -2172,6 +2853,150 @@ letter-spacing: 4px !important;
     }
   }
 
+  /* ══════════════════════════════════════════════════════
+     COMPREHENSIVE DEVICE-AWARE RESPONSIVE STYLES
+     Covers: iPhone SE (375px), phones (414-480px),
+     tablets (768px), iPad Pro (1024px), laptops (1280px+)
+  ══════════════════════════════════════════════════════ */
+
+  /* ── Base: ensure no horizontal overflow anywhere ── */
+  html, body, #root, #jv-root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* ── Tablet & iPad (769px – 1024px) ── */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .site-nav { padding: 0 16px 0 8px !important; }
+    .card-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .card { height: 410px; }
+    .card-img-wrap { height: 260px !important; }
+    .hero-carousel-root { height: clamp(380px, 50vw, 560px); }
+    section#shop { padding: 48px 20px !important; }
+    .shop-section-title { font-size: 30px; }
+    .team-section-banner-wrap { aspect-ratio: 16 / 6; max-height: 320px; }
+    .modal { max-width: 520px; }
+    .modal-img-wrap { height: 320px !important; }
+    .cart-panel { width: min(400px, 88vw) !important; }
+    .cart-total-amount { font-size: 30px; }
+    .desktop-search { max-width: 360px !important; }
+    .stat-num { font-size: 26px; }
+    .stat-label { font-size: 11px; }
+  }
+
+  /* ── iPad Pro / Small Laptop (1025px – 1279px) ── */
+  @media (min-width: 1025px) and (max-width: 1279px) {
+    .card-grid { grid-template-columns: repeat(4, 1fr) !important; }
+    .card { height: 420px; }
+    .card-img-wrap { height: 270px !important; }
+    .hero-carousel-root { height: clamp(400px, 52vw, 720px); }
+    .modal { max-width: 500px; }
+    .modal-img-wrap { height: 340px !important; }
+    .cart-panel { width: 400px; }
+  }
+
+  /* ── Full Laptop / Desktop (≥1280px) ── */
+  @media (min-width: 1280px) {
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; }
+    .card { height: 440px; }
+    .card-img-wrap { height: 290px !important; }
+    .hero-carousel-root { height: clamp(440px, 56.25vw, 860px); }
+    section#shop { padding: 64px 32px !important; }
+    .shop-section-title { font-size: 42px; }
+    .modal { max-width: 520px; }
+    .modal-img-wrap { height: 380px !important; }
+    .team-section-banner-wrap { max-height: 480px; }
+  }
+
+  /* ── Mobile: 481px – 768px (large phones, phablets) ── */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .card { height: 410px; }
+    .card-img-wrap { height: 250px !important; }
+    .cart-panel { width: min(380px, 90vw) !important; }
+    .modal-img-wrap { height: 290px !important; }
+    section#shop { padding: 40px 14px !important; }
+  }
+
+  /* ── Small Phone: 376px – 480px ── */
+  @media (min-width: 376px) and (max-width: 480px) {
+    .card { height: 390px; }
+    .card-img-wrap { height: 230px !important; }
+    .card-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .cart-panel { width: min(360px, 94vw) !important; }
+    .modal-img-wrap { height: 270px !important; }
+    section#shop { padding: 32px 12px !important; }
+    .shop-section-title { font-size: 28px; }
+  }
+
+  /* ── iPhone SE / XR / XS (≤375px) ── */
+  @media (max-width: 375px) {
+    .site-nav { height: 56px !important; }
+    .mobile-menu { top: 56px !important; height: calc(100vh - 56px) !important; }
+    .hero-carousel-root {
+      width: 100% !important;
+      aspect-ratio: auto !important;
+      height: clamp(330px, 94vw, 420px) !important;
+      min-height: 330px !important;
+      max-height: 440px !important;
+    }
+    .card { height: 370px; }
+    .card-img-wrap { height: 215px !important; }
+    .card-body { padding: 10px 10px 0; }
+    .card-title { font-size: 13px; min-height: 46px; }
+    .card-price { font-size: 20px; }
+    .card-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 4px !important; }
+    section#shop { padding: 28px 10px !important; }
+    .shop-section-title { font-size: 24px !important; }
+    .add-btn { font-size: 12px !important; letter-spacing: 2px !important; padding: 9px 4px !important; }
+    .cart-panel { width: 100vw !important; }
+    .modal { max-width: 100% !important; border-radius: 0 !important; }
+    .modal-img-wrap { height: 240px !important; }
+    .modal-close-btn { top: 8px !important; right: 8px !important; }
+    .toast-banner { bottom: 72px; right: 10px; left: 10px; max-width: calc(100vw - 20px); min-width: 0; }
+    .toast-msg { max-width: calc(100vw - 100px); }
+    .stat-num { font-size: 22px; }
+    .stat-label { font-size: 10px; letter-spacing: 2px; }
+    .stat-cell { padding: 10px 4px; }
+    .hero-eyebrow { font-size: 8px !important; letter-spacing: 2px !important; }
+    .heading-home-btn { font-size: 11px; padding: 3px 8px; }
+    .heading-home-btn svg { width: 12px; height: 12px; }
+    .sort-dropdown-btn { padding: 4px 8px !important; }
+    .sort-dropdown-label { font-size: 9px !important; letter-spacing: 1px !important; }
+    .sort-dropdown-value { font-size: 10px !important; }
+    .team-section-banner-wrap { aspect-ratio: 16 / 9; border-radius: 6px; margin-bottom: 16px; }
+    .team-section-banner-heading { font-size: 18px; }
+    .team-section-banner-overlay { padding: 12px; }
+    .wc26-video-wrap { height: 28px !important; width: 60px !important; }
+    #jv-root .filter-btn { font-size: 11px !important; letter-spacing: 1px !important; padding: 4px 8px !important; height: 32px !important; }
+    #jv-root .filter-btn.wc26-btn { width: 50px !important; height: 32px !important; }
+    .hero-dots-bar { bottom: 8px; padding: 4px 8px; gap: 6px; }
+    .hero-dot-item { width: 6px; height: 6px; }
+    .hero-dot-item.active { width: 6px; transform: scale(1.25); }
+  }
+
+  /* ── Touch device: disable hover-only effects ── */
+  @media (hover: none) and (pointer: coarse) {
+    .card:hover { transform: none; }
+    .t-team-card:hover { transform: none; }
+    .hero-nav-arrow { opacity: 1 !important; }
+  }
+
+  /* ── Landscape phones: ensure carousel doesn't take full height ── */
+  @media (max-width: 812px) and (orientation: landscape) {
+    .hero-carousel-root {
+      height: clamp(200px, 55vh, 400px) !important;
+      min-height: 200px !important;
+    }
+    .slide-1-content { padding: 12px 16px !important; }
+    .hero-eyebrow { margin-bottom: 4px !important; }
+    .hero-subtitle { margin-top: 6px !important; }
+    .hero-cta-row { margin-top: 8px !important; }
+    .hero-btn-primary { padding: 8px 20px !important; }
+    .hero-btn-secondary { padding: 8px 16px !important; }
+    section#shop { padding: 28px 12px !important; }
+    .card-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  }
 
 `}</style>
 
@@ -2623,23 +3448,326 @@ letter-spacing: 4px !important;
         <BrandLogos />
         <div className="section-divider" />
 
-        {/* HERO */}
-        <section className="hero-section" aria-label="Hero" style={{ opacity: heroVisible ? 1 : 0, transition: heroVisible ? "none" : "opacity 0.8s ease", backgroundImage: `url(${heroBg})` }}>
-          <div className="hero-overlay" />
-          <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
-          <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 1 }}>
-            <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
-            <span style={{ display: "block", color: "#39ff14", fontSize: "clamp(48px,10vw,120px)", fontWeight: 900, fontStyle: "italic", lineHeight: 0.9, letterSpacing: -2 }}>LEGEND</span>
-          </h1>
-          <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
-          <div className="hero-cta-row">
-            <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
-              SHOP NOW
-            </button>
-            <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
-              VIEW TEAMS
-            </button>
+        {/* HERO SLIDESHOW */}
+        <section
+          className="hero-section hero-carousel-root"
+          aria-label="Hero Slideshow"
+          style={{
+            opacity: heroVisible ? 1 : 0,
+            transition: heroVisible ? "none" : "opacity 0.8s ease",
+          }}
+          onTouchStart={(e) => {
+            heroTouchStartX.current = e.touches[0].clientX;
+            setIsHeroTouching(true);
+          }}
+          onTouchEnd={(e) => {
+            if (heroTouchStartX.current !== null) {
+              const diffX = e.changedTouches[0].clientX - heroTouchStartX.current;
+              if (diffX > 40) {
+                setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+              } else if (diffX < -40) {
+                setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+              }
+              heroTouchStartX.current = null;
+            }
+            setIsHeroTouching(false);
+          }}
+        >
+          {heroSlides.map((slide, idx) => {
+            const isActive = currentHeroSlide === idx;
+            return (
+              <div
+                key={slide.id}
+                className={`hero-slide ${isActive ? "active" : ""}`}
+                onClick={slide.isFirstSlide ? undefined : () => navigate(slide.targetUrl)}
+                style={{
+                  cursor: slide.isFirstSlide ? "default" : "pointer",
+                  opacity: isActive ? 1 : 0,
+                  pointerEvents: isActive ? "auto" : "none",
+                  transition: "opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                }}
+              >
+                {/* Slide 1: Legend with Overlay & Hero Buttons */}
+                {slide.isFirstSlide ? (
+                  <>
+                    <div
+                      className="hero-slide-bg"
+                      style={{
+                        backgroundImage: `url(${slide.image})`,
+                        backgroundSize: "cover",
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "center center",
+                      }}
+                    />
+                    <div className="hero-overlay" />
+                    <div className="hero-slide-content slide-1-content">
+                      <p className="hero-eyebrow">INDIA'S PREMIUM VAULT</p>
+                      <h1 style={{ lineHeight: 0.9, animation: "breathe 3s ease-in-out 1s infinite", position: "relative", display: "inline-block", zIndex: 2 }}>
+                        <span style={{ display: "block", position: "relative", marginBottom: 4 }}><CartoonFlameText text="WEAR YOUR" /></span>
+                        <span className="hero-legend-text">LEGEND</span>
+                      </h1>
+                      <p className="hero-subtitle">Premium football &amp; cricket jerseys in India. Top-tier fan versions &amp; elite player issue kits.</p>
+                      <div className="hero-cta-row">
+                        <button type="button" className="hero-btn-primary" onClick={scrollToShop} aria-label="Shop Now">
+                          SHOP NOW
+                        </button>
+                        <button type="button" className="hero-btn-secondary" onClick={() => navigate("/teams")} aria-label="View Teams">
+                          VIEW TEAMS
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Slides 2-5: Full-bleed kit photo with title + Shop Now CTA */
+                  <>
+                    <img
+                      src={slide.image}
+                      alt={slide.title || "26/27 Kits"}
+                      className={`hero-slide-img ${isShopNowHovered ? "blurred" : ""}`}
+                      loading={idx === 1 ? "eager" : "lazy"}
+                      decoding="async"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center center",
+                        display: "block",
+                        pointerEvents: "none",
+                        imageRendering: "-webkit-optimize-contrast",
+                      }}
+                    />
+                    {/* Left overlay typography & CTA sliding in from infinity */}
+                    <div
+                      className="hero-slide-kit-track"
+                      style={{
+                        left: slide.alignLeft || "clamp(12px, 3.5vw, 44px)",
+                        maxWidth: "clamp(280px, 52vw, 820px)",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        textAlign: "left",
+                      }}
+                    >
+                      {/* 1. Official 26/27 Drop label */}
+                      <p
+                        style={{
+                          margin: 0,
+                          padding: 0,
+                          textAlign: "left",
+                          marginBottom: "clamp(4px, 0.8vw, 12px)",
+                          color: "#39ff14",
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontWeight: 800,
+                          fontSize: "clamp(12px, 1.5vw, 22px)",
+                          letterSpacing: "clamp(3px, 0.5vw, 6.5px)",
+                          textTransform: "uppercase",
+                          textShadow: "0 2px 10px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.9)",
+                          opacity: 0.95,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        OFFICIAL 26/27 DROP
+                      </p>
+
+                      {/* 2. Big team kit heading - increased a lot */}
+                      <h2
+                        style={{
+                          margin: 0,
+                          padding: 0,
+                          textAlign: "left",
+                          color: "#ffffff",
+                          fontFamily: "'Barlow Condensed', sans-serif",
+                          fontWeight: 900,
+                          fontSize: "clamp(44px, 7.8vw, 124px)",
+                          lineHeight: 0.84,
+                          letterSpacing: "clamp(-1px, 0.1vw, 1.5px)",
+                          textTransform: "uppercase",
+                          textShadow: "0 4px 24px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.9)",
+                        }}
+                      >
+                        <span style={{ display: "block", textAlign: "left" }}>{slide.titleLine1}</span>
+                        <span style={{ display: "block", textAlign: "left" }}>{slide.titleLine2}</span>
+                      </h2>
+
+                      {/* 3. Horizontal line + Subtitle - strictly left aligned */}
+                      {slide.subtitle && (
+                        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", marginTop: "clamp(6px, 0.9vw, 14px)" }}>
+                          <div
+                            style={{
+                              width: "clamp(180px, 85%, 440px)",
+                              height: "2px",
+                              background: "rgba(255, 255, 255, 0.85)",
+                              margin: 0,
+                              marginBottom: "clamp(5px, 0.7vw, 10px)",
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.7)",
+                              alignSelf: "flex-start",
+                            }}
+                          />
+                          <p
+                            style={{
+                              margin: 0,
+                              padding: 0,
+                              textAlign: "left",
+                              color: "#ffffff",
+                              fontFamily: "'Barlow Condensed', sans-serif",
+                              fontWeight: 700,
+                              fontSize: "clamp(12px, 1.7vw, 24px)",
+                              letterSpacing: "clamp(2px, 0.35vw, 4.5px)",
+                              textTransform: "uppercase",
+                              textShadow: "0 2px 10px rgba(0, 0, 0, 0.95)",
+                            }}
+                          >
+                            {slide.subtitle}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* 4. Shop Now CTA button */}
+                      <div style={{ marginTop: "clamp(14px, 2vw, 28px)", alignSelf: "flex-start" }}>
+                        <Link
+                          to={slide.targetUrl}
+                          className="hero-kit-shop-btn"
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseEnter={(e) => {
+                            setIsShopNowHovered(true);
+                            e.currentTarget.style.background = "transparent";
+                            e.currentTarget.style.color = "#ffffff";
+                            e.currentTarget.style.letterSpacing = "clamp(3.5px, 0.7vw, 7px)";
+                            e.currentTarget.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            setIsShopNowHovered(false);
+                            e.currentTarget.style.background = "#ffffff";
+                            e.currentTarget.style.color = "#000000";
+                            e.currentTarget.style.letterSpacing = "clamp(2.5px, 0.5vw, 5px)";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                          onTouchStart={() => setIsShopNowHovered(true)}
+                          onTouchEnd={() => setTimeout(() => setIsShopNowHovered(false), 200)}
+                          onTouchCancel={() => setIsShopNowHovered(false)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "clamp(5px, 0.6vw, 8px)",
+                            background: "#ffffff",
+                            color: "#000000",
+                            fontFamily: "'Barlow Condensed', sans-serif",
+                            fontWeight: 900,
+                            fontSize: "clamp(11px, 1.25vw, 16px)",
+                            letterSpacing: "clamp(2.5px, 0.5vw, 5px)",
+                            textDecoration: "none",
+                            textTransform: "uppercase",
+                            padding: "clamp(8px, 1.1vw, 14px) clamp(20px, 2.4vw, 36px)",
+                            border: "2px solid #ffffff",
+                            boxShadow: "0 4px 18px rgba(0, 0, 0, 0.5)",
+                            transition: "background 0.22s ease, color 0.22s ease, letter-spacing 0.22s ease, transform 0.22s ease",
+                          }}
+                          aria-label={`Shop ${slide.id}`}
+                        >
+                          SHOP NOW
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Sleek Previous (<) / Next (>) Navigation Arrows with direct touch handlers */}
+          <button
+            type="button"
+            className="hero-nav-arrow hero-nav-prev"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+            }}
+            aria-label="Previous Slide"
+            title="Previous Slide (<)"
+          >
+            <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="hero-nav-arrow hero-nav-next"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentHeroSlide(prev => (prev + 1) % heroSlides.length);
+            }}
+            aria-label="Next Slide"
+            title="Next Slide (>)"
+          >
+            <svg width="28" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+
+          {/* Scrolling Dots Indicator at middle bottom of slides - identical to jersey image section */}
+          <div
+            className="hero-dots-bar carousel-dots"
+            style={{
+              position: "absolute",
+              bottom: "clamp(10px, 1.8vw, 18px)",
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              zIndex: 50,
+              padding: "4px 8px",
+              background: "rgba(0, 0, 0, 0.4)",
+              borderRadius: "10px",
+              backdropFilter: "blur(4px)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              pointerEvents: "auto",
+            }}
+          >
+            {heroSlides.map((s, idx) => (
+              <button
+                type="button"
+                key={s.id}
+                className={`hero-dot-item ${currentHeroSlide === idx ? "active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentHeroSlide(idx);
+                }}
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  background: currentHeroSlide === idx ? "#39ff14" : "rgba(255, 255, 255, 0.4)",
+                  transition: "background 0.2s, transform 0.2s, box-shadow 0.2s",
+                  transform: currentHeroSlide === idx ? "scale(1.25)" : "scale(1)",
+                  boxShadow: currentHeroSlide === idx ? "0 0 8px rgba(57, 255, 20, 0.85)" : "none",
+                }}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
           </div>
+
           <div className="hero-divider" />
         </section>
 
@@ -2656,12 +3784,67 @@ letter-spacing: 4px !important;
 
         {/* SHOP */}
         <section id="shop" style={{ padding: "60px 16px" }}>
+          {/* Team Section Banner above jersey listings */}
+          {teamBannerData && (
+            <div className="team-section-banner-wrap">
+              <img
+                src={teamBannerData.image}
+                alt={teamBannerData.title}
+                className="team-section-banner-img"
+              />
+              <div className="team-section-banner-overlay">
+                <div className="team-section-banner-meta">
+                  <span
+                    className="team-section-banner-badge"
+                    style={{
+                      borderColor: teamBannerData.accent,
+                      color: teamBannerData.accent,
+                      boxShadow: `0 0 14px ${teamBannerData.accent}55`
+                    }}
+                  >
+                    OFFICIAL 26/27 DROP
+                  </span>
+                  <h3 className="team-section-banner-heading">
+                    {teamBannerData.title}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="shop-header-outer">
-            {/* ROW 1: Title & Right Border Arrow Indicator */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <h2 className="shop-section-title" style={{ margin: 0 }}>
-                <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
-              </h2>
+            {/* ROW 1: Title, Home Button & Right Border Arrow Indicator */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <h2 className="shop-section-title" style={{ margin: 0 }}>
+                  <span style={{ color: "#39ff14" }}>/ </span>{sectionTitle}
+                </h2>
+                {(activeTeamName || collectionSlug || searchParams.get("team") || (sectionTitle && sectionTitle.toUpperCase().includes("JERSEYS"))) && (
+                  <button
+                    type="button"
+                    className="heading-home-btn"
+                    onClick={() => {
+                      setActiveTeamName("");
+                      setActiveFilter("ALL");
+                      setSearchQuery("");
+                      setSearchParams({});
+                      navigate("/");
+                      setTimeout(() => {
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }, 50);
+                    }}
+                    title="Back to Home Page"
+                    aria-label="Back to Home Page"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <span>SHOP ALL</span>
+                  </button>
+                )}
+              </div>
               <div 
                 className="mobile-scroll-arrow-hint"
                 style={{ marginTop: 6 }}
