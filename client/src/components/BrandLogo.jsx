@@ -23,8 +23,17 @@ export default function BrandLogo({ onClick, style = {}, logoSize, textSize }) {
       }}
     >
       <style>{`
-        .brand-logo-img { height: ${logoSize || "38px"}; width: auto; object-fit: contain; }
-        .brand-logo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: ${textSize || "21px"}; letter-spacing: 2px; color: #fff; display: flex; align-items: center; }
+        .brand-logo-img { height: ${logoSize || "36px"}; width: auto; object-fit: contain; }
+        .brand-logo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: ${textSize || "20px"}; letter-spacing: 1.5px; color: #fff; display: flex; align-items: center; }
+        @media (max-width: 440px) {
+          .brand-logo-container { gap: 4px !important; }
+          .brand-logo-img { height: ${logoSize ? `calc(${logoSize} * 0.85)` : "30px"}; }
+          .brand-logo-text { font-size: ${textSize ? `calc(${textSize} * 0.85)` : "17px"}; letter-spacing: 1px; }
+        }
+        @media (max-width: 360px) {
+          .brand-logo-img { height: 26px; }
+          .brand-logo-text { font-size: 15px; letter-spacing: 0.5px; }
+        }
         @media (min-width: 520px) {
           .brand-logo-img { height: ${logoSize || "44px"}; }
           .brand-logo-text { font-size: ${textSize || "25px"}; letter-spacing: 3px; }

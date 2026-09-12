@@ -2168,31 +2168,100 @@ letter-spacing: 4px !important;
     .site-nav { padding:0 12px 0 4px !important; gap:8px !important; }
     .wc26-video-wrap {
       display:flex;
-      height:36px;
-      width:clamp(75px, 20vw, 110px);
+      height:34px;
+      width:clamp(60px, 16vw, 85px);
       margin:0 4px 0 auto;
       border:1px solid rgba(255,255,255,0.12);
       border-radius:4px;
     }
     .site-nav .nav-right {
-      margin-left:0 !important;
-      gap:12px !important;
+      margin-left:auto !important;
+      gap:8px !important;
     }
   }
-  @media(max-width:380px) {
+  @media(max-width:440px) {
+    .site-nav { padding:0 10px 0 4px !important; gap:6px !important; }
     .wc26-video-wrap {
-      height:32px;
-      width:68px;
+      height:30px;
+      width:clamp(48px, 13vw, 65px);
       margin:0 2px 0 auto;
+    }
+    .site-nav .nav-right {
+      gap:6px !important;
+    }
+    .mobile-search-btn button {
+      width:34px;
+      height:34px;
+    }
+  }
+  @media(max-width:360px) {
+    .site-nav { padding:0 8px 0 2px !important; gap:4px !important; }
+    .wc26-video-wrap {
+      height:28px;
+      width:44px;
+    }
+    .site-nav .nav-right {
+      gap:4px !important;
+    }
+    .mobile-search-btn button {
+      width:32px;
+      height:32px;
     }
   }
   .logo-title { font-weight:900; font-size:20px; letter-spacing:3px; color:#fff; }
   .logo-title-accent { color:#39ff14; }
-  .nav-right { display:flex; align-items:center; gap:12px; flex-shrink:0; margin-left:auto; }
-  .icon-action-btn { background:transparent; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s; }
+  .nav-right { display:flex; align-items:center; gap:14px; flex-shrink:0; margin-left:auto; }
+  .icon-action-btn { background:transparent; border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0; transition:color 0.2s, transform 0.15s; }
   .icon-action-btn:hover { color:#39ff14; }
-  .icon-cart-btn { gap:0; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px; letter-spacing:1px; position:relative; }
-  .cart-count-inline { color:#39ff14; background:transparent; font-size:16px; font-weight:900; line-height:1; padding:0; min-width:0; text-align:center; margin-left:4px; }
+  .icon-action-btn:active { transform:scale(0.92); }
+  .icon-cart-btn {
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    padding:0;
+    flex-shrink:0;
+    font-family:'Barlow Condensed',sans-serif;
+    color:#fff;
+    cursor:pointer;
+  }
+  .cart-icon-badge {
+    position:absolute;
+    top:0px;
+    right:1px;
+    min-width:18px;
+    height:18px;
+    padding:0 4px;
+    background:#39ff14;
+    color:#000;
+    font-family:'Barlow Condensed',sans-serif;
+    font-size:11px;
+    font-weight:900;
+    line-height:1;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 0 10px rgba(57,255,20,0.7);
+    border:1.5px solid #070707;
+    pointer-events:none;
+    z-index:2;
+    animation:cartBadgePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @media(max-width:440px) {
+    .icon-cart-btn { width:36px; height:36px; }
+    .cart-icon-badge { top:-1px; right:0px; min-width:16px; height:16px; font-size:10px; padding:0 3px; }
+  }
+  @media(max-width:360px) {
+    .icon-cart-btn { width:32px; height:32px; }
+    .cart-icon-badge { top:-2px; right:-1px; min-width:15px; height:15px; font-size:9px; }
+  }
+  @keyframes cartBadgePop {
+    0% { transform:scale(0.4); opacity:0; }
+    100% { transform:scale(1); opacity:1; }
+  }
   .mobile-search-gap { margin-bottom:8px; }
   .hero-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(7,7,7,0.85) 0%, rgba(7,7,7,0.3) 30%, rgba(0,0,0,0.2) 60%, rgba(7,7,7,0.92) 100%); pointer-events:none; }
   .hero-eyebrow { color:#39ff14; letter-spacing:6px; font-size:12px; font-weight:700; margin-bottom:16px; position:relative; z-index:1; opacity:0.8; }
@@ -3111,7 +3180,7 @@ letter-spacing: 4px !important;
               preload="auto"
             />
           </div>
-          <div className="nav-right" style={{ gap: "18px", marginLeft: "auto" }}>
+          <div className="nav-right">
             {/* SEARCH ICON */}
             <div className="mobile-search-btn">
               <button type="button"
@@ -3127,8 +3196,8 @@ letter-spacing: 4px !important;
                 }}
               >
                 <svg
-                  width="26"
-                  height="26"
+                  width="22"
+                  height="22"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -3147,12 +3216,12 @@ letter-spacing: 4px !important;
               className="icon-action-btn icon-cart-btn"
               onClick={() => { ReactGA.event("view_cart", { currency: "INR" }); setCartOpen(true); }}
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
               {cartCount > 0 && (
-                <span className="cart-count-inline">{cartCount}</span>
+                <span className="cart-icon-badge">{cartCount}</span>
               )}
             </button>
           </div>
@@ -4987,6 +5056,116 @@ letter-spacing: 4px !important;
                     </div>
                   )}
                 </div>
+
+                {/* ── YOU MAY ALSO LIKE SECTION IN MODAL ── */}
+                {(() => {
+                  if (!selectedJersey) return null;
+                  let relatable = jerseys.filter(j => j.id !== selectedJersey.id && selectedJersey.team_id && j.team_id === selectedJersey.team_id);
+                  if (relatable.length === 0) {
+                    relatable = jerseys.filter(j => j.id !== selectedJersey.id && selectedJersey.category && j.category === selectedJersey.category).slice(0, 6);
+                  }
+                  if (relatable.length === 0) {
+                    relatable = jerseys.filter(j => j.id !== selectedJersey.id).slice(0, 4);
+                  }
+                  if (relatable.length === 0) return null;
+
+                  return (
+                    <div style={{ marginTop: 28, borderTop: "1px solid #1a1a1a", paddingTop: 20 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+                        <div>
+                          <div style={{ color: "#39ff14", fontFamily: "'Barlow Condensed', sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+                            RECOMMENDED FOR YOU
+                          </div>
+                          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#fff" }}>
+                            YOU MAY ALSO LIKE
+                          </div>
+                        </div>
+                        <Link
+                          to={`/product/${generateProductSlug(selectedJersey.name)}`}
+                          style={{
+                            color: "#39ff14",
+                            textDecoration: "none",
+                            fontSize: 11,
+                            fontWeight: 800,
+                            letterSpacing: 1,
+                            fontFamily: "'Barlow Condensed', sans-serif"
+                          }}
+                        >
+                          OPEN FULL PAGE ↗
+                        </Link>
+                      </div>
+
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
+                        gap: 12
+                      }}>
+                        {relatable.map((rel) => {
+                          const relImg = getFirstImage(rel.image_url);
+                          const relIsPlayer = (rel.type || "").toUpperCase().includes("PLAYER");
+                          return (
+                            <div
+                              key={rel.id}
+                              onClick={() => {
+                                openQuickView(rel);
+                                const modalEl = document.querySelector('.modal');
+                                if (modalEl) modalEl.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              style={{
+                                background: "#080808",
+                                border: "1px solid #1c1c1c",
+                                borderRadius: 4,
+                                overflow: "hidden",
+                                cursor: "pointer",
+                                transition: "border-color 0.2s, transform 0.2s",
+                                display: "flex",
+                                flexDirection: "column"
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = "#39ff14"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = "#1c1c1c"; e.currentTarget.style.transform = "none"; }}
+                            >
+                              <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", background: "#111" }}>
+                                <img src={relImg} alt={rel.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <div style={{ position: "absolute", top: 4, left: 4, background: "rgba(0,0,0,0.85)", border: relIsPlayer ? "1px solid #ff4444" : "1px solid #39ff14", color: relIsPlayer ? "#ff4444" : "#39ff14", fontSize: 8, fontWeight: 900, padding: "1px 4px", borderRadius: 2 }}>
+                                  {rel.type || (relIsPlayer ? "PLAYER" : "FAN")}
+                                </div>
+                              </div>
+                              <div style={{ padding: "8px 10px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                                <div>
+                                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 4 }}>
+                                    {rel.name}
+                                  </div>
+                                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 16, color: "#39ff14", letterSpacing: 1 }}>
+                                    ₹{rel.price?.toLocaleString("en-IN")}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  style={{
+                                    marginTop: 6,
+                                    width: "100%",
+                                    background: "transparent",
+                                    border: "1px solid #39ff14",
+                                    color: "#39ff14",
+                                    padding: "4px 0",
+                                    fontSize: 10,
+                                    fontWeight: 900,
+                                    fontFamily: "'Barlow Condensed', sans-serif",
+                                    letterSpacing: 1,
+                                    borderRadius: 2,
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  SELECT SIZE
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

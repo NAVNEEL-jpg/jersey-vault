@@ -453,8 +453,8 @@ export default function Teams() {
             .t-desktop-search { display:none; }
             .wc26-video-wrap {
               display:flex;
-              height:36px;
-              width:clamp(75px, 20vw, 110px);
+              height:34px;
+              width:clamp(60px, 16vw, 85px);
               margin:0 4px 0 auto;
               border:1px solid rgba(255,255,255,0.12);
               border-radius:4px;
@@ -469,14 +469,60 @@ export default function Teams() {
           }
           @media(max-width:480px) {
             .wc26-video-wrap {
-              height:32px;
-              width:68px;
+              height:30px;
+              width:clamp(48px, 13vw, 65px);
               margin:0 2px 0 auto;
             }
             .t-team-logo-wrap { width:88px; height:88px; }
             .t-team-logo-bg { width:88px; height:88px; padding:7px; }
             .t-team-logo { max-width:74px; max-height:74px; }
             .t-team-name { font-size:13px; margin-top:10px; }
+          }
+          .icon-cart-btn {
+            position:relative;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            width:38px;
+            height:38px;
+            padding:0;
+            background:transparent;
+            border:none;
+            color:#fff;
+            cursor:pointer;
+            transition:color 0.2s, transform 0.15s;
+          }
+          .icon-cart-btn:hover { color:#39ff14; }
+          .icon-cart-btn:active { transform:scale(0.92); }
+          .cart-icon-badge {
+            position:absolute;
+            top:0px;
+            right:1px;
+            min-width:18px;
+            height:18px;
+            padding:0 4px;
+            background:#39ff14;
+            color:#000;
+            font-family:'Barlow Condensed',sans-serif;
+            font-size:11px;
+            font-weight:900;
+            line-height:1;
+            border-radius:999px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 0 10px rgba(57,255,20,0.7);
+            border:1.5px solid #070707;
+            pointer-events:none;
+            z-index:2;
+          }
+          @media(max-width:440px) {
+            .icon-cart-btn { width:36px; height:36px; }
+            .cart-icon-badge { top:-1px; right:0px; min-width:16px; height:16px; font-size:10px; padding:0 3px; }
+          }
+          @media(max-width:360px) {
+            .icon-cart-btn { width:32px; height:32px; }
+            .cart-icon-badge { top:-2px; right:-1px; min-width:15px; height:15px; font-size:9px; }
           }
           /* ── base overflow guard ── */
           html, body { max-width:100vw; overflow-x:hidden; }
@@ -583,16 +629,14 @@ export default function Teams() {
           <div className="t-nav-right" style={{ marginRight: "4px" }}>
             <button type="button"
               aria-label="View cart"
+              className="icon-cart-btn"
               onClick={() => navigate("/")}
-              style={{ background:"transparent", border:"none", color:"#fff", cursor:"pointer", display:"flex", alignItems:"center", gap:8, fontFamily:"'Barlow Condensed',sans-serif", fontWeight:900, fontSize:15, letterSpacing:1, padding:0, transition:"color 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.color="#39ff14"}
-              onMouseLeave={e => e.currentTarget.style.color="#fff"}
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.0" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
               </svg>
-              {cartCount > 0 && <span style={{ color:"#39ff14", fontSize:19, fontWeight:900, lineHeight:1 }}>{cartCount}</span>}
+              {cartCount > 0 && <span className="cart-icon-badge">{cartCount}</span>}
             </button>
           </div>
 
