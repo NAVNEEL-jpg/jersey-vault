@@ -452,12 +452,7 @@ export default function Teams() {
             .t-desktop-nav-links { display:none; }
             .t-desktop-search { display:none; }
             .wc26-video-wrap {
-              display:flex;
-              height:34px;
-              width:clamp(60px, 16vw, 85px);
-              margin:0 4px 0 auto;
-              border:1px solid rgba(255,255,255,0.12);
-              border-radius:4px;
+              display: none !important;
             }
             .t-hero { padding:60px 16px 40px; }
             .t-filter-btn { font-size:14px !important; padding:6px 12px; }
@@ -468,11 +463,6 @@ export default function Teams() {
             .t-team-name { font-size:14px; margin-top:12px; }
           }
           @media(max-width:480px) {
-            .wc26-video-wrap {
-              height:30px;
-              width:clamp(48px, 13vw, 65px);
-              margin:0 2px 0 auto;
-            }
             .t-team-logo-wrap { width:88px; height:88px; }
             .t-team-logo-bg { width:88px; height:88px; padding:7px; }
             .t-team-logo { max-width:74px; max-height:74px; }
@@ -557,7 +547,7 @@ export default function Teams() {
             .t-team-logo-bg { width:80px; height:80px; padding:7px; }
             .t-team-logo { max-width:66px; max-height:66px; }
             .t-team-name { font-size:12px; margin-top:8px; }
-            .wc26-video-wrap { height:28px !important; width:58px !important; }
+            .wc26-video-wrap { display: none !important; }
             .t-filter-btn { font-size:12px !important; padding:5px 10px; height:34px !important; }
           }
 

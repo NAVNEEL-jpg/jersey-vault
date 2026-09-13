@@ -2167,12 +2167,7 @@ letter-spacing: 4px !important;
   @media(max-width:768px) {
     .site-nav { padding:0 12px 0 4px !important; gap:8px !important; }
     .wc26-video-wrap {
-      display:flex;
-      height:34px;
-      width:clamp(60px, 16vw, 85px);
-      margin:0 4px 0 auto;
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius:4px;
+      display: none !important;
     }
     .site-nav .nav-right {
       margin-left:auto !important;
@@ -2182,9 +2177,7 @@ letter-spacing: 4px !important;
   @media(max-width:440px) {
     .site-nav { padding:0 10px 0 4px !important; gap:6px !important; }
     .wc26-video-wrap {
-      height:30px;
-      width:clamp(48px, 13vw, 65px);
-      margin:0 2px 0 auto;
+      display: none !important;
     }
     .site-nav .nav-right {
       gap:6px !important;
@@ -2197,8 +2190,7 @@ letter-spacing: 4px !important;
   @media(max-width:360px) {
     .site-nav { padding:0 8px 0 2px !important; gap:4px !important; }
     .wc26-video-wrap {
-      height:28px;
-      width:44px;
+      display: none !important;
     }
     .site-nav .nav-right {
       gap:4px !important;
@@ -3036,7 +3028,7 @@ letter-spacing: 4px !important;
     .team-section-banner-wrap { aspect-ratio: 16 / 9; border-radius: 6px; margin-bottom: 16px; }
     .team-section-banner-heading { font-size: 18px; }
     .team-section-banner-overlay { padding: 12px; }
-    .wc26-video-wrap { height: 28px !important; width: 60px !important; }
+    .wc26-video-wrap { display: none !important; }
     #jv-root .filter-btn { font-size: 11px !important; letter-spacing: 1px !important; padding: 4px 8px !important; height: 32px !important; }
     #jv-root .filter-btn.wc26-btn { width: 50px !important; height: 32px !important; }
     .hero-dots-bar { bottom: 8px; padding: 4px 8px; gap: 6px; }

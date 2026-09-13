@@ -54,33 +54,257 @@ const ACCENT_MAP = {
 
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
-const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style }) {
+const ProductCarousel = memo(function ProductCarousel({ imageUrl, alt, style, className, onClick, arrowSize = "28px" }) {
   const images = getProductImages(imageUrl);
-  const [idx, setIdx] = useState(0);
-  if (!images.length) {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  if (images.length === 0) {
     return (
-      <div style={{ width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"#0d0d0d",fontSize:48 }}>
+      <div style={{ ...style, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d0d0d", fontSize: 56 }} className={className} onClick={onClick}>
         👕
       </div>
     );
   }
+
   if (images.length === 1) {
-    return <img src={images[0]} alt={alt} draggable="false" style={{ width:"100%",height:"100%",objectFit:"cover",objectPosition:"center",display:"block",...style }} />;
+    return (
+      <img
+        src={images[0]}
+        alt={alt}
+        className={className}
+        draggable="false"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center center",
+          transform: "scale(1.08)",
+          transformOrigin: "center center",
+          display: "block",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          WebkitUserDrag: "none",
+          pointerEvents: "none",
+          ...style
+        }}
+        onClick={onClick}
+      />
+    );
   }
+
+  const handleDotClick = (e, index) => {
+    e.stopPropagation();
+    setActiveIndex(index);
+    const container = e.currentTarget.parentElement.previousSibling;
+    if (container) {
+      const width = container.offsetWidth;
+      container.scrollTo({
+        left: index * width,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleArrowClick = (e, dir) => {
+    e.stopPropagation();
+    const container = e.currentTarget.parentElement.querySelector('.image-slider-container');
+    if (container) {
+      const width = container.offsetWidth;
+      const totalScroll = container.scrollWidth;
+      let newLeft = container.scrollLeft + dir * width;
+      if (newLeft < 0) {
+        newLeft = totalScroll - width;
+      } else if (newLeft >= totalScroll) {
+        newLeft = 0;
+      }
+      container.scrollTo({
+        left: newLeft,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const handleScroll = (e) => {
+    const container = e.currentTarget;
+    const width = container.offsetWidth;
+    if (width > 0) {
+      const newIndex = Math.round(container.scrollLeft / width);
+      if (newIndex !== activeIndex) {
+        setActiveIndex(newIndex);
+      }
+    }
+  };
+
   return (
-    <div style={{ position:"relative",width:"100%",height:"100%" }}>
-      <div style={{ width:"100%",height:"100%",overflow:"hidden" }}>
-        <div style={{ display:"flex",width:`${images.length*100}%`,height:"100%",transform:`translateX(-${(idx/images.length)*100}%)`,transition:"transform 0.38s cubic-bezier(0.23,1,0.32,1)" }}>
-          {images.map((src,i) => (
-            <img key={i} src={src} alt={alt} draggable="false"
-              style={{ width:`${100/images.length}%`,height:"100%",objectFit:"cover",objectPosition:"center",display:"block" }} />
-          ))}
-        </div>
+    <div className="product-carousel-wrapper" style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden", userSelect: "none", ...style }}>
+      <div 
+        className="image-slider-container"
+        onScroll={handleScroll}
+        onClick={onClick}
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          overflowX: "auto",
+          overflowY: "hidden",
+          touchAction: "pan-x",
+          scrollSnapType: "x mandatory",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          cursor: onClick ? "pointer" : "default"
+        }}
+      >
+        {images.map((img, idx) => (
+          <div 
+            key={idx}
+            className="image-slider-item"
+            style={{
+              flex: "0 0 100%",
+              width: "100%",
+              height: "100%",
+              scrollSnapAlign: "start",
+              userSelect: "none",
+              WebkitUserSelect: "none"
+            }}
+          >
+            <img 
+              src={img} 
+              alt={`${alt} - ${idx + 1}`} 
+              className={className}
+              draggable="false"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center center",
+                transform: "scale(1.08)",
+                transformOrigin: "center center",
+                display: "block",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                WebkitUserDrag: "none",
+                pointerEvents: "none"
+              }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        ))}
       </div>
-      <div style={{ position:"absolute",bottom:6,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:5 }}>
-        {images.map((_,i) => (
-          <button key={i} type="button" onClick={e=>{e.stopPropagation();setIdx(i);}}
-            style={{ all:"unset",width:i===idx?16:6,height:6,borderRadius:3,background:i===idx?"#39ff14":"rgba(255,255,255,0.35)",transition:"all 0.25s ease",cursor:"pointer" }} />
+
+      {activeIndex > 0 && (
+        <button
+          type="button"
+          className="carousel-arrow carousel-arrow-left"
+          onClick={(e) => handleArrowClick(e, -1)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "8px",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            color: "#39ff14",
+            textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            fontSize: arrowSize,
+            fontWeight: "bold",
+            opacity: 0.6,
+            transition: "opacity 0.2s ease, transform 0.2s, color 0.2s",
+            padding: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1.2)";
+            e.currentTarget.style.color = "#00ff33";
+            e.currentTarget.style.opacity = 1;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            e.currentTarget.style.color = "#39ff14";
+            e.currentTarget.style.opacity = 0.6;
+          }}
+        >
+          ◀
+        </button>
+      )}
+      {activeIndex < images.length - 1 && (
+        <button
+          type="button"
+          className="carousel-arrow carousel-arrow-right"
+          onClick={(e) => handleArrowClick(e, 1)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "8px",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            color: "#39ff14",
+            textShadow: "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            fontSize: arrowSize,
+            fontWeight: "bold",
+            opacity: 0.6,
+            transition: "opacity 0.2s ease, transform 0.2s, color 0.2s",
+            padding: 0
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1.2)";
+            e.currentTarget.style.color = "#00ff33";
+            e.currentTarget.style.opacity = 1;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+            e.currentTarget.style.color = "#39ff14";
+            e.currentTarget.style.opacity = 0.6;
+          }}
+        >
+          ▶
+        </button>
+      )}
+
+      <div 
+        className="carousel-dots"
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: "6px",
+          zIndex: 2,
+          padding: "4px 8px",
+          background: "rgba(0,0,0,0.4)",
+          borderRadius: "10px"
+        }}
+      >
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={(e) => handleDotClick(e, idx)}
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              background: activeIndex === idx ? "#39ff14" : "rgba(255,255,255,0.4)",
+              transition: "background 0.2s, transform 0.2s",
+              transform: activeIndex === idx ? "scale(1.2)" : "scale(1)"
+            }}
+            aria-label={`Go to slide ${idx + 1}`}
+          />
         ))}
       </div>
     </div>
@@ -166,30 +390,25 @@ export default function TeamPage() {
   }, [cart]);
 
   useEffect(() => {
-    if (selectedJersey || cartOpen || previewReviewPhoto || showSizeChart) {
-      document.body.style.overflow = "hidden";
-    } else if (!mobileMenuOpen) {
-      document.body.style.overflow = "";
-    }
-  }, [selectedJersey, cartOpen, previewReviewPhoto, showSizeChart, mobileMenuOpen]);
-
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      const y = window.scrollY;
+    const isAnyModalOpen = Boolean(selectedJersey || cartOpen || previewReviewPhoto || showSizeChart || mobileMenuOpen);
+    if (isAnyModalOpen) {
+      const scrollY = window.scrollY;
       document.body.style.position = "fixed";
-      document.body.style.top = `-${y}px`;
+      document.body.style.top = `-${scrollY}px`;
       document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
       return () => {
-        const saved = Math.abs(parseInt(document.body.style.top || "0", 10));
+        const savedScrollY = Math.abs(parseInt(document.body.style.top || "0", 10));
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
         document.body.style.overflow = "";
-        if (saved) window.scrollTo(0, saved);
+        if (savedScrollY) {
+          window.scrollTo(0, savedScrollY);
+        }
       };
     }
-  }, [mobileMenuOpen]);
+  }, [selectedJersey, cartOpen, previewReviewPhoto, showSizeChart, mobileMenuOpen]);
 
   const getSizeStock = useCallback((jersey, size) => {
     if (!jersey) return 0;
@@ -444,37 +663,37 @@ export default function TeamPage() {
           .tp-add-btn:hover{background:transparent;color:#39ff14;box-shadow:inset 0 0 0 2px #39ff14;}
           .tp-oos-badge{position:absolute;top:10px;left:10px;background:#c0392b;color:#fff;font-size:11px;font-weight:900;letter-spacing:2px;padding:3px 8px;z-index:2;border-radius:2px;}
           .tp-skeleton{background:linear-gradient(90deg,#0f0f0f 25%,#161616 50%,#0f0f0f 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
-          .tp-modal-bg{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;}
-          .tp-modal-dim{position:absolute;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);cursor:pointer;border:none;width:100%;height:100%;}
-          .tp-modal{background:#0a0a0a;border:1px solid #1e1e1e;width:100%;max-width:540px;max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:2px;position:relative;z-index:1;animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1);box-shadow:0 0 80px rgba(57,255,20,0.06),0 40px 80px rgba(0,0,0,0.9);}
+          .tp-modal-bg{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;touch-action:none;}
+          .tp-modal-dim{position:absolute;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(8px);cursor:pointer;border:none;width:100%;height:100%;touch-action:none;}
+          .tp-modal{background:#0a0a0a;color:#ffffff;font-family:'Barlow Condensed',sans-serif;border:1px solid #1e1e1e;width:100%;max-width:480px;max-height:calc(100vh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:2px;position:relative;z-index:1;animation:fadeUp 0.3s cubic-bezier(0.23,1,0.32,1);box-shadow:0 0 80px rgba(57,255,20,0.06),0 40px 80px rgba(0,0,0,0.9);}
           .tp-modal-img-wrap{position:relative;width:100%;height:360px;background:#0d0d0d;overflow:hidden;}
-          .tp-modal-back-btn{position:absolute;top:12px;left:12px;z-index:100;background:rgba(0,0,0,0.85);border:1px solid #39ff14;color:#39ff14;padding:4px 10px;border-radius:3px;font-size:11px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 0 8px rgba(57,255,20,0.3);backdrop-filter:blur(4px);transition:transform 0.15s, background 0.15s;}
+          .tp-modal-back-btn{position:absolute;top:10px;left:10px;z-index:100;background:rgba(0,0,0,0.85);border:1px solid #39ff14;color:#39ff14;padding:4px 10px;border-radius:3px;font-size:11px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 0 8px rgba(57,255,20,0.3);backdrop-filter:blur(4px);transition:transform 0.15s, background 0.15s;}
           .tp-modal-back-btn:hover{background:#39ff14;color:#000;}
-          .tp-modal-close{position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.85);border:1.5px solid #39ff14;color:#39ff14;font-size:18px;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;z-index:100;font-weight:900;border-radius:4px;box-shadow:0 0 10px rgba(57,255,20,0.4);transition:transform 0.15s, border-color 0.2s;}
+          .tp-modal-close{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.85);border:1.5px solid #39ff14;color:#39ff14;font-size:18px;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;z-index:100;font-weight:900;border-radius:4px;box-shadow:0 0 10px rgba(57,255,20,0.4);transition:transform 0.15s, border-color 0.2s;}
           .tp-modal-close:hover{border-color:#39ff14;color:#fff;transform:scale(1.05);}
           .tp-modal-body{padding:20px;}
-          .tp-modal-name{font-size:22px;font-weight:900;letter-spacing:1px;line-height:1.2;}
-          .tp-modal-price{font-size:32px;font-weight:900;color:#39ff14;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-top:4px;}
-          .tp-size-label{font-size:12px;letter-spacing:3px;color:#555;font-weight:700;margin-top:16px;margin-bottom:8px;}
-          .tp-size-grid{display:flex;flex-wrap:wrap;gap:6px;}
-          .tp-size-btn{all:unset;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:1px;border:1.5px solid #2a2a2a;cursor:pointer;transition:all 0.2s;border-radius:2px;}
-          .tp-size-btn.active{background:#39ff14;color:#000;border-color:#39ff14;transform:translateY(-2px);box-shadow:0 0 0 2px rgba(57,255,20,0.25);}
-          .tp-size-btn:hover:not(.active):not(:disabled){border-color:#39ff14;color:#39ff14;}
-          .tp-size-btn:disabled{background:#0d0d0d!important;border-color:#1a1a1a!important;color:#333!important;cursor:not-allowed;text-decoration:line-through;transform:none!important;box-shadow:none!important;}
-          .tp-size-chart-btn{all:unset;box-sizing:border-box;margin-left:auto;background:transparent;border:1px dashed #39ff14!important;color:#ffffff!important;padding:4px 10px;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-style:italic;transition:all 0.2s ease-in-out;display:inline-flex;align-items:center;gap:6px;}
-          .tp-size-chart-btn:hover{background:#39ff14!important;color:#000000!important;border-style:solid!important;}
-          .tp-size-chart-btn:hover svg{stroke:#000000!important;}
+          .tp-modal-name{font-size:28px;font-weight:900;letter-spacing:1px;line-height:1.2;color:#ffffff;font-style:italic;}
+          .tp-modal-price{font-size:32px;font-weight:400;color:#39ff14;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin:0;line-height:1;}
+          .tp-size-label{font-size:13px;letter-spacing:2.5px;color:#888;font-weight:700;margin-top:16px;margin-bottom:8px;}
+          .size-grid{display:flex;flex-wrap:wrap;gap:6px;}
+          .size-btn{position:relative;background:#111;border:1px solid #2a2a2a!important;color:#aaa!important;width:40px;height:40px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s cubic-bezier(0.23,1,0.32,1);overflow:hidden;}
+          .size-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:#1a1a1a;transition:background 0.2s;}
+          .size-btn:hover:not(.selected):not(:disabled){border-color:rgba(57,255,20,0.5)!important;color:#39ff14!important;background:rgba(57,255,20,0.05);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.5);}
+          .size-btn:hover:not(.selected):not(:disabled)::before{background:#39ff14;}
+          .size-btn.selected,.size-btn.selected:hover,.size-btn.selected:focus{background:#39ff14!important;border-color:#39ff14!important;color:#000!important;font-weight:900;font-size:17px;transform:translateY(-2px);box-shadow:0 0 0 3px rgba(57,255,20,0.15),0 8px 20px rgba(57,255,20,0.25);}
+          .size-btn.selected::before{background:rgba(0,0,0,0.2);}
+          .size-btn:disabled{background:#0d0d0d!important;border-color:#1a1a1a!important;color:#2a2a2a!important;cursor:not-allowed;text-decoration:line-through;}
           .tp-stock-warning{font-size:12px;color:#e67e22;letter-spacing:3px;font-weight:700;margin-top:8px;}
           .tp-modal-qty-control{display:inline-flex;align-items:center;background:#0a0a0a;border:1px solid #333;border-radius:2px;padding:0 4px;height:42px;}
           .tp-modal-qty-control button:not(:disabled){transition:color 0.15s,transform 0.15s;color:#ffffff;}
           .tp-modal-qty-control button:not(:disabled):hover{color:#39ff14!important;transform:scale(1.15);}
-          .tp-type-badge{display:inline-block;font-size:12px;letter-spacing:3px;color:#000;font-weight:900;background:#39ff14;padding:3px 10px;border-radius:2px;}
+          .tp-type-badge{display:inline-block;font-size:11px;letter-spacing:2px;color:#000;font-weight:900;background:#39ff14;padding:3px 8px;border-radius:2px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;}
           .tp-share-btn{background:none;border:none;color:#ffffff;padding:2px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:transform 0.15s;}
           .tp-share-btn:hover{transform:scale(1.2);}
           @keyframes scanline{0%{top:-100%;}100%{top:200%;}}
           .tp-modal-add{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#39ff14;color:#000;padding:15px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:4px;cursor:pointer;margin-top:20px;transition:background 0.2s,box-shadow 0.2s;border-radius:2px;}
           .tp-modal-add:hover{background:#2dff00;box-shadow:0 0 20px rgba(57,255,20,0.5);}
-          .tp-cart-overlay{position:fixed;inset:0;z-index:1999;}
+          .tp-cart-overlay{position:fixed;inset:0;z-index:1000000;}
           .tp-cart-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.7);border:none;width:100%;height:100%;cursor:pointer;}
           .tp-cart-panel{position:fixed;right:0;top:0;bottom:0;width:min(380px,92vw);background:#070707;border-left:1px solid #1a1a1a;z-index:2000;display:flex;flex-direction:column;animation:slideDown 0.25s cubic-bezier(0.23,1,0.32,1);box-shadow:-24px 0 60px rgba(0,0,0,0.7);overflow:hidden;}
           .tp-cart-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #111;}
@@ -508,12 +727,14 @@ export default function TeamPage() {
           @media(max-width:768px){
             .tp-hamburger{display:flex!important;}
             .tp-desktop-links{display:none!important;}
-            .wc26-video-wrap{height:34px;width:clamp(60px,16vw,85px);margin:0 4px 0 auto;border:1px solid rgba(255,255,255,0.12);border-radius:4px;}
+            .wc26-video-wrap{display:none!important;}
             .tp-hero{height:clamp(240px,58vw,380px);}
             .tp-card{height:390px;}
             .tp-card-img-wrap{height:240px!important;}
-            .tp-modal{max-width:100%;border-radius:0;}
-            .tp-modal-img-wrap{height:280px!important;}
+            .tp-modal-bg{padding:0!important;}
+            .tp-modal{max-width:100%!important;border-radius:0!important;height:100vh!important;max-height:100vh!important;margin:0!important;border:none!important;}
+            .tp-modal-img-wrap{height:300px!important;}
+            .size-btn{width:36px;height:36px;font-size:13px;}
             .tp-cart-panel{width:min(360px,94vw);}
           }
           @media(max-width:480px){
@@ -521,9 +742,9 @@ export default function TeamPage() {
             .tp-hero{height:clamp(200px,64vw,320px);}
             .tp-card{height:370px;}
             .tp-card-img-wrap{height:220px!important;}
-            .tp-modal-img-wrap{height:250px!important;}
+            .tp-modal-img-wrap{height:260px!important;}
+            .size-btn{width:34px;height:34px;font-size:12px;}
             .tp-cart-panel{width:100vw;}
-            .wc26-video-wrap{height:30px!important;width:clamp(48px,13vw,65px)!important;}
           }
           @media(max-width:375px){
             .tp-nav{height:56px!important;}
@@ -532,9 +753,10 @@ export default function TeamPage() {
             .tp-hero-title{font-size:clamp(22px,9vw,48px);}
             .tp-card{height:350px;}
             .tp-card-img-wrap{height:200px!important;}
+            .tp-modal-img-wrap{height:240px!important;}
+            .size-btn{width:32px;height:32px;font-size:11px;}
             .tp-add-btn{font-size:12px!important;letter-spacing:2px!important;}
             .tp-filter-btn{font-size:11px!important;padding:4px 9px!important;height:30px!important;}
-            .wc26-video-wrap{height:28px!important;width:44px!important;}
           }
           @media(min-width:769px) and (max-width:1024px){
             .tp-hero{height:clamp(320px,42vw,480px);}
@@ -549,19 +771,6 @@ export default function TeamPage() {
             .tp-card:hover{transform:none;}
           }
         `}</style>
-
-        {/* TICKER */}
-        <div style={{ background:"#39ff14",color:"#000",padding:"10px 0",overflow:"hidden",whiteSpace:"nowrap" }}>
-          <div style={{ display:"inline-flex",animation:"marquee 18s linear infinite" }}>
-            {[...Array(2)].map((_,i)=>(
-              <span key={i} style={{ display:"inline-flex" }}>
-                {["FREE SHIPPING ABOVE ₹1099","AUTHENTIC LICENSED JERSEYS","EASY 30-DAY RETURNS","COD AVAILABLE","SIZES XS TO XXL"].map(t=>(
-                  <span key={t} style={{ fontWeight:900,letterSpacing:3,fontSize:15,padding:"0 36px" }}>★ {t}</span>
-                ))}
-              </span>
-            ))}
-          </div>
-        </div>
 
         {/* NAVBAR */}
         <nav className="tp-nav">
@@ -604,6 +813,19 @@ export default function TeamPage() {
             {isAdmin && <button type="button" className="tp-nav-link" style={{ color:"#39ff14" }} onClick={()=>{navigate("/admin");setMobileMenuOpen(false);}}>⚙ ADMIN</button>}
           </div>
         </nav>
+
+        {/* TICKER */}
+        <div style={{ background:"#39ff14",color:"#000",padding:"10px 0",overflow:"hidden",whiteSpace:"nowrap" }}>
+          <div style={{ display:"inline-flex",animation:"marquee 18s linear infinite" }}>
+            {[...Array(2)].map((_,i)=>(
+              <span key={i} style={{ display:"inline-flex" }}>
+                {["FREE SHIPPING ABOVE ₹1099","AUTHENTIC LICENSED JERSEYS","EASY 30-DAY RETURNS","COD AVAILABLE","SIZES XS TO XXL"].map(t=>(
+                  <span key={t} style={{ fontWeight:900,letterSpacing:3,fontSize:15,padding:"0 36px" }}>★ {t}</span>
+                ))}
+              </span>
+            ))}
+          </div>
+        </div>
 
         {/* HERO BANNER */}
         <div className="tp-hero">
@@ -693,7 +915,6 @@ export default function TeamPage() {
             ))}
           </div>
         </footer>
-      </div>
 
       {/* SIZE PICKER & DETAILS MODAL */}
       {selectedJersey && (
@@ -724,7 +945,7 @@ export default function TeamPage() {
 
             {/* Product Info Header */}
             <div style={{ padding: "16px 24px 6px" }}>
-              <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: 1, fontStyle: "italic", lineHeight: 1.2 }}>{selectedJersey.name}</div>
+              <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: 1, fontStyle: "italic", color: "#ffffff", lineHeight: 1.15 }}>{selectedJersey.name}</div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginTop: 8, width: "100%" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="tp-type-badge">{(() => {
@@ -745,7 +966,7 @@ export default function TeamPage() {
                     onClick={(e) => handleShareWhatsApp(selectedJersey, e)}
                     title="Share on WhatsApp"
                   >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff">
                       <path d="M12.012 2c-5.508 0-9.989 4.478-9.989 9.984 0 1.762.459 3.483 1.332 5.004L2 22l5.161-1.344a9.96 9.96 0 004.851 1.256h.004c5.507 0 9.988-4.478 9.988-9.984 0-2.668-1.039-5.176-2.925-7.062A9.925 9.925 0 0012.012 2zm5.721 14.286c-.24.673-1.398 1.282-1.92 1.348-.48.06-1.096.084-3.54-.924-2.772-1.144-4.56-3.96-4.696-4.14-.136-.18-1.12-1.488-1.12-2.844 0-1.356.708-2.016.96-2.292.24-.264.528-.336.708-.336.18 0 .36.004.516.012.168.008.396-.064.62.472.24.576.816 1.992.888 2.136.072.144.12.312.024.504-.096.192-.144.312-.288.48-.144.168-.304.376-.432.504-.144.144-.294.3-.126.588.168.288.75 1.238 1.61 2.004 1.106.985 2.038 1.29 2.326 1.434.288.144.48.216.552.336.072.12.072.696-.168 1.368z"/>
                     </svg>
                   </button>
@@ -756,7 +977,7 @@ export default function TeamPage() {
                     onClick={(e) => handleCopyShareLink(selectedJersey, e)}
                     title="Copy Product Link"
                   >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                     </svg>
@@ -777,7 +998,7 @@ export default function TeamPage() {
 
               {/* SIZE GRID & SIZE CHART BUTTON */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "nowrap", gap: "10px" }}>
-                <div className="tp-size-grid" style={{ margin: 0 }}>
+                <div className="size-grid" style={{ margin: 0 }}>
                   {(() => {
                     const availableSizes = SIZES.filter(s => getSizeStock(selectedJersey, s) > 0);
                     const listToRender = availableSizes.length > 0 ? availableSizes : SIZES;
@@ -788,7 +1009,7 @@ export default function TeamPage() {
                           type="button"
                           key={s}
                           disabled={!inStock}
-                          className={`tp-size-btn${selectedSize === s ? " active" : ""}`}
+                          className={`size-btn${selectedSize === s ? " selected" : ""}`}
                           onClick={() => {
                             if (inStock) {
                               setSelectedSize(s);
@@ -803,14 +1024,30 @@ export default function TeamPage() {
                   })()}
                 </div>
 
-                {/* Size Chart Button */}
+                {/* Size Chart White Logo at EXTREME RIGHT with small SIZE CHART text below */}
                 <button
                   type="button"
                   onClick={() => setShowSizeChart(true)}
                   title="View Size Chart"
-                  className="tp-size-chart-btn"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#ffffff",
+                    padding: "2px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginLeft: "auto",
+                    marginRight: "-6px",
+                    flexShrink: 0,
+                    transition: "transform 0.15s"
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+                  onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
                 >
-                  <svg width="28" height="28" viewBox="0 0 100 100" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="38" height="38" viewBox="0 0 100 100" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M 18 16 L 18 72 L 78 72" />
                     <line x1="18" y1="28" x2="25" y2="28" />
                     <line x1="18" y1="40" x2="25" y2="40" />
@@ -825,7 +1062,7 @@ export default function TeamPage() {
                     <path d="M 36 24 H 60 V 58 H 52 L 48 38 L 44 58 H 36 Z" strokeWidth="4" />
                     <path d="M 36 30 H 60" strokeWidth="3" />
                   </svg>
-                  <span style={{ fontSize: "9px", fontWeight: "900", letterSpacing: "1px", textTransform: "uppercase" }}>
+                  <span style={{ fontSize: "9px", fontWeight: "900", letterSpacing: "1px", textTransform: "uppercase", marginTop: "2px", color: "#ffffff", fontFamily: "'Barlow Condensed', sans-serif" }}>
                     SIZE CHART
                   </span>
                 </button>
@@ -1462,12 +1699,12 @@ export default function TeamPage() {
 
       {/* LIGHTBOX FOR REVIEW PHOTOS */}
       {previewReviewPhoto && (
-        <div className="tp-modal-bg" style={{ zIndex: 2100 }}>
+        <div className="tp-modal-bg" style={{ zIndex: 1000020 }}>
           <button type="button" className="tp-modal-dim" onClick={() => setPreviewReviewPhoto(null)} aria-label="Close photo preview" />
-          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", margin: "auto", background: "#000", border: "1px solid #39ff14", padding: 8, zIndex: 2101 }}>
+          <div style={{ position: "relative", maxWidth: "90vw", maxHeight: "90vh", margin: "auto", background: "#000", border: "1px solid #39ff14", padding: 8, zIndex: 1000021 }}>
             <button
               type="button"
-              style={{ position: "absolute", top: 12, right: 12, background: "#39ff14", color: "#000", border: "none", width: 32, height: 32, fontWeight: 900, cursor: "pointer", zIndex: 10 }}
+              style={{ position: "absolute", top: 12, right: 12, background: "#39ff14", color: "#000", border: "none", width: 32, height: 32, fontWeight: 900, cursor: "pointer", zIndex: 100 }}
               onClick={() => setPreviewReviewPhoto(null)}
             >
               ✕
@@ -1479,10 +1716,10 @@ export default function TeamPage() {
 
       {/* SIZE CHART MODAL POPUP */}
       {showSizeChart && (
-        <div className="tp-modal-bg" style={{ zIndex: 2100 }}>
+        <div className="tp-modal-bg" style={{ zIndex: 1000020 }}>
           <button type="button" className="tp-modal-dim" aria-label="Close size chart" onClick={() => setShowSizeChart(false)} />
-          <div className="tp-modal" style={{ maxWidth: "520px", border: "1px solid #39ff14", position: "relative", zIndex: 2101 }}>
-            <button type="button" className="tp-modal-close" style={{ right: "12px", left: "auto", zIndex: 10 }} onClick={() => setShowSizeChart(false)}>
+          <div className="tp-modal" style={{ maxWidth: "520px", border: "1px solid #39ff14", position: "relative", zIndex: 1000021 }}>
+            <button type="button" className="tp-modal-close" style={{ right: "12px", left: "auto", zIndex: 100 }} onClick={() => setShowSizeChart(false)}>
               ✕
             </button>
             <div style={{ position: "relative", background: "#0a0a0a" }}>
@@ -1603,6 +1840,7 @@ export default function TeamPage() {
       )}
 
       {toast && <div className="tp-toast">{toast}</div>}
+      </div>
     </>
   );
 }
