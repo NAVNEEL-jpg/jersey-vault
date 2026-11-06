@@ -1,19 +1,25 @@
 import multer from 'multer';
+import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Define storage location and filename
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Ensure this folder exists in server root
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// File filter (optional but recommended)
+// Ensure local uploads directory exists
+const uploadDir = path.resolve(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) {
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  } catch (_) {}
+}
+
+// Use memory storage for direct buffer access without disk ENOENT issues
+const storage = multer.memoryStorage();
+
+// File filter to accept image uploads reliably
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (!file.mimetype || file.mimetype.startsWith('image/') || file.mimetype === 'application/octet-stream') {
     cb(null, true);
   } else {
     cb(new Error('Only image files are allowed!'), false);
@@ -23,7 +29,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ 
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB limit to support high-resolution mobile photos
 });
 
 export default upload;

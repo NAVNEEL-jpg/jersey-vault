@@ -1,5 +1,25 @@
 import { API_BASE } from './config/api.js';
 
+export function getStoredAuthToken() {
+  if (typeof window === 'undefined') return null;
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key.includes('auth-token') || key.startsWith('sb-')) {
+        try {
+          const item = localStorage.getItem(key);
+          if (!item) continue;
+          const parsed = JSON.parse(item);
+          const token = parsed?.access_token || parsed?.currentSession?.access_token;
+          if (token && typeof token === 'string' && token.split('.').length === 3) {
+            return token;
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
 class ExpressQueryBuilder {
   constructor(table) {
     this.table = table;
@@ -85,17 +105,9 @@ class ExpressQueryBuilder {
       const headers = { 'Content-Type': 'application/json' };
 
       // Attach Supabase auth token if available (admin authorization for navneeldutta@gmail.com)
-      if (typeof window !== 'undefined') {
-        try {
-          const authKey = Object.keys(localStorage).find(k => k.includes('auth-token') || k.includes('supabase.auth.token') || k.startsWith('sb-'));
-          if (authKey) {
-            const parsed = JSON.parse(localStorage.getItem(authKey));
-            const token = parsed?.access_token || parsed?.currentSession?.access_token;
-            if (token) {
-              headers['Authorization'] = `Bearer ${token}`;
-            }
-          }
-        } catch (_) {}
+      const token = getStoredAuthToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       if (this.action === 'insert') {
@@ -135,22 +147,16 @@ export const express = {
   storage: {
     from(bucket) {
       return {
-        async upload(fileName, file) {
+        async upload(fileName, file, explicitToken = null) {
           try {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('fileName', fileName);
 
             const headers = {};
-            if (typeof window !== 'undefined') {
-              try {
-                const authKey = Object.keys(localStorage).find(k => k.includes('auth-token') || k.includes('supabase.auth.token') || k.startsWith('sb-'));
-                if (authKey) {
-                  const parsed = JSON.parse(localStorage.getItem(authKey));
-                  const token = parsed?.access_token || parsed?.currentSession?.access_token;
-                  if (token) headers['Authorization'] = `Bearer ${token}`;
-                }
-              } catch (_) {}
+            const token = explicitToken || getStoredAuthToken();
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
             }
 
             const res = await fetch(`${API_BASE}/api/db/storage/${encodeURIComponent(bucket)}/upload`, {
@@ -161,13 +167,14 @@ export const express = {
 
             if (!res.ok) {
               const err = await res.json().catch(() => ({}));
-              return { data: null, error: err.error || { message: 'Upload failed' } };
+              const msg = err.error?.message || err.message || `Upload failed with status ${res.status}`;
+              return { data: null, error: { message: msg } };
             }
 
             const json = await res.json();
             return { data: json.data, error: null };
           } catch (err) {
-            return { data: null, error: { message: err.message } };
+            return { data: null, error: { message: err.message || 'Upload failed' } };
           }
         },
 

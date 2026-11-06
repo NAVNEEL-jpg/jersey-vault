@@ -33,6 +33,7 @@ function getS3Client() {
       accessKeyId: R2_ACCESS_KEY_ID,
       secretAccessKey: R2_SECRET_ACCESS_KEY,
     },
+    forcePathStyle: true,
   });
 }
 
@@ -146,14 +147,15 @@ export async function updateR2Table(tableName, data) {
  * @returns {Promise<string>} publicUrl
  */
 export async function uploadFileToR2(fileBuffer, key, contentType = 'image/jpeg') {
-  if (s3Client) {
+  const client = s3Client || getS3Client();
+  if (client) {
     const cmd = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: key,
       Body: fileBuffer,
       ContentType: contentType,
     });
-    await s3Client.send(cmd);
+    await client.send(cmd);
     const cleanUrl = R2_PUBLIC_URL.replace(/\/+$/, '');
     return `${cleanUrl}/${key.replace(/^\/+/, '')}`;
   }

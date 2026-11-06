@@ -6,7 +6,7 @@ import { express } from "../express";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
-import { getProductImages, getFirstImage } from "../utils/imageHelpers";
+import { getProductImages, getFirstImage, extractImageUrls } from "../utils/imageHelpers";
 import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications";
 import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview, updateProductReview } from "../utils/reviews";
 
@@ -30,7 +30,13 @@ const sportColor = { FOOTBALL: "#39ff14", CRICKET: "#00aaff", BASKETBALL: "#ff99
 const uploadProductImageAndGetUrl = async (file) => {
   const ext = file.name ? file.name.split(".").pop() : "jpg";
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
-  const { data, error } = await express.storage.from("Jersey image").upload(fileName, file);
+  let token = null;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token;
+  } catch (_) {}
+
+  const { data, error } = await express.storage.from("Jersey image").upload(fileName, file, token);
   if (error) throw new Error("Image upload failed: " + (error.message || "Upload error"));
   return data.publicUrl;
 };
@@ -612,6 +618,18 @@ export default function AdminPage() {
     if (!name.trim()) { setFormError("Product name is required."); return; }
     if (!price || isNaN(Number(price)) || Number(price) <= 0) { setFormError("Enter a valid price."); return; }
     setFormSaving(true);
+
+    // If an image address or link is still in the input field, automatically extract and include it
+    let currentImages = [...uploadedImages];
+    if (tempUrlInput && tempUrlInput.trim()) {
+      const extracted = extractImageUrls(tempUrlInput);
+      if (extracted.length > 0) {
+        currentImages = [...currentImages, ...extracted];
+        setUploadedImages(currentImages);
+        setTempUrlInput("");
+      }
+    }
+
     const totalStock = SIZES.reduce((s, sz) => s + (formData.size_stock[sz] || 0), 0);
     const isPlayerProd = (formData.type || "").toUpperCase().includes("PLAYER") || name.toUpperCase().includes("PLAYER");
     const defaultDescText = isPlayerProd
@@ -624,7 +642,7 @@ export default function AdminPage() {
       stock: totalStock,
       size_stock: formData.size_stock,
       status: formData.status,
-      image_url: uploadedImages.join(",") || null,
+      image_url: currentImages.join(",") || null,
       type: formData.type,
       team_id: formData.team_id || null,
       featured: formData.featured || false,
@@ -686,7 +704,12 @@ export default function AdminPage() {
   const uploadLogoAndGetUrl = async (file, teamName) => {
     const ext = file.name ? file.name.split(".").pop() : "png";
     const fileName = `${Date.now()}-${teamName.trim().replace(/\s+/g, "-").toLowerCase()}.${ext}`;
-    const { data, error } = await express.storage.from("teams").upload(fileName, file);
+    let token = null;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token;
+    } catch (_) {}
+    const { data, error } = await express.storage.from("teams").upload(fileName, file, token);
     if (error) throw new Error("Logo upload failed: " + (error.message || "Upload error"));
     return data.publicUrl;
   };
@@ -706,7 +729,12 @@ export default function AdminPage() {
     setInlineTeamSaving(true);
     try {
       let logo_url = inlineTeamForm.logo_url;
-      if (inlineTeamLogoFile) logo_url = await uploadLogoAndGetUrl(inlineTeamLogoFile, inlineTeamForm.name);
+      if (inlineTeamLogoFile) {
+        logo_url = await uploadLogoAndGetUrl(inlineTeamLogoFile, inlineTeamForm.name);
+      } else if (logo_url) {
+        const extracted = extractImageUrls(logo_url);
+        if (extracted.length > 0) logo_url = extracted[0];
+      }
       const payload = { name: inlineTeamForm.name.trim(), sport: inlineTeamForm.sport, logo_url: logo_url || null };
       const { data, error } = await express.from("teams").insert([payload]).single();
       if (error) { setInlineTeamError("Failed: " + error.message); setInlineTeamSaving(false); return; }
@@ -741,7 +769,12 @@ export default function AdminPage() {
     setTeamSaving(true);
     try {
       let logo_url = teamForm.logo_url;
-      if (teamLogoFile) logo_url = await uploadLogoAndGetUrl(teamLogoFile, teamForm.name);
+      if (teamLogoFile) {
+        logo_url = await uploadLogoAndGetUrl(teamLogoFile, teamForm.name);
+      } else if (logo_url) {
+        const extracted = extractImageUrls(logo_url);
+        if (extracted.length > 0) logo_url = extracted[0];
+      }
       const payload = { name: teamForm.name.trim(), sport: teamForm.sport, logo_url: logo_url || null };
       const { data, error } = await express.from("teams").insert([payload]).single();
       if (error) { setTeamFormError("Failed to add team: " + error.message); setTeamSaving(false); return; }
@@ -815,6 +848,9 @@ export default function AdminPage() {
       let logo_url = editTeamForm.logo_url;
       if (editTeamLogoFile) {
         logo_url = await uploadLogoAndGetUrl(editTeamLogoFile, editTeamForm.name);
+      } else if (logo_url) {
+        const extracted = extractImageUrls(logo_url);
+        if (extracted.length > 0) logo_url = extracted[0];
       }
       const payload = {
         name: editTeamForm.name.trim().toUpperCase(),
@@ -1753,26 +1789,43 @@ export default function AdminPage() {
                     )}
 
                     <div className="image-url-row-wrapper" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                      <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 200 }}>
+                      <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 220 }}>
                         <input 
                           className="form-input" 
-                          type="url" 
-                          placeholder="Paste Image URL..." 
+                          type="text" 
+                          placeholder="Paste image address or link address (comma/newline separated)..." 
                           value={tempUrlInput} 
                           onChange={(e) => setTempUrlInput(e.target.value)} 
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (tempUrlInput.trim()) {
+                                const urls = extractImageUrls(tempUrlInput);
+                                if (urls.length > 0) {
+                                  setUploadedImages(prev => [...prev, ...urls]);
+                                  setTempUrlInput("");
+                                  setFormError("");
+                                }
+                              }
+                            }
+                          }}
                           style={{ flex: 1 }} 
                         />
                         <button type="button" className="btn-primary" onClick={() => {
                           if (tempUrlInput.trim()) {
-                            setUploadedImages(prev => [...prev, tempUrlInput.trim()]);
-                            setTempUrlInput("");
+                            const urls = extractImageUrls(tempUrlInput);
+                            if (urls.length > 0) {
+                              setUploadedImages(prev => [...prev, ...urls]);
+                              setTempUrlInput("");
+                              setFormError("");
+                            }
                           }
-                        }} style={{ padding: "0 14px", height: 40, fontSize: 12 }}>ADD URL</button>
+                        }} style={{ padding: "0 14px", height: 40, fontSize: 12 }}>+ ADD URL / LINK</button>
                       </div>
                       
                       <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
                         <button type="button" className="btn-ghost" style={{ padding: "0 14px", height: 40, fontSize: 12, border: "1px dashed #39ff14", color: "#39ff14" }} disabled={uploadingNewProductImage}>
-                          {uploadingNewProductImage ? "UPLOADING..." : "📁 UPLOAD IMAGE"}
+                          {uploadingNewProductImage ? "UPLOADING..." : "📁 UPLOAD FROM FILES"}
                         </button>
                         <input 
                           type="file" 
@@ -1782,6 +1835,7 @@ export default function AdminPage() {
                             const files = Array.from(e.target.files || []);
                             if (files.length === 0) return;
                             setUploadingNewProductImage(true);
+                            setFormError("");
                             try {
                               const uploadPromises = files.map(file => uploadProductImageAndGetUrl(file));
                               const urls = await Promise.all(uploadPromises);
@@ -3394,28 +3448,43 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
 
           {/* Add URL and Upload file */}
           <div className="image-url-row-wrapper" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 200 }}>
+            <div style={{ display: "flex", gap: 6, flex: 1, minWidth: 220 }}>
               <input 
                 className="form-input" 
-                type="url" 
-                placeholder="Paste Image URL..." 
+                type="text" 
+                placeholder="Paste image address or link address..." 
                 value={newUrlInput} 
                 onChange={(e) => setNewUrlInput(e.target.value)} 
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!newUrlInput.trim()) return;
+                    const urls = extractImageUrls(newUrlInput);
+                    if (urls.length === 0) return;
+                    const updated = [...localImages, ...urls];
+                    const success = await updateProductImagesInDb(updated);
+                    if (success) {
+                      setNewUrlInput("");
+                    }
+                  }
+                }}
                 style={{ flex: 1, padding: "6px 10px", fontSize: 12, height: 32 }} 
               />
               <button type="button" className="btn-primary" onClick={async () => {
                 if (!newUrlInput.trim()) return;
-                const updated = [...localImages, newUrlInput.trim()];
+                const urls = extractImageUrls(newUrlInput);
+                if (urls.length === 0) return;
+                const updated = [...localImages, ...urls];
                 const success = await updateProductImagesInDb(updated);
                 if (success) {
                   setNewUrlInput("");
                 }
-              }} style={{ padding: "0 12px", fontSize: 11, height: 32 }}>ADD URL</button>
+              }} style={{ padding: "0 12px", fontSize: 11, height: 32 }}>+ ADD URL / LINK</button>
             </div>
             
             <div style={{ position: "relative", overflow: "hidden", display: "inline-block" }}>
               <button type="button" className="btn-ghost" style={{ padding: "0 12px", fontSize: 11, height: 32, border: "1px dashed #39ff14", color: "#39ff14" }} disabled={uploadingImage}>
-                {uploadingImage ? "UPLOADING..." : "📁 UPLOAD IMAGE"}
+                {uploadingImage ? "UPLOADING..." : "📁 UPLOAD FROM FILES"}
               </button>
               <input 
                 type="file" 

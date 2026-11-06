@@ -1,5 +1,7 @@
 import express from 'express';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   getR2Table,
   updateR2Table,
@@ -13,6 +15,9 @@ import {
   getFileStreamFromR2,
 } from '../services/r2Service.js';
 import upload from '../middlewares/uploadMiddleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -267,9 +272,20 @@ router.post('/storage/:bucket/upload', verifyAdminForMutations, upload.single('f
       try { fs.unlinkSync(req.file.path); } catch (_) {}
     }
 
-    let publicUrl = await uploadFileToR2(buffer, key, req.file.mimetype || 'image/jpeg');
-    // Ensure streamable URL via API proxy
-    publicUrl = `/api/db/storage/${key}`;
+    if (!buffer) {
+      return res.status(400).json({ data: null, error: { message: 'Failed to process file buffer' } });
+    }
+
+    // Always store a persistent local copy in server/uploads/<cleanBucket>/
+    try {
+      const localUploadDir = path.resolve(__dirname, `../../uploads/${cleanBucket}`);
+      if (!fs.existsSync(localUploadDir)) {
+        fs.mkdirSync(localUploadDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(localUploadDir, fileName), buffer);
+    } catch (fsErr) {
+      console.warn('[dbRoutes:storage/upload] Local backup notice:', fsErr.message);
+    }
 
     // Also write local backup if bucket is teams
     try {
@@ -281,23 +297,63 @@ router.post('/storage/:bucket/upload', verifyAdminForMutations, upload.single('f
       }
     } catch (_) {}
 
+    // Upload to Cloudflare R2 if available, with graceful fallback to local storage
+    try {
+      await uploadFileToR2(buffer, key, req.file.mimetype || 'image/jpeg');
+    } catch (r2Err) {
+      console.warn('[dbRoutes:storage/upload] R2 upload notice (falling back to local storage):', r2Err.message);
+    }
+
+    // Streamable URL via API proxy
+    const publicUrl = `/api/db/storage/${key}`;
+
     res.json({ data: { path: key, publicUrl }, error: null });
   } catch (err) {
     console.error('[dbRoutes:storage/upload] Error:', err);
-    res.status(500).json({ data: null, error: { message: err.message } });
+    res.status(500).json({ data: null, error: { message: err.message || 'Upload failed' } });
   }
 });
 
-// ── GET /api/db/storage/:bucket/:filename (Stream media file directly from Cloudflare R2) ──
+// ── GET /api/db/storage/:bucket/:filename (Stream media file directly from local storage or Cloudflare R2) ──
 router.get('/storage/:bucket/:filename', async (req, res) => {
   try {
     const { bucket, filename } = req.params;
     const cleanBucket = bucket.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
     const fullKey = `${cleanBucket}/${filename}`;
 
+    const mimeTypes = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      gif: 'image/gif',
+      svg: 'image/svg+xml'
+    };
+    const ext = path.extname(filename).toLowerCase().replace('.', '');
+    const contentType = mimeTypes[ext] || 'image/jpeg';
+
+    // 1. Try local server storage first (instant response, zero latency)
+    const localFilePath = path.resolve(__dirname, `../../uploads/${cleanBucket}/${filename}`);
+    if (fs.existsSync(localFilePath)) {
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return fs.createReadStream(localFilePath).pipe(res);
+    }
+
+    // 2. Try client public teams directory if teams bucket
+    if (cleanBucket === 'teams' || cleanBucket === 'team-logos') {
+      const publicTeamPath = path.resolve(__dirname, `../../../client/public/teams/${filename}`);
+      if (fs.existsSync(publicTeamPath)) {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return fs.createReadStream(publicTeamPath).pipe(res);
+      }
+    }
+
+    // 3. Fall back to Cloudflare R2 stream
     const streamObj = await getFileStreamFromR2(fullKey);
     if (!streamObj || !streamObj.Body) {
-      return res.status(404).json({ error: 'File not found in Cloudflare R2' });
+      return res.status(404).json({ error: 'File not found' });
     }
 
     if (streamObj.ContentType) res.setHeader('Content-Type', streamObj.ContentType);

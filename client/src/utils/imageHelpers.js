@@ -29,3 +29,74 @@ export const getFirstImage = (imageUrlString) => {
   const images = getProductImages(imageUrlString);
   return images[0] || "";
 };
+
+/**
+ * Helper to clean and resolve image URLs from user input.
+ * Supports:
+ * - Direct image addresses (e.g. https://.../pic.jpg, webp, png, svg)
+ * - Link addresses from Google Images (e.g. ?imgurl=... or &url=...)
+ * - Imgur links (https://imgur.com/xyz -> https://i.imgur.com/xyz.jpg)
+ * - Pinterest, Unsplash, and general web photo links
+ * - Protocol-relative URLs (//...)
+ * - URLs without protocol (example.com/pic.jpg -> https://example.com/pic.jpg)
+ * - Multiple URLs pasted together separated by newlines, commas, or semicolons
+ */
+export const extractImageUrls = (input) => {
+  if (!input) return [];
+  const rawParts = String(input)
+    .split(/[\r\n,;]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const cleanUrls = [];
+
+  for (let part of rawParts) {
+    // Strip wrapping quotes or brackets
+    part = part.replace(/^["'\[\(]+|["'\]\)]+$/g, '').trim();
+    if (!part) continue;
+
+    // 1. Google image redirect link (Copy link address from Google Images)
+    // E.g. https://www.google.com/imgres?imgurl=https%3A%2F%2F...
+    if (part.includes('imgurl=')) {
+      try {
+        const urlObj = new URL(part);
+        const imgParam = urlObj.searchParams.get('imgurl');
+        if (imgParam) {
+          part = decodeURIComponent(imgParam);
+        }
+      } catch (_) {
+        const match = part.match(/[?&]imgurl=([^&]+)/);
+        if (match && match[1]) {
+          part = decodeURIComponent(match[1]);
+        }
+      }
+    } else if (part.includes('google.com/url') && part.includes('url=')) {
+      try {
+        const urlObj = new URL(part);
+        const targetUrl = urlObj.searchParams.get('url');
+        if (targetUrl) {
+          part = decodeURIComponent(targetUrl);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Imgur page address (https://imgur.com/abc -> https://i.imgur.com/abc.jpg)
+    const imgurMatch = part.match(/^https?:\/\/(?:www\.)?imgur\.com\/([a-zA-Z0-9]+)$/);
+    if (imgurMatch && imgurMatch[1]) {
+      part = `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+    }
+
+    // 3. Protocol fix
+    if (part.startsWith('//')) {
+      part = 'https:' + part;
+    } else if (!part.startsWith('http://') && !part.startsWith('https://') && !part.startsWith('/') && !part.startsWith('data:')) {
+      part = 'https://' + part;
+    }
+
+    if (part) {
+      cleanUrls.push(part);
+    }
+  }
+
+  return cleanUrls;
+};
