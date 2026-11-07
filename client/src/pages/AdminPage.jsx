@@ -6,7 +6,7 @@ import { express } from "../express";
 import { downloadInvoice } from "../utils/downloadInvoice";
 import { API_BASE } from "../config/api";
 import BrandLogo from "../components/BrandLogo";
-import { getProductImages, getFirstImage, extractImageUrls } from "../utils/imageHelpers";
+import { getProductImages, getFirstImage, extractImageUrls, resolveImageUrl } from "../utils/imageHelpers";
 import { useAdminOrderNotifications } from "../hooks/useAdminOrderNotifications";
 import { fetchProductReviews, addProductReview, toggleReviewPublishStatus, deleteProductReview, updateProductReview } from "../utils/reviews";
 
@@ -38,7 +38,7 @@ const uploadProductImageAndGetUrl = async (file) => {
 
   const { data, error } = await express.storage.from("Jersey image").upload(fileName, file, token);
   if (error) throw new Error("Image upload failed: " + (error.message || "Upload error"));
-  return data.publicUrl;
+  return resolveImageUrl(data.publicUrl);
 };
 
 
@@ -711,7 +711,7 @@ export default function AdminPage() {
     } catch (_) {}
     const { data, error } = await express.storage.from("teams").upload(fileName, file, token);
     if (error) throw new Error("Logo upload failed: " + (error.message || "Upload error"));
-    return data.publicUrl;
+    return resolveImageUrl(data.publicUrl);
   };
 
   // ── Inline team creation (inside product form) ──
@@ -1625,7 +1625,7 @@ export default function AdminPage() {
                                 ? teamSearchResults.map(team => (
                                     <button type="button" key={team.id} className="team-dropdown-item" onClick={() => handleSelectTeamForProduct(team)}>
                                       {team.logo_url
-                                        ? <img src={team.logo_url} alt="" className="team-dropdown-logo" />
+                                        ? <img src={resolveImageUrl(team.logo_url)} alt="" className="team-dropdown-logo" />
                                         : <span style={{ fontSize: 24, width: 32, textAlign: "center" }}>{sportIcon[team.sport] || "🛡️"}</span>
                                       }
                                       <div>
@@ -1760,7 +1760,7 @@ export default function AdminPage() {
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                         {uploadedImages.map((img, idx) => (
                           <div key={idx} style={{ position: "relative", width: 60, height: 60, border: "1px solid #222", background: "#0d0d0d" }}>
-                            <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={resolveImageUrl(img)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             {idx === 0 && (
                               <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 8, fontWeight: 900, textAlign: "center" }}>PRIMARY</span>
                             )}
@@ -2101,7 +2101,7 @@ export default function AdminPage() {
                       </div>
                       <div className="team-logo-circle" style={{ borderColor: sc + "44" }}>
                         {team.logo_url
-                          ? <img src={team.logo_url} alt={team.name} style={{ width: 60, height: 60, objectFit: "contain" }} />
+                          ? <img src={resolveImageUrl(team.logo_url)} alt={team.name} style={{ width: 60, height: 60, objectFit: "contain" }} />
                           : <span style={{ fontSize: 36 }}>{sportIcon[team.sport] || "🛡️"}</span>
                         }
                       </div>
@@ -3263,7 +3263,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
               {p.teams && (
                 <span className="product-team-badge">
                   {p.teams.logo_url
-                    ? <img src={p.teams.logo_url} alt="" className="product-team-logo-tiny" />
+                    ? <img src={resolveImageUrl(p.teams.logo_url)} alt="" className="product-team-logo-tiny" />
                     : <span style={{ fontSize: 12 }}>{sportIcon[p.teams.sport] || "🛡️"}</span>
                   }
                   <span style={{ fontSize: 12, letterSpacing: 1, color: "#aaa", fontWeight: 700 }}>{p.teams.name}</span>
@@ -3412,7 +3412,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
               {localImages.map((img, idx) => (
                 <div key={idx} style={{ position: "relative", width: 64, height: 64, border: "1px solid #222", background: "#0d0d0d" }}>
-                  <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={resolveImageUrl(img)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   {idx === 0 && (
                     <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 9, fontWeight: 900, textAlign: "center", padding: "1px 0" }}>PRIMARY</span>
                   )}

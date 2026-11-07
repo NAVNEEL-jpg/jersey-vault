@@ -179,12 +179,12 @@ export const express = {
         },
 
         getPublicUrl(filePath) {
-          const publicDomain = 'https://pub-d7ef29e16fdd45ccb2e5e07e3e81b251.r2.dev';
+          const base = (API_BASE && API_BASE.trim()) || 'https://jersey-vault-backend.onrender.com';
           const cleanBucket = bucket.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
           const cleanPath = filePath.replace(/^\/+/, '');
           return {
             data: {
-              publicUrl: `${publicDomain}/${cleanBucket}/${cleanPath}`
+              publicUrl: `${base.replace(/\/+$/, '')}/api/db/storage/${cleanBucket}/${cleanPath}`
             }
           };
         }

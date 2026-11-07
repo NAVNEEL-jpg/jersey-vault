@@ -304,8 +304,9 @@ router.post('/storage/:bucket/upload', verifyAdminForMutations, upload.single('f
       console.warn('[dbRoutes:storage/upload] R2 upload notice (falling back to local storage):', r2Err.message);
     }
 
-    // Streamable URL via API proxy
-    const publicUrl = `/api/db/storage/${key}`;
+    // Return absolute streamable URL via API proxy
+    const backendDomain = process.env.BACKEND_PUBLIC_URL || 'https://jersey-vault-backend.onrender.com';
+    const publicUrl = `${backendDomain.replace(/\/+$/, '')}/api/db/storage/${key}`;
 
     res.json({ data: { path: key, publicUrl }, error: null });
   } catch (err) {

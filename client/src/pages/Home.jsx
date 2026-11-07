@@ -31,7 +31,7 @@ import AnnouncementPopup from "../components/AnnouncementPopup";
 import wc26Bg from "../assets/WC26.jpeg";
 import kits2627Img from "../assets/KITS2627.png";
 import laliga26Video from "../assets/Laliga26.mp4.mp4";
-import { getProductImages, getFirstImage } from "../utils/imageHelpers";
+import { getProductImages, getFirstImage, resolveImageUrl } from "../utils/imageHelpers";
 import { fetchProductReviews, addProductReview, uploadReviewImage } from "../utils/reviews";
 import ProductSEO from "../components/ProductSEO";
 import { API_BASE } from "../config/api";
@@ -3416,7 +3416,7 @@ letter-spacing: 4px !important;
                         }}
                       >
                         {t.logo_url ? (
-                          <img src={t.logo_url} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%", background: "#fff", padding: "1px" }} />
+                          <img src={resolveImageUrl(t.logo_url)} alt="" style={{ width: 18, height: 18, objectFit: "contain", borderRadius: "50%", background: "#fff", padding: "1px" }} />
                         ) : (
                           <span style={{ fontSize: 14 }}>🛡️</span>
                         )}

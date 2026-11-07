@@ -1,3 +1,28 @@
+import { API_BASE } from '../config/api';
+
+const BACKEND_BASE = (API_BASE && API_BASE.trim()) || 'https://jersey-vault-backend.onrender.com';
+
+/**
+ * Resolves any image URL to a valid, globally reachable URL.
+ * Converts relative API storage paths (/api/db/storage/...) into full backend URLs.
+ */
+export const resolveImageUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('/api/')) {
+    const base = BACKEND_BASE.replace(/\/+$/, '');
+    return `${base}${trimmed}`;
+  }
+
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  return trimmed;
+};
+
 /**
  * Helper to parse a product's image_url field into an array of image URL strings.
  * Supports:
@@ -8,18 +33,21 @@
 export const getProductImages = (imageUrlString) => {
   if (!imageUrlString) return [];
   const str = String(imageUrlString).trim();
+  let list = [];
   if (str.startsWith('[')) {
     try {
       const parsed = JSON.parse(str);
       if (Array.isArray(parsed)) {
-        return parsed.map(url => String(url).trim()).filter(Boolean);
+        list = parsed.map(url => String(url).trim()).filter(Boolean);
       }
     } catch (e) {
       // Fallback if parsing fails
     }
   }
-  // Split by comma
-  return str.split(',').map(url => url.trim()).filter(Boolean);
+  if (list.length === 0) {
+    list = str.split(',').map(url => url.trim()).filter(Boolean);
+  }
+  return list.map(url => resolveImageUrl(url));
 };
 
 /**
