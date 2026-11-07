@@ -1760,7 +1760,7 @@ export default function AdminPage() {
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                         {uploadedImages.map((img, idx) => (
                           <div key={idx} style={{ position: "relative", width: 60, height: 60, border: "1px solid #222", background: "#0d0d0d" }}>
-                            <img src={resolveImageUrl(img)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={resolveImageUrl(img)} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             {idx === 0 && (
                               <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 8, fontWeight: 900, textAlign: "center" }}>PRIMARY</span>
                             )}
@@ -3205,7 +3205,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
       <div className="stock-row-top">
         <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
           {getFirstImage(p.image_url)
-            ? <img src={getFirstImage(p.image_url)} alt={p.name} style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
+            ? <img src={getFirstImage(p.image_url)} alt={p.name} referrerPolicy="no-referrer" style={{ width: 48, height: 48, objectFit: "cover", background: "#0d0d0d", flexShrink: 0 }} />
             : <div style={{ width: 48, height: 48, background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>👕</div>
           }
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -3263,7 +3263,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
               {p.teams && (
                 <span className="product-team-badge">
                   {p.teams.logo_url
-                    ? <img src={resolveImageUrl(p.teams.logo_url)} alt="" className="product-team-logo-tiny" />
+                    ? <img src={resolveImageUrl(p.teams.logo_url)} alt="" referrerPolicy="no-referrer" className="product-team-logo-tiny" />
                     : <span style={{ fontSize: 12 }}>{sportIcon[p.teams.sport] || "🛡️"}</span>
                   }
                   <span style={{ fontSize: 12, letterSpacing: 1, color: "#aaa", fontWeight: 700 }}>{p.teams.name}</span>
@@ -3412,7 +3412,7 @@ function StockRow({ product: p, deletingId, confirmDeleteId, setConfirmDeleteId,
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
               {localImages.map((img, idx) => (
                 <div key={idx} style={{ position: "relative", width: 64, height: 64, border: "1px solid #222", background: "#0d0d0d" }}>
-                  <img src={resolveImageUrl(img)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={resolveImageUrl(img)} alt="" referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   {idx === 0 && (
                     <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#39ff14", color: "#000", fontSize: 9, fontWeight: 900, textAlign: "center", padding: "1px 0" }}>PRIMARY</span>
                   )}
